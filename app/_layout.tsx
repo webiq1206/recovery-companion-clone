@@ -87,6 +87,7 @@ function RootLayoutNav() {
       <Stack.Screen name="recovery-stages-explained" options={{ title: 'Recovery Stages', animation: defaultAnimation }} />
       <Stack.Screen name="early-warning-explained" options={{ title: 'Early Warning', animation: defaultAnimation }} />
       <Stack.Screen name="recovery-insights-explained" options={{ title: 'Recovery Insights', animation: defaultAnimation }} />
+      <Stack.Screen name="protection-profile" options={{ title: 'Protection Profile', animation: defaultAnimation }} />
     </Stack>
   );
 }

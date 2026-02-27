@@ -516,6 +516,8 @@ export default function HomeScreen() {
     [riskLevel, displayScore]
   );
 
+  const isProtectionLow = displayScore < 60;
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(heroFadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
@@ -687,29 +689,39 @@ export default function HomeScreen() {
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.heroTop}>
-            <StabilityRing score={displayScore} size={120} />
-            <View style={styles.heroStats}>
-              <View style={styles.heroStatItem}>
-                <Text style={styles.heroStatValue}>{elapsed.days}</Text>
-                <Text style={styles.heroStatLabel}>{HOME_COPY.freedomLabel}</Text>
-              </View>
-              <View style={styles.heroStatDivider} />
-              <View style={styles.heroStatItem}>
-                <Text style={styles.heroStatValue}>{currentStreak}</Text>
-                <Text style={styles.heroStatLabel}>{HOME_COPY.streakLabel}</Text>
-              </View>
-              <View style={styles.heroStatDivider} />
-              <View style={styles.heroStatItem}>
-                <Text style={styles.heroStatValue}>${totalSaved}</Text>
-                <Text style={styles.heroStatLabel}>{HOME_COPY.savedLabel}</Text>
-              </View>
-            </View>
+            <StabilityRing score={displayScore} size={132} />
           </View>
           <View style={styles.heroBottom}>
             <EmotionalBadge score={displayScore} />
           </View>
         </LinearGradient>
       </Animated.View>
+
+      <View
+        style={[
+          styles.protectionBanner,
+          { backgroundColor: isProtectionLow ? 'rgba(239,83,80,0.10)' : 'rgba(76,175,80,0.10)', borderColor: isProtectionLow ? '#EF5350' + '33' : '#4CAF50' + '33' },
+        ]}
+      >
+        <View style={styles.protectionBannerLeft}>
+          <View
+            style={[
+              styles.protectionDot,
+              { backgroundColor: isProtectionLow ? '#EF5350' : '#4CAF50' },
+            ]}
+          />
+          <View>
+            <Text style={styles.protectionBannerTitle}>
+              {isProtectionLow ? 'Extra protection recommended today' : 'Protection looks steady today'}
+            </Text>
+            <Text style={styles.protectionBannerSub}>
+              {isProtectionLow
+                ? 'Your protection score is running lower than usual. Today’s plan will focus on safety and support.'
+                : 'Your protection score suggests a stable day. Today’s plan keeps that strength in motion.'}
+            </Text>
+          </View>
+        </View>
+      </View>
 
       <View style={styles.todayFocusCard}>
         <View style={styles.todayFocusHeader}>
@@ -744,13 +756,13 @@ export default function HomeScreen() {
           <View style={styles.todayFocusIconBg}>
             <Sparkles size={16} color="#FFD54F" />
           </View>
-          <Text style={styles.todayFocusLabel}>TODAY'S SMALL WINS</Text>
+          <Text style={styles.todayFocusLabel}>TODAY'S PROTECTION PLAN</Text>
         </View>
         <Text style={styles.todayFocusDesc}>
-          Gentle, doable steps for today. Tap to check off what you’ve honored.
+          Three core actions to protect your recovery today. Tap to check off what you’ve honored.
         </Text>
 
-        {/* Win 1 – data-driven check-in */}
+        {/* Required action 1 – Morning Check-In */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
           <View
             style={{
@@ -768,14 +780,14 @@ export default function HomeScreen() {
             {todayCheckIn && <Check size={14} color={Colors.primary} />}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.checkinTitle}>Check in with yourself</Text>
+            <Text style={styles.checkinTitle}>Morning Check-In</Text>
             <Text style={styles.checkinSub}>
-              Notice how your body, mind, and heart are doing.
+              Take 60 seconds to notice how you’re arriving and name 1–2 feelings.
             </Text>
           </View>
         </View>
 
-        {/* Win 2 – reflection */}
+        {/* Required action 2 – Trigger Review */}
         <Pressable
           onPress={() => handleToggleWin('reflection')}
           style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
@@ -797,14 +809,14 @@ export default function HomeScreen() {
             {wins.reflection && <Check size={14} color={Colors.primary} />}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.checkinTitle}>One kind thought</Text>
+            <Text style={styles.checkinTitle}>Trigger Review</Text>
             <Text style={styles.checkinSub}>
-              Offer yourself a single gentle sentence about today.
+              Look over your main triggers and choose one situation to plan around today.
             </Text>
           </View>
         </Pressable>
 
-        {/* Win 3 – connection */}
+        {/* Required action 3 – One Rebuild Action */}
         <Pressable
           onPress={() => handleToggleWin('connection')}
           style={{ flexDirection: 'row', alignItems: 'center' }}
@@ -826,9 +838,9 @@ export default function HomeScreen() {
             {wins.connection && <Check size={14} color={Colors.primary} />}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.checkinTitle}>Reach toward support</Text>
+            <Text style={styles.checkinTitle}>One Rebuild Action</Text>
             <Text style={styles.checkinSub}>
-              A message, call, or community moment that reminds you you’re not alone.
+              Pick one small action that moves you toward your rebuilding goal and commit to it.
             </Text>
           </View>
         </Pressable>
@@ -1373,34 +1385,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(46,196,182,0.1)',
   },
   heroTop: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 18,
     marginBottom: 16,
-  },
-  heroStats: {
-    flex: 1,
-    gap: 10,
-  },
-  heroStatItem: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-  },
-  heroStatValue: {
-    fontSize: 20,
-    fontWeight: '600' as const,
-    color: Colors.text,
-  },
-  heroStatLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontWeight: '500' as const,
-  },
-  heroStatDivider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    opacity: 0.5,
   },
   heroBottom: {
     borderTopWidth: 1,
@@ -1414,6 +1400,34 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     borderWidth: 1,
     borderColor: 'rgba(46,196,182,0.15)',
+  },
+  protectionBanner: {
+    marginTop: 10,
+    marginBottom: 14,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  protectionBannerLeft: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  protectionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 6,
+  },
+  protectionBannerTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  protectionBannerSub: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 19,
   },
   todayFocusHeader: {
     flexDirection: 'row',
