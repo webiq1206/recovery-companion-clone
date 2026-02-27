@@ -105,6 +105,158 @@ function getInterventionSuggestion(riskLevel: string, stabilityScore: number): {
   return null;
 }
 
+type StagePhase = 'Awareness' | 'Decision' | 'Stabilization' | 'Rebuild' | 'Growth';
+
+interface StageTask {
+  id: string;
+  title: string;
+  description: string;
+  category: 'emotional' | 'physical' | 'connection';
+}
+
+function getStagePhase(daysSober: number): StagePhase {
+  if (daysSober < 7) return 'Awareness';
+  if (daysSober < 30) return 'Decision';
+  if (daysSober < 90) return 'Stabilization';
+  if (daysSober < 180) return 'Rebuild';
+  return 'Growth';
+}
+
+function getStageTasks(phase: StagePhase): StageTask[] {
+  switch (phase) {
+    case 'Awareness':
+      return [
+        {
+          id: 'awareness-emotional-checkin',
+          title: 'Name what you’re feeling',
+          description: 'Take 30 seconds to quietly notice and name 1–2 emotions without judging them.',
+          category: 'emotional',
+        },
+        {
+          id: 'awareness-physical-grounding',
+          title: 'Ground your body',
+          description: 'Place both feet on the floor, feel the chair beneath you, and take 5 slow breaths.',
+          category: 'physical',
+        },
+        {
+          id: 'awareness-connection-text',
+          title: 'Send a small check-in',
+          description: 'Text or message someone you trust with a simple “Hey, I’m here today.”',
+          category: 'connection',
+        },
+      ];
+    case 'Decision':
+      return [
+        {
+          id: 'decision-emotional-intention',
+          title: 'Set today’s intention',
+          description: 'Finish this sentence: “Today, I want to treat myself with…” and hold it gently in mind.',
+          category: 'emotional',
+        },
+        {
+          id: 'decision-physical-move',
+          title: 'One caring action for your body',
+          description: 'Choose one simple action: drink water, stretch for 1 minute, or step outside briefly.',
+          category: 'physical',
+        },
+        {
+          id: 'decision-connection-share',
+          title: 'Let someone in',
+          description: 'Share one honest sentence with a person or journal about how today really feels.',
+          category: 'connection',
+        },
+        {
+          id: 'decision-physical-rest',
+          title: 'Plan one rest moment',
+          description: 'Choose a time today when you’ll pause for 3 calm breaths or a quiet break.',
+          category: 'physical',
+        },
+      ];
+    case 'Stabilization':
+      return [
+        {
+          id: 'stabilization-emotional-scan',
+          title: 'Do a gentle body scan',
+          description: 'Notice where tension sits in your body and soften one small area with your breath.',
+          category: 'emotional',
+        },
+        {
+          id: 'stabilization-physical-routine',
+          title: 'Keep one steady routine',
+          description: 'Choose and honor one stabilizing habit today (meal, sleep time, walk, or hygiene).',
+          category: 'physical',
+        },
+        {
+          id: 'stabilization-connection-ping',
+          title: 'Touch base with support',
+          description: 'Ping a support person, group, or community space—even a short emoji counts.',
+          category: 'connection',
+        },
+        {
+          id: 'stabilization-emotional-kindness',
+          title: 'Offer yourself one kind phrase',
+          description: 'When self-criticism shows up, gently replace it with one kinder sentence.',
+          category: 'emotional',
+        },
+      ];
+    case 'Rebuild':
+      return [
+        {
+          id: 'rebuild-emotional-vision',
+          title: 'Remember why you’re rebuilding',
+          description: 'Write or think of one reason your future self is grateful you stayed on this path.',
+          category: 'emotional',
+        },
+        {
+          id: 'rebuild-physical-step',
+          title: 'Take a small forward step',
+          description: 'Do one small action toward work, home, or health that future you will appreciate.',
+          category: 'physical',
+        },
+        {
+          id: 'rebuild-connection-offer',
+          title: 'Reach out or respond',
+          description: 'Reply to a message, check in on someone, or say “thank you” to a person who supports you.',
+          category: 'connection',
+        },
+        {
+          id: 'rebuild-physical-environment',
+          title: 'Tidy one small space',
+          description: 'Reset a tiny area—a desk, nightstand, or counter—to support a calmer mind.',
+          category: 'physical',
+        },
+      ];
+    case 'Growth':
+    default:
+      return [
+        {
+          id: 'growth-emotional-gratitude',
+          title: 'Notice one point of gratitude',
+          description: 'Name one thing in your life today that you’re quietly grateful for.',
+          category: 'emotional',
+        },
+        {
+          id: 'growth-physical-energize',
+          title: 'Gently energize your body',
+          description: 'Choose a short walk, stretch, or movement that reminds you you’re alive and growing.',
+          category: 'physical',
+        },
+        {
+          id: 'growth-connection-giveback',
+          title: 'Offer a small kindness',
+          description: 'Send encouragement, hold the door, or show a simple kindness to someone else.',
+          category: 'connection',
+        },
+        {
+          id: 'growth-emotional-reflect',
+          title: 'Reflect on progress',
+          description: 'Remember one moment from the past week that shows how far you’ve come.',
+          category: 'emotional',
+        },
+      ];
+  }
+}
+
 const StabilityRing = React.memo(({ score, size }: { score: number; size: number }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0.3)).current;
@@ -335,6 +487,11 @@ export default function HomeScreen() {
   const [checkinExpanded, setCheckinExpanded] = useState<boolean>(false);
   const [pledgeExpanded, setPledgeExpanded] = useState<boolean>(false);
   const [pledgeMood, setPledgeMood] = useState<number>(3);
+  const [wins, setWins] = useState({
+    reflection: false,
+    connection: false,
+    healthyChoice: false,
+  });
   const heroFadeAnim = useRef(new Animated.Value(0)).current;
   const heroSlideAnim = useRef(new Animated.Value(20)).current;
 
@@ -440,6 +597,47 @@ export default function HomeScreen() {
     addPledge(newPledge);
   }, [pledgeMood, addPledge]);
 
+  const handleToggleWin = useCallback((key: 'reflection' | 'connection' | 'healthyChoice') => {
+    setWins((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  }, []);
+
+  const stagePhase = useMemo<StagePhase>(() => getStagePhase(daysSober), [daysSober]);
+  const stageTasks = useMemo(() => getStageTasks(stagePhase), [stagePhase]);
+  const [completedStageTasks, setCompletedStageTasks] = useState<Record<string, boolean>>({});
+  const [checklistStreak, setChecklistStreak] = useState(0);
+  const [lastChecklistCompletionDate, setLastChecklistCompletionDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initial: Record<string, boolean> = {};
+    stageTasks.forEach((task) => {
+      initial[task.id] = false;
+    });
+    setCompletedStageTasks(initial);
+  }, [stagePhase, stageTasks]);
+
+  const toggleStageTask = useCallback((id: string) => {
+    setCompletedStageTasks((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  }, []);
+
+  const allStageTasksComplete = useMemo(
+    () => stageTasks.length > 0 && stageTasks.every((task) => completedStageTasks[task.id]),
+    [stageTasks, completedStageTasks],
+  );
+
+  useEffect(() => {
+    if (!allStageTasksComplete) return;
+    const todayKey = new Date().toISOString().split('T')[0];
+    if (lastChecklistCompletionDate === todayKey) return;
+    setChecklistStreak((prev) => prev + 1);
+    setLastChecklistCompletionDate(todayKey);
+  }, [allStageTasksComplete, lastChecklistCompletionDate]);
+
   if (isLoading) {
     return <HomeLoadingSkeleton />;
   }
@@ -464,17 +662,20 @@ export default function HomeScreen() {
             <Text style={[styles.stageTag, { color: stageConfig.accentColor }]}>{stageConfig.label}</Text>
             {stageProgress > 0 && <Text style={styles.stageDaysText}> · {stageProgress}d</Text>}
           </View>
+          <Text style={styles.checkinSub}>
+            {encouragement}
+          </Text>
         </View>
         <Pressable
           style={({ pressed }) => [styles.crisisBtn, pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            router.push('/crisis-mode' as any);
+            router.push('/emergency' as any);
           }}
           testID="crisis-mode-btn"
         >
           <ShieldAlert size={16} color="#FFFFFF" />
-          <Text style={styles.crisisBtnText}>SOS</Text>
+          <Text style={styles.crisisBtnText}>I need help right now</Text>
         </Pressable>
       </View>
 
@@ -535,6 +736,164 @@ export default function HomeScreen() {
       <View style={styles.encouragementCard}>
         <Sparkles size={15} color="#FFD54F" />
         <Text style={styles.encouragementText}>{encouragement}</Text>
+      </View>
+
+      {/* Today's Small Wins checklist */}
+      <View style={styles.todayFocusCard}>
+        <View style={styles.todayFocusHeader}>
+          <View style={styles.todayFocusIconBg}>
+            <Sparkles size={16} color="#FFD54F" />
+          </View>
+          <Text style={styles.todayFocusLabel}>TODAY'S SMALL WINS</Text>
+        </View>
+        <Text style={styles.todayFocusDesc}>
+          Gentle, doable steps for today. Tap to check off what you’ve honored.
+        </Text>
+
+        {/* Win 1 – data-driven check-in */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: todayCheckIn ? Colors.primary : Colors.border,
+              backgroundColor: todayCheckIn ? Colors.primary + '20' : 'transparent',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 10,
+            }}
+          >
+            {todayCheckIn && <Check size={14} color={Colors.primary} />}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.checkinTitle}>Check in with yourself</Text>
+            <Text style={styles.checkinSub}>
+              Notice how your body, mind, and heart are doing.
+            </Text>
+          </View>
+        </View>
+
+        {/* Win 2 – reflection */}
+        <Pressable
+          onPress={() => handleToggleWin('reflection')}
+          style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
+          hitSlop={8}
+        >
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: wins.reflection ? Colors.primary : Colors.border,
+              backgroundColor: wins.reflection ? Colors.primary + '20' : 'transparent',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 10,
+            }}
+          >
+            {wins.reflection && <Check size={14} color={Colors.primary} />}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.checkinTitle}>One kind thought</Text>
+            <Text style={styles.checkinSub}>
+              Offer yourself a single gentle sentence about today.
+            </Text>
+          </View>
+        </Pressable>
+
+        {/* Win 3 – connection */}
+        <Pressable
+          onPress={() => handleToggleWin('connection')}
+          style={{ flexDirection: 'row', alignItems: 'center' }}
+          hitSlop={8}
+        >
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: wins.connection ? Colors.primary : Colors.border,
+              backgroundColor: wins.connection ? Colors.primary + '20' : 'transparent',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 10,
+            }}
+          >
+            {wins.connection && <Check size={14} color={Colors.primary} />}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.checkinTitle}>Reach toward support</Text>
+            <Text style={styles.checkinSub}>
+              A message, call, or community moment that reminds you you’re not alone.
+            </Text>
+          </View>
+        </Pressable>
+      </View>
+
+      {/* Stage-based daily checklist */}
+      <View style={styles.todayFocusCard}>
+        <View style={styles.todayFocusHeader}>
+          <View style={styles.todayFocusIconBg}>
+            <Heart size={16} color="#2EC4B6" />
+          </View>
+          <Text style={styles.todayFocusLabel}>TODAY'S STAGE ACTIONS</Text>
+        </View>
+        <Text style={styles.todayFocusTitle}>{stagePhase} focus</Text>
+        <Text style={styles.todayFocusDesc}>
+          Gentle actions matched to where you are in recovery today.
+        </Text>
+
+        {stageTasks.map((task) => {
+          const done = completedStageTasks[task.id];
+          return (
+            <Pressable
+              key={task.id}
+              onPress={() => toggleStageTask(task.id)}
+              style={({ pressed }) => [
+                styles.stageTaskRow,
+                done && styles.stageTaskRowDone,
+                pressed && { opacity: 0.9 },
+              ]}
+              hitSlop={8}
+            >
+              <View
+                style={[
+                  styles.stageTaskCheck,
+                  done && styles.stageTaskCheckDone,
+                ]}
+              >
+                {done && <Check size={14} color={Colors.background} />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.stageTaskTitle}>{task.title}</Text>
+                <Text style={styles.stageTaskDescription}>{task.description}</Text>
+              </View>
+              <View style={styles.stageTaskTag}>
+                <Text style={styles.stageTaskTagText}>
+                  {task.category === 'emotional'
+                    ? 'Emotional'
+                    : task.category === 'physical'
+                    ? 'Body'
+                    : 'Connection'}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+
+        {checklistStreak > 0 && (
+          <View style={styles.stageStreakRow}>
+            <Zap size={14} color={Colors.accent} />
+            <Text style={styles.stageStreakText}>
+              You’ve honored your stage checklist for {checklistStreak} day
+              {checklistStreak === 1 ? '' : 's'} in a row.
+            </Text>
+          </View>
+        )}
       </View>
 
       {intervention && (
@@ -646,7 +1005,7 @@ export default function HomeScreen() {
               </View>
               <View style={styles.checkinTextWrap}>
                 <View style={checkinExpandStyles.titleRow}>
-                  <Text style={styles.checkinTitle}>{currentCheckInPeriod.charAt(0).toUpperCase() + currentCheckInPeriod.slice(1)} Check-In</Text>
+                  <Text style={styles.checkinTitle}>Start Daily Check-In</Text>
                   <View style={checkinExpandStyles.completedBadge}>
                     <Check size={10} color="#2EC4B6" />
                     <Text style={checkinExpandStyles.completedText}>{todayCheckIns.length}/3</Text>
@@ -683,7 +1042,7 @@ export default function HomeScreen() {
           style={({ pressed }) => [styles.checkinCard, pressed && styles.pressed]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/daily-checkin' as any);
+            router.push('/checkin' as any);
           }}
           testID="daily-checkin-cta"
         >
@@ -692,8 +1051,8 @@ export default function HomeScreen() {
               <ClipboardCheck size={20} color="#7C8CF8" />
             </View>
             <View style={styles.checkinTextWrap}>
-              <Text style={styles.checkinTitle}>{currentCheckInPeriod.charAt(0).toUpperCase() + currentCheckInPeriod.slice(1)} Check-In</Text>
-              <Text style={styles.checkinSub}>{todayCheckIns.length > 0 ? `${todayCheckIns.length}/3 done — check in now` : 'Quick mood & wellness check'}</Text>
+              <Text style={styles.checkinTitle}>Start Daily Check-In</Text>
+              <Text style={styles.checkinSub}>{todayCheckIns.length > 0 ? `${todayCheckIns.length}/3 done — check in now` : 'A gentle, guided check-in for today.'}</Text>
             </View>
           </View>
           <ChevronRight size={20} color={Colors.textMuted} />
@@ -906,7 +1265,7 @@ export default function HomeScreen() {
           <View style={stageStyles.stageSupportContent}>
             <Text style={stageStyles.stageSupportTitle}>Crisis Support Active</Text>
             <Text style={stageStyles.stageSupportDesc}>
-              Maximum support is enabled. Crisis tools and immediate interventions are prioritized.
+              You have extra support around you right now. Calm, safety-focused tools are being gently prioritized while things feel intense.
             </Text>
           </View>
         </View>
@@ -1103,6 +1462,63 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.white,
+  },
+  stageTaskRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    gap: 10,
+  },
+  stageTaskRowDone: {
+    opacity: 0.7,
+  },
+  stageTaskCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  stageTaskCheckDone: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  stageTaskTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  stageTaskDescription: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  stageTaskTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: Colors.surface,
+  },
+  stageTaskTagText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  stageStreakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  stageStreakText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
   encouragementCard: {
     flexDirection: 'row',

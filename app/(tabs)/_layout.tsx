@@ -53,7 +53,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(home)"
         options={{
-          title: "Home",
+          title: "Today",
           tabBarIcon: renderHomeIcon,
         }}
       />
@@ -66,15 +66,12 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="journal"
-        options={{
-          title: "Journal",
-          tabBarIcon: renderJournalIcon,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="community"
         options={{
-          title: "Connection",
+          title: "Community",
           tabBarIcon: renderCommunityIcon,
         }}
       />

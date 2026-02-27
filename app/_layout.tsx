@@ -65,6 +65,8 @@ function RootLayoutNav() {
       <Stack.Screen name="workbook-section" options={{ title: 'Exercises' }} />
       <Stack.Screen name="crisis-mode" options={{ headerShown: false, presentation: 'fullScreenModal', animation: fadeAnimation }} />
       <Stack.Screen name="daily-checkin" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
+      <Stack.Screen name="checkin" options={{ title: 'Daily Check-In', animation: modalAnimation }} />
+      <Stack.Screen name="emergency" options={{ headerShown: false, presentation: 'fullScreenModal', animation: fadeAnimation }} />
       <Stack.Screen name="companion-chat" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
       <Stack.Screen name="recovery-rooms" options={{ title: 'Recovery Rooms' }} />
       <Stack.Screen name="room-session" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
