@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Platform, AppState } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import * as Crypto from 'expo-crypto';
 import {
   SecuritySettings,
