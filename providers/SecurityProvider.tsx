@@ -52,9 +52,12 @@ const DEFAULT_SECURITY_SETTINGS: SecuritySettings = {
 };
 
 async function checkBiometricAvailability(): Promise<boolean> {
-  if (Platform.OS === 'web') return false;
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
+    return false;
+  }
+
   try {
-    const LocalAuth = await import('expo-local-authentication');
+    const LocalAuth = require('expo-local-authentication');
     const hasHardware = await LocalAuth.hasHardwareAsync();
     const isEnrolled = await LocalAuth.isEnrolledAsync();
     return hasHardware && isEnrolled;
