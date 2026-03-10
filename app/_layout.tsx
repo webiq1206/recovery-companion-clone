@@ -94,6 +94,7 @@ function RootLayoutNav() {
       <Stack.Screen name="recovery-insights-explained" options={{ title: 'Recovery Insights', animation: defaultAnimation }} />
       <Stack.Screen name="protection-profile" options={{ title: 'Protection Profile', animation: defaultAnimation }} />
       <Stack.Screen name="first-day" options={{ title: 'Your First Day', headerShown: false, animation: defaultAnimation }} />
+      <Stack.Screen name="wizard" options={{ title: 'Guided Wizard', animation: defaultAnimation }} />
     </Stack>
       <RelapseFlowGate />
     </>

@@ -197,7 +197,27 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* 4. Optional Tools — Secondary */}
+        {/* 4. Intelligent Wizard — Daily & onboarding guidance */}
+        <Text style={styles.optionalTitle}>Need guidance?</Text>
+        <Pressable
+          style={({ pressed }) => [styles.quickWizardBtn, pressed && styles.quickActionPressed]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/wizard' as any);
+          }}
+          testID="wizard-cta"
+        >
+          <Heart size={20} color={Colors.primary} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.quickActionText}>Open Guided Wizard</Text>
+            <Text style={styles.quickWizardSubtitle}>
+              See the next best steps based on your current data.
+            </Text>
+          </View>
+          <ArrowRight size={18} color={Colors.primary} />
+        </Pressable>
+
+        {/* 5. Optional Tools — Secondary */}
         <Text style={styles.optionalTitle}>Optional tools</Text>
         <View style={styles.quickActionsRow}>
           <Pressable
@@ -419,6 +439,18 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 10,
   },
+  quickWizardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: Colors.primary + '33',
+    marginBottom: 16,
+  },
   quickActionsRow: {
     flexDirection: 'row',
     gap: 12,
@@ -443,5 +475,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.text,
+  },
+  quickWizardSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
 });

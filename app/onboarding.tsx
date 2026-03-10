@@ -204,29 +204,6 @@ export default function OnboardingScreen() {
         // IdentityScreen: welcome + name + anonymous
         return (
           <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
-            <View style={styles.heroContainer}>
-              <Image
-                source={require('@/assets/images/app-icon.png')}
-                style={styles.heroAppIcon}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.heroAppName}>Recovery Companion</Text>
-            <Text style={styles.heroTitle}>{ONBOARDING_COPY.hero.title}</Text>
-            <Text style={styles.heroSubtitle}>
-              {ONBOARDING_COPY.hero.subtitle}
-            </Text>
-            <View style={styles.trustBadges}>
-              <View style={styles.trustItem}>
-                <Lock size={14} color={Colors.primary} />
-                <Text style={styles.trustText}>Private & encrypted</Text>
-              </View>
-              <View style={styles.trustItem}>
-                <EyeOff size={14} color={Colors.primary} />
-                <Text style={styles.trustText}>Anonymous option</Text>
-              </View>
-            </View>
-
             <Text style={[styles.stepLabel, { marginTop: 24 }]}>STEP 1 OF {TOTAL_STEPS}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.name.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.name.subtitle}</Text>
