@@ -195,6 +195,13 @@ export interface DailyCheckIn {
   emotionalTags?: EmotionalTag[];
 }
 
+export interface NearMissEvent {
+  timestamp: string;
+  cravingLevel: number;
+  triggerContext: string;
+  note?: string;
+}
+
 export interface TrustedContact {
   id: string;
   name: string;

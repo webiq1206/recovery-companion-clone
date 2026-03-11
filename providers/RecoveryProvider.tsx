@@ -2,7 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { UserProfile, Pledge, JournalEntry, MediaItem, WorkbookAnswer, EmergencyContact, DailyCheckIn, CheckInTimeOfDay, RebuildData, ReplacementHabit, RoutineBlock, PurposeGoal, ConfidenceMilestone, AccountabilityData, CommitmentContract, AccountabilityPartner, DriftAlert, ContractCheckIn, RecoveryProfile, PrivacyControls, IdentityProgramData, IdentityExerciseResponse, IdentityValue, TimelineEvent, RelapsePlan } from '@/types';
+import { UserProfile, Pledge, JournalEntry, MediaItem, WorkbookAnswer, EmergencyContact, DailyCheckIn, CheckInTimeOfDay, RebuildData, ReplacementHabit, RoutineBlock, PurposeGoal, ConfidenceMilestone, AccountabilityData, CommitmentContract, AccountabilityPartner, DriftAlert, ContractCheckIn, RecoveryProfile, PrivacyControls, IdentityProgramData, IdentityExerciseResponse, IdentityValue, TimelineEvent, RelapsePlan, NearMissEvent } from '@/types';
 import { calculateStability } from '@/utils/stabilityEngine';
 
 const STORAGE_KEYS = {
@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   WORKBOOK_ANSWERS: 'recovery_workbook_answers',
   EMERGENCY_CONTACTS: 'recovery_emergency_contacts',
   CHECK_INS: 'recovery_check_ins',
+  NEAR_MISS_EVENTS: 'recovery_near_miss_events',
   REBUILD: 'recovery_rebuild',
   ACCOUNTABILITY: 'recovery_accountability',
   TIMELINE_EVENTS: 'recovery_timeline_events',
@@ -154,6 +155,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   const [workbookAnswers, setWorkbookAnswers] = useState<WorkbookAnswer[]>([]);
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
   const [checkIns, setCheckIns] = useState<DailyCheckIn[]>([]);
+  const [nearMissEvents, setNearMissEvents] = useState<NearMissEvent[]>([]);
   const [rebuildData, setRebuildData] = useState<RebuildData>(DEFAULT_REBUILD);
   const [accountabilityData, setAccountabilityData] = useState<AccountabilityData>(DEFAULT_ACCOUNTABILITY);
   const [showRelapseModal, setShowRelapseModal] = useState(false);
@@ -257,6 +259,16 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     if (checkInsQuery.data) setCheckIns(checkInsQuery.data);
   }, [checkInsQuery.data]);
 
+  const nearMissEventsQuery = useQuery({
+    queryKey: ['nearMissEvents'],
+    queryFn: () => loadStorageItem<NearMissEvent[]>(STORAGE_KEYS.NEAR_MISS_EVENTS, []),
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (nearMissEventsQuery.data) setNearMissEvents(nearMissEventsQuery.data);
+  }, [nearMissEventsQuery.data]);
+
   useEffect(() => {
     if (rebuildQuery.data) setRebuildData(rebuildQuery.data);
   }, [rebuildQuery.data]);
@@ -328,6 +340,14 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     onSuccess: (data) => {
       setCheckIns(data);
       queryClient.setQueryData(['checkIns'], data);
+    },
+  });
+
+  const saveNearMissEventsMutation = useMutation({
+    mutationFn: (events: NearMissEvent[]) => saveStorageItem(STORAGE_KEYS.NEAR_MISS_EVENTS, events),
+    onSuccess: (data) => {
+      setNearMissEvents(data);
+      queryClient.setQueryData(['nearMissEvents'], data);
     },
   });
 
@@ -454,6 +474,12 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     setCheckIns(updated);
     saveCheckInsMutation.mutate(updated);
   }, [checkIns]);
+
+  const logNearMiss = useCallback((event: NearMissEvent) => {
+    const updated = [event, ...nearMissEvents];
+    setNearMissEvents(updated);
+    saveNearMissEventsMutation.mutate(updated);
+  }, [nearMissEvents]);
 
   const addReplacementHabit = useCallback((habit: ReplacementHabit) => {
     const updated = { ...rebuildData, habits: [...rebuildData.habits, habit] };
@@ -891,6 +917,8 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     dismissRelapseModal,
     relapsePlan,
     saveRelapsePlan,
+    nearMissEvents,
+    logNearMiss,
   }), [
     profile, pledges, journal, media, workbookAnswers,
     todayPledge, currentStreak, daysSober, isLoading,
@@ -911,5 +939,6 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     dismissAlert, useStreakProtection,
     timelineEvents, logRelapse, showRelapseModal, dismissRelapseModal,
     relapsePlan, saveRelapsePlan,
+    nearMissEvents, logNearMiss,
   ]);
 });

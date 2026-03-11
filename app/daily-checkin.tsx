@@ -9,6 +9,7 @@ import {
   Dimensions,
   ScrollView,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -332,6 +333,7 @@ export default function DailyCheckInScreen() {
     currentPeriodCheckIn,
     checkIns,
     daysSober,
+    logNearMiss,
   } = useRecovery();
   const { triggerLoop, generateSupportiveNotification } = useRetention();
 
@@ -363,6 +365,8 @@ export default function DailyCheckInScreen() {
   const [reflection, setReflection] = useState('');
   const [emotionalNote, setEmotionalNote] = useState('');
   const [calculatedScore, setCalculatedScore] = useState(0);
+  const [hadNearMiss, setHadNearMiss] = useState<boolean | null>(null);
+  const [nearMissNote, setNearMissNote] = useState('');
 
   useEffect(() => {
     if (sleepLocked) {
@@ -454,6 +458,16 @@ export default function DailyCheckInScreen() {
 
     console.log('[CheckIn] Submitted for period:', currentCheckInPeriod, checkIn);
     addCheckIn(checkIn);
+    if (hadNearMiss) {
+      const nearMissEvent = {
+        timestamp: new Date().toISOString(),
+        cravingLevel: values.cravingLevel,
+        triggerContext: `${periodConfig.label} check-in; mood ${values.mood}; stress ${values.stress}; environment ${values.environment}`,
+        note: nearMissNote.trim() || undefined,
+      };
+      console.log('[CheckIn] Logging near miss event:', nearMissEvent);
+      logNearMiss(nearMissEvent);
+    }
     triggerReliefLoop(checkIn);
     setSubmitted(true);
 
@@ -462,7 +476,7 @@ export default function DailyCheckInScreen() {
       Animated.timing(resultSlide, { toValue: 0, duration: 500, useNativeDriver: true }),
       Animated.spring(scoreScale, { toValue: 1, friction: 4, tension: 60, useNativeDriver: true }),
     ]).start();
-  }, [phase, stabilityScore, values, checkIns, daysSober, currentCheckInPeriod, selectedTags, addCheckIn, triggerReliefLoop, resultFade, resultSlide, scoreScale]);
+  }, [phase, stabilityScore, values, checkIns, daysSober, currentCheckInPeriod, selectedTags, addCheckIn, triggerReliefLoop, resultFade, resultSlide, scoreScale, hadNearMiss, nearMissNote, logNearMiss, periodConfig.label]);
 
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -774,6 +788,67 @@ export default function DailyCheckInScreen() {
             <Text style={styles.tagsFooterText}>
               You can skip this if nothing fits. Your honesty here helps the app learn when to step in supportively.
             </Text>
+
+            <View style={styles.nearMissSection}>
+              <Text style={styles.nearMissTitle}>Did cravings lead to a close call today?</Text>
+              <Text style={styles.nearMissSubtitle}>
+                This helps your relapse detection system treat near misses as important warning signs.
+              </Text>
+              <View style={styles.nearMissChoices}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.nearMissChoice,
+                    hadNearMiss === true && styles.nearMissChoiceSelected,
+                    pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+                  ]}
+                  onPress={() => setHadNearMiss(true)}
+                  testID="near-miss-yes"
+                >
+                  <Text
+                    style={[
+                      styles.nearMissChoiceText,
+                      hadNearMiss === true && styles.nearMissChoiceTextSelected,
+                    ]}
+                  >
+                    Yes, it was a close call
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.nearMissChoice,
+                    hadNearMiss === false && styles.nearMissChoiceSelected,
+                    pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+                  ]}
+                  onPress={() => setHadNearMiss(false)}
+                  testID="near-miss-no"
+                >
+                  <Text
+                    style={[
+                      styles.nearMissChoiceText,
+                      hadNearMiss === false && styles.nearMissChoiceTextSelected,
+                    ]}
+                  >
+                    No, cravings stayed manageable
+                  </Text>
+                </Pressable>
+              </View>
+
+              {hadNearMiss && (
+                <View style={styles.nearMissNoteContainer}>
+                  <Text style={styles.nearMissNoteLabel}>Optional note about this close call</Text>
+                  <TextInput
+                    style={styles.nearMissNoteInput}
+                    placeholder="What was happening or what helped you hold the line?"
+                    placeholderTextColor={Colors.textMuted}
+                    value={nearMissNote}
+                    onChangeText={setNearMissNote}
+                    multiline
+                    maxLength={280}
+                    testID="near-miss-note"
+                  />
+                </View>
+              )}
+            </View>
           </View>
         )}
       </Animated.ScrollView>
@@ -938,6 +1013,71 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 16,
     lineHeight: 18,
+  },
+  nearMissSection: {
+    marginTop: 28,
+    paddingTop: 18,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+  },
+  nearMissTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  nearMissSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  nearMissChoices: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  nearMissChoice: {
+    flex: 1,
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  nearMissChoiceSelected: {
+    backgroundColor: 'rgba(239,83,80,0.08)',
+    borderColor: '#EF5350',
+  },
+  nearMissChoiceText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontWeight: '500' as const,
+  },
+  nearMissChoiceTextSelected: {
+    color: '#EF5350',
+    fontWeight: '600' as const,
+  },
+  nearMissNoteContainer: {
+    marginTop: 6,
+  },
+  nearMissNoteLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: 6,
+  },
+  nearMissNoteInput: {
+    minHeight: 70,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: Colors.cardBackground,
+    color: Colors.text,
+    fontSize: 13,
+    textAlignVertical: 'top' as const,
   },
   submitBar: {
     position: 'absolute',
