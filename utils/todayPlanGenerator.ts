@@ -54,14 +54,6 @@ function applyStageProgramActions(
   const weekIndex = Math.floor((day - 1) / 7); // 0-based
 
   if (recoveryStage === 'crisis') {
-    addActionIfMissing(priorityActions, {
-      id: 'crisis-program-grounding',
-      title: 'Crisis grounding block',
-      subtitle: 'Spend a few focused minutes with safety and grounding tools.',
-      route: '/crisis-mode',
-      kind: 'crisis',
-    });
-
     if (weekIndex >= 0) {
       addActionIfMissing(optionalActions, {
         id: 'crisis-program-support-contact',
@@ -268,18 +260,7 @@ export function generateTodayPlan(input: TodayPlanInput): TodayPlan {
   }
 
   // Recovery stage adjustments
-  if (recoveryStage === 'crisis' || recoveryStage === 'stabilize') {
-    // Ensure crisis tools are prominent when early in recovery or in crisis
-    if (!priorityActions.find(a => a.id === 'crisis-tools')) {
-      priorityActions.unshift({
-        id: 'crisis-tools',
-        title: 'Safety first',
-        subtitle: 'Spend a few minutes with grounding and safety tools.',
-        route: '/crisis-mode',
-        kind: 'crisis',
-      });
-    }
-  } else if (recoveryStage === 'rebuild' || recoveryStage === 'maintain') {
+  if (recoveryStage === 'rebuild' || recoveryStage === 'maintain') {
     // Emphasize growth when more stable
     if (stabilityBand === 'high' && !priorityActions.find(a => a.id === 'rebuild-step')) {
       priorityActions.push({

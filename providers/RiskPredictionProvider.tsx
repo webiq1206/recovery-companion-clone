@@ -747,7 +747,13 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
   }, [data.predictions]);
 
   const activeAlerts = useMemo(() => {
-    return data.alerts.filter(a => !a.isDismissed);
+    const undismissed = data.alerts.filter(a => !a.isDismissed);
+    const missedAlerts = undismissed.filter(a => a.id.startsWith('missed_'));
+    if (missedAlerts.length <= 1) return undismissed;
+    const latestMissed = missedAlerts.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
+    return undismissed.filter(a => !a.id.startsWith('missed_') || a.id === latestMissed.id);
   }, [data.alerts]);
 
   const criticalAlerts = useMemo(() => {
