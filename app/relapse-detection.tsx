@@ -537,19 +537,27 @@ export default function RelapseDetectionScreen() {
             </View>
           )}
 
-          {activeAlerts.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Active Alerts</Text>
-              {activeAlerts.slice(0, 3).map((alert) => (
-                <AlertCard
-                  key={alert.id}
-                  alert={alert}
-                  onDismiss={() => dismissAlert(alert.id)}
-                  onAct={() => actOnAlert(alert.id)}
-                />
-              ))}
-            </View>
-          )}
+          {activeAlerts.length > 0 && (() => {
+            const byTitle = new Map<string, RiskAlert>();
+            for (const a of activeAlerts) {
+              const existing = byTitle.get(a.title);
+              if (!existing || new Date(a.createdAt) > new Date(existing.createdAt)) byTitle.set(a.title, a);
+            }
+            const uniqueAlerts = Array.from(byTitle.values()).slice(0, 3);
+            return (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Active Alerts</Text>
+                {uniqueAlerts.map((alert) => (
+                  <AlertCard
+                    key={alert.id}
+                    alert={alert}
+                    onDismiss={() => dismissAlert(alert.id)}
+                    onAct={() => actOnAlert(alert.id)}
+                  />
+                ))}
+              </View>
+            );
+          })()}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Risk Factors</Text>
