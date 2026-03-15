@@ -192,7 +192,7 @@ export default function HowToUseScreen() {
 
   const handleStartDay = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/daily-checkin' as any);
+    router.push('/wizard' as any);
   }, [router]);
 
   return (

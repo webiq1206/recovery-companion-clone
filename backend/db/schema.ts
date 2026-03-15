@@ -52,6 +52,7 @@ export const CheckInSchema = z.object({
   stabilityScore: z.number(),
   reflection: z.string().optional(),
   completedAt: z.string(),
+  emotionalTags: z.array(z.string()).max(3).optional(),
   isEncrypted: z.boolean().default(false),
 });
 

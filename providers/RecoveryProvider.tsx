@@ -2,7 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { UserProfile, Pledge, JournalEntry, MediaItem, WorkbookAnswer, EmergencyContact, DailyCheckIn, CheckInTimeOfDay, RebuildData, ReplacementHabit, RoutineBlock, PurposeGoal, ConfidenceMilestone, AccountabilityData, CommitmentContract, AccountabilityPartner, DriftAlert, ContractCheckIn, RecoveryProfile, PrivacyControls, IdentityProgramData, IdentityExerciseResponse, IdentityValue, TimelineEvent } from '@/types';
+import { UserProfile, Pledge, JournalEntry, MediaItem, WorkbookAnswer, EmergencyContact, DailyCheckIn, CheckInTimeOfDay, RebuildData, ReplacementHabit, RoutineBlock, PurposeGoal, ConfidenceMilestone, AccountabilityData, CommitmentContract, AccountabilityPartner, DriftAlert, ContractCheckIn, RecoveryProfile, PrivacyControls, IdentityProgramData, IdentityExerciseResponse, IdentityValue, TimelineEvent, RelapsePlan, NearMissEvent } from '@/types';
 import { calculateStability } from '@/utils/stabilityEngine';
 
 const STORAGE_KEYS = {
@@ -13,9 +13,11 @@ const STORAGE_KEYS = {
   WORKBOOK_ANSWERS: 'recovery_workbook_answers',
   EMERGENCY_CONTACTS: 'recovery_emergency_contacts',
   CHECK_INS: 'recovery_check_ins',
+  NEAR_MISS_EVENTS: 'recovery_near_miss_events',
   REBUILD: 'recovery_rebuild',
   ACCOUNTABILITY: 'recovery_accountability',
   TIMELINE_EVENTS: 'recovery_timeline_events',
+  RELAPSE_PLAN: 'recovery_relapse_plan',
 };
 
 const DEFAULT_PRIVACY: PrivacyControls = {
@@ -36,6 +38,11 @@ const DEFAULT_RECOVERY_PROFILE: RecoveryProfile = {
   riskScore: 50,
   interventionIntensity: 'moderate',
   baselineStabilityScore: 50,
+  baselineStability: 50,
+  relapseRiskLevel: 'moderate',
+  emotionalBaseline: 3,
+  cravingBaseline: 3,
+  supportLevel: 'medium',
 };
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -148,10 +155,12 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   const [workbookAnswers, setWorkbookAnswers] = useState<WorkbookAnswer[]>([]);
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
   const [checkIns, setCheckIns] = useState<DailyCheckIn[]>([]);
+  const [nearMissEvents, setNearMissEvents] = useState<NearMissEvent[]>([]);
   const [rebuildData, setRebuildData] = useState<RebuildData>(DEFAULT_REBUILD);
   const [accountabilityData, setAccountabilityData] = useState<AccountabilityData>(DEFAULT_ACCOUNTABILITY);
   const [showRelapseModal, setShowRelapseModal] = useState(false);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [relapsePlan, setRelapsePlan] = useState<RelapsePlan | null>(null);
 
   const profileQuery = useQuery({
     queryKey: ['profile'],
@@ -216,6 +225,12 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     staleTime: Infinity,
   });
 
+  const relapsePlanQuery = useQuery({
+    queryKey: ['relapsePlan'],
+    queryFn: () => loadStorageItem<RelapsePlan | null>(STORAGE_KEYS.RELAPSE_PLAN, null),
+    staleTime: Infinity,
+  });
+
   useEffect(() => {
     if (profileQuery.data) setProfile(profileQuery.data);
   }, [profileQuery.data]);
@@ -244,6 +259,16 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     if (checkInsQuery.data) setCheckIns(checkInsQuery.data);
   }, [checkInsQuery.data]);
 
+  const nearMissEventsQuery = useQuery({
+    queryKey: ['nearMissEvents'],
+    queryFn: () => loadStorageItem<NearMissEvent[]>(STORAGE_KEYS.NEAR_MISS_EVENTS, []),
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (nearMissEventsQuery.data) setNearMissEvents(nearMissEventsQuery.data);
+  }, [nearMissEventsQuery.data]);
+
   useEffect(() => {
     if (rebuildQuery.data) setRebuildData(rebuildQuery.data);
   }, [rebuildQuery.data]);
@@ -255,6 +280,12 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   useEffect(() => {
     if (timelineEventsQuery.data) setTimelineEvents(timelineEventsQuery.data);
   }, [timelineEventsQuery.data]);
+
+  useEffect(() => {
+    if (relapsePlanQuery.data !== undefined) {
+      setRelapsePlan(relapsePlanQuery.data);
+    }
+  }, [relapsePlanQuery.data]);
 
   const saveProfileMutation = useMutation({
     mutationFn: (newProfile: UserProfile) => saveStorageItem(STORAGE_KEYS.PROFILE, newProfile),
@@ -312,6 +343,14 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     },
   });
 
+  const saveNearMissEventsMutation = useMutation({
+    mutationFn: (events: NearMissEvent[]) => saveStorageItem(STORAGE_KEYS.NEAR_MISS_EVENTS, events),
+    onSuccess: (data) => {
+      setNearMissEvents(data);
+      queryClient.setQueryData(['nearMissEvents'], data);
+    },
+  });
+
   const saveRebuildMutation = useMutation({
     mutationFn: (data: RebuildData) => saveStorageItem(STORAGE_KEYS.REBUILD, data),
     onSuccess: (data) => {
@@ -333,6 +372,14 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     onSuccess: (data) => {
       setTimelineEvents(data);
       queryClient.setQueryData(['timelineEvents'], data);
+    },
+  });
+
+  const saveRelapsePlanMutation = useMutation({
+    mutationFn: (plan: RelapsePlan | null) => saveStorageItem(STORAGE_KEYS.RELAPSE_PLAN, plan),
+    onSuccess: (data) => {
+      setRelapsePlan(data);
+      queryClient.setQueryData(['relapsePlan'], data);
     },
   });
 
@@ -427,6 +474,12 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     setCheckIns(updated);
     saveCheckInsMutation.mutate(updated);
   }, [checkIns]);
+
+  const logNearMiss = useCallback((event: NearMissEvent) => {
+    const updated = [event, ...nearMissEvents];
+    setNearMissEvents(updated);
+    saveNearMissEventsMutation.mutate(updated);
+  }, [nearMissEvents]);
 
   const addReplacementHabit = useCallback((habit: ReplacementHabit) => {
     const updated = { ...rebuildData, habits: [...rebuildData.habits, habit] };
@@ -740,6 +793,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
       STORAGE_KEYS.REBUILD,
       STORAGE_KEYS.ACCOUNTABILITY,
       STORAGE_KEYS.TIMELINE_EVENTS,
+      STORAGE_KEYS.RELAPSE_PLAN,
     ]);
     setProfile(DEFAULT_PROFILE);
     setPledges([]);
@@ -752,6 +806,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     setAccountabilityData(DEFAULT_ACCOUNTABILITY);
     setTimelineEvents([]);
     setShowRelapseModal(false);
+    setRelapsePlan(null);
     queryClient.clear();
   }, [queryClient]);
 
@@ -790,6 +845,11 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   }, [profile.soberDate]);
 
   const isLoading = profileQuery.isLoading || pledgesQuery.isLoading || journalQuery.isLoading || mediaQuery.isLoading || workbookQuery.isLoading || emergencyContactsQuery.isLoading || checkInsQuery.isLoading || rebuildQuery.isLoading || accountabilityQuery.isLoading;
+
+  const saveRelapsePlan = useCallback((plan: RelapsePlan) => {
+    setRelapsePlan(plan);
+    saveRelapsePlanMutation.mutate(plan);
+  }, []);
 
   return useMemo(() => ({
     profile,
@@ -855,6 +915,10 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     logRelapse,
     showRelapseModal,
     dismissRelapseModal,
+    relapsePlan,
+    saveRelapsePlan,
+    nearMissEvents,
+    logNearMiss,
   }), [
     profile, pledges, journal, media, workbookAnswers,
     todayPledge, currentStreak, daysSober, isLoading,
@@ -874,5 +938,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     checkInContract, addPartner, updatePartner, deletePartner,
     dismissAlert, useStreakProtection,
     timelineEvents, logRelapse, showRelapseModal, dismissRelapseModal,
+    relapsePlan, saveRelapsePlan,
+    nearMissEvents, logNearMiss,
   ]);
 });

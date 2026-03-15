@@ -26,6 +26,23 @@ const STAGE_CONFIGS: Record<RecoveryStage, StageConfig> = {
     interventionTiming: 'immediate',
     accentColor: '#EF5350',
     iconName: 'shield-alert',
+    program: {
+      durationDays: 7,
+      weeklyObjectives: [
+        'Create a simple safety plan for the next 24 hours',
+        'Anchor one or two reliable grounding tools',
+        'Identify at least one safe person or support line',
+      ],
+      recommendedExercises: [
+        'Use crisis grounding tools during spikes',
+        'Complete short emergency check-ins when overwhelmed',
+      ],
+      dailyPractices: [
+        'Open Crisis Mode and do at least one grounding tool',
+        'Send a brief message or call to a safe contact',
+        'Log a quick check-in after intense moments',
+      ],
+    },
   },
   stabilize: {
     stage: 'stabilize',
@@ -38,6 +55,24 @@ const STAGE_CONFIGS: Record<RecoveryStage, StageConfig> = {
     interventionTiming: 'proactive',
     accentColor: '#FFB347',
     iconName: 'anchor',
+    program: {
+      durationDays: 14,
+      weeklyObjectives: [
+        'Establish a daily check-in routine',
+        'Identify top 3 personal triggers',
+        'Experiment with at least two sleep-supporting habits',
+      ],
+      recommendedExercises: [
+        'Use daily check-ins to track mood and cravings',
+        'Review the Triggers tab and map risky situations',
+        'Capture one small change that helps sleep each day',
+      ],
+      dailyPractices: [
+        'Complete one daily check-in',
+        'Review triggers and note one you managed or avoided',
+        'Choose one small action that supports better sleep tonight',
+      ],
+    },
   },
   rebuild: {
     stage: 'rebuild',
@@ -50,6 +85,24 @@ const STAGE_CONFIGS: Record<RecoveryStage, StageConfig> = {
     interventionTiming: 'scheduled',
     accentColor: '#2EC4B6',
     iconName: 'hammer',
+    program: {
+      durationDays: 30,
+      weeklyObjectives: [
+        'Design simple morning and evening recovery routines',
+        'Create or refine at least one replacement habit',
+        'Define one purpose-driven goal to move toward',
+      ],
+      recommendedExercises: [
+        'Add or refine routine blocks in Rebuild',
+        'Create a replacement habit for a common trigger',
+        'Break a bigger life goal into smaller steps',
+      ],
+      dailyPractices: [
+        'Complete at least one Rebuild routine block',
+        'Practice one replacement habit when triggers show up',
+        'Take one small step toward a purpose goal',
+      ],
+    },
   },
   maintain: {
     stage: 'maintain',
@@ -62,6 +115,24 @@ const STAGE_CONFIGS: Record<RecoveryStage, StageConfig> = {
     interventionTiming: 'on_demand',
     accentColor: '#4CAF50',
     iconName: 'trophy',
+    program: {
+      durationDays: 60,
+      weeklyObjectives: [
+        'Maintain recovery routines with flexibility, not pressure',
+        'Strengthen connection and give-back in community',
+        'Keep an eye on subtle early warning signs',
+      ],
+      recommendedExercises: [
+        'Review routines and adjust for current season of life',
+        'Engage in community or support room at least weekly',
+        'Do a quick scan for stress, sleep, and isolation shifts',
+      ],
+      dailyPractices: [
+        'Touch one small routine or habit that protects recovery',
+        'Connect briefly with someone who supports your sobriety',
+        'Do a two-minute reflection to catch early warning signs',
+      ],
+    },
   },
 };
 
@@ -418,6 +489,24 @@ export const [StageDetectionProvider, useStageDetection] = createContextHook(() 
     return daysInStage;
   }, [data.stageStartedAt]);
 
+  const currentProgram = useMemo(() => {
+    const config = STAGE_CONFIGS[data.currentStage];
+    const day = stageProgress + 1;
+    const duration = config.program.durationDays;
+    const clampedDay = Math.min(day, duration);
+    const completed = clampedDay >= duration;
+    const progressPercent = duration > 0 ? Math.min(1, clampedDay / duration) : 0;
+    return {
+      day: clampedDay,
+      duration,
+      completed,
+      progressPercent,
+      objectives: config.program.weeklyObjectives,
+      recommendedExercises: config.program.recommendedExercises,
+      dailyPractices: config.program.dailyPractices,
+    };
+  }, [data.currentStage, stageProgress]);
+
   const isProgressing = useMemo(() => {
     if (!data.pendingTransition) return false;
     return getStageIndex(data.pendingTransition.toStage) > getStageIndex(data.currentStage);
@@ -430,6 +519,7 @@ export const [StageDetectionProvider, useStageDetection] = createContextHook(() 
     transitions: data.transitions,
     pendingTransition: data.pendingTransition,
     stageProgress,
+    currentProgram,
     isProgressing,
     stageConfigs: STAGE_CONFIGS,
     acknowledgeTransition,

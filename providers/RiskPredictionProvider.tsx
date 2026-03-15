@@ -15,6 +15,7 @@ import {
   InterventionRecord,
   AlertSeverity,
   InterventionType,
+  NearMissEvent,
 } from '@/types';
 
 const STORAGE_KEY = 'risk_prediction_data';
@@ -192,6 +193,35 @@ function calculateBehavioralRisk(checkIns: DailyCheckIn[], daysSober: number): n
   if (cravingSpike) risk += 12;
 
   return Math.min(100, Math.max(0, Math.round(risk)));
+}
+
+function calculateNearMissRisk(nearMissEvents: NearMissEvent[]): number {
+  if (!Array.isArray(nearMissEvents) || nearMissEvents.length === 0) return 0;
+
+  const now = new Date();
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+  const recent = nearMissEvents.filter((e) => {
+    const ts = new Date(e.timestamp).getTime();
+    return !Number.isNaN(ts) && now.getTime() - ts <= sevenDaysMs;
+  });
+
+  if (recent.length === 0) return 0;
+
+  let risk = 35;
+
+  const highCravingEvents = recent.filter((e) => e.cravingLevel >= 70).length;
+  if (highCravingEvents > 0) {
+    risk += Math.min(highCravingEvents * 8, 24);
+  }
+
+  if (recent.length >= 3) {
+    risk += 8;
+  } else if (recent.length === 2) {
+    risk += 4;
+  }
+
+  return Math.min(50, Math.max(0, Math.round(risk)));
 }
 
 function calculateTriggerRisk(checkIns: DailyCheckIn[]): number {
@@ -556,7 +586,7 @@ function generateAutoInterventions(
 
 export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() => {
   const queryClient = useQueryClient();
-  const { checkIns, daysSober } = useRecovery();
+  const { checkIns, daysSober, nearMissEvents } = useRecovery();
   const [data, setData] = useState<RiskPredictionData>(DEFAULT_DATA);
   const dataRef = useRef<RiskPredictionData>(data);
 
@@ -613,14 +643,19 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
     const triggerRisk = calculateTriggerRisk(checkIns);
     const stabilityRisk = calculateStabilityRisk(checkIns);
     const isolationRisk = calculateIsolationRisk(checkIns);
+    const nearMissRisk = calculateNearMissRisk(nearMissEvents);
 
-    const overallRisk = Math.round(
+    let overallRisk = Math.round(
       emotionalRisk * weights.emotional +
       behavioralRisk * weights.behavioral +
       triggerRisk * weights.trigger +
       stabilityRisk * weights.stability +
       isolationRisk * weights.isolation
     );
+
+    if (nearMissRisk > 0) {
+      overallRisk = Math.min(100, overallRisk + nearMissRisk);
+    }
 
     const riskCategory = categorizeRisk(overallRisk);
 
@@ -712,7 +747,13 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
   }, [data.predictions]);
 
   const activeAlerts = useMemo(() => {
-    return data.alerts.filter(a => !a.isDismissed);
+    const undismissed = data.alerts.filter(a => !a.isDismissed);
+    const missedAlerts = undismissed.filter(a => a.id.startsWith('missed_'));
+    if (missedAlerts.length <= 1) return undismissed;
+    const latestMissed = missedAlerts.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
+    return undismissed.filter(a => !a.id.startsWith('missed_') || a.id === latestMissed.id);
   }, [data.alerts]);
 
   const criticalAlerts = useMemo(() => {

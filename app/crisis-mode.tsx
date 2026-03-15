@@ -642,6 +642,24 @@ export default function CrisisModeScreen() {
         </Pressable>
       </Animated.View>
 
+      <Pressable
+        style={({ pressed }) => [styles.relapsePlanBar, pressed && { opacity: 0.9 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push('/relapse-plan' as any);
+        }}
+        testID="crisis-relapse-plan-cta"
+      >
+        <View style={styles.relapsePlanDot} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
+          <Text style={styles.relapsePlanSubtitle}>
+            Re-center on your warning signs, coping strategies, and support contacts while you use these tools.
+          </Text>
+        </View>
+        <ChevronRight size={16} color={MUTED} />
+      </Pressable>
+
       {currentStep !== 'landing' && currentStep !== 'connect' && (
         <View style={styles.stepNav}>
           {STEPS.slice(1).map((step) => {
@@ -1158,5 +1176,34 @@ const styles = StyleSheet.create({
     color: TXT,
     lineHeight: 20,
     fontWeight: '400' as const,
+  },
+  relapsePlanBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CARD,
+    borderRadius: 16,
+    marginHorizontal: 20,
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: ACCENT + '18',
+  },
+  relapsePlanDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E53935',
+  },
+  relapsePlanTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: TXT,
+  },
+  relapsePlanSubtitle: {
+    fontSize: 12,
+    color: MUTED,
+    marginTop: 2,
   },
 });

@@ -21,6 +21,13 @@ export interface RecoveryProfile {
   riskScore: number;
   interventionIntensity: 'low' | 'moderate' | 'high' | 'critical';
   baselineStabilityScore: number;
+
+  // Onboarding recovery assessment fields
+  baselineStability?: number;
+  relapseRiskLevel?: 'low' | 'moderate' | 'high' | 'critical';
+  emotionalBaseline?: number;
+  cravingBaseline?: number;
+  supportLevel?: 'low' | 'medium' | 'high';
 }
 
 export type TimelineEventType = 'relapse' | 'crisis_activation';
@@ -117,6 +124,14 @@ export interface EmergencyContact {
   phone: string;
 }
 
+export interface RelapsePlan {
+  warningSigns: string[];
+  triggers: string[];
+  copingStrategies: string[];
+  emergencyContacts: EmergencyContact[];
+  commitments: string;
+}
+
 export interface CommunityUser {
   id: string;
   username: string;
@@ -156,6 +171,14 @@ export interface PrivateGroup {
 
 export type CheckInTimeOfDay = 'morning' | 'afternoon' | 'evening';
 
+export type EmotionalTag =
+  | 'anxious'
+  | 'lonely'
+  | 'ashamed'
+  | 'angry'
+  | 'hopeful'
+  | 'numb';
+
 export interface DailyCheckIn {
   id: string;
   date: string;
@@ -169,6 +192,14 @@ export interface DailyCheckIn {
   stabilityScore: number;
   reflection: string;
   completedAt: string;
+  emotionalTags?: EmotionalTag[];
+}
+
+export interface NearMissEvent {
+  timestamp: string;
+  cravingLevel: number;
+  triggerContext: string;
+  note?: string;
 }
 
 export interface TrustedContact {
@@ -759,6 +790,12 @@ export interface StageConfig {
   interventionTiming: 'immediate' | 'proactive' | 'scheduled' | 'on_demand';
   accentColor: string;
   iconName: string;
+  program: {
+    durationDays: number;
+    weeklyObjectives: string[];
+    recommendedExercises: string[];
+    dailyPractices: string[];
+  };
 }
 
 export interface StageDetectionData {

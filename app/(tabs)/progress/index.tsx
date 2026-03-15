@@ -34,6 +34,7 @@ import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useRecovery } from '@/providers/RecoveryProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
+import { useRiskPrediction } from '@/providers/RiskPredictionProvider';
 import { DailyCheckIn } from '@/types';
 import { PremiumSectionOverlay } from '@/components/PremiumGate';
 import { getStabilityPhrase, getMoodPhrase, getCravingsPhrase, getProtectionReadingSummary } from '@/constants/emotionalRisk';
@@ -331,6 +332,7 @@ interface TriggerPatternInsight {
 function StabilityTimelineScreen() {
   const router = useRouter();
   const { profile, checkIns, pledges, rebuildData } = useRecovery();
+  const { trendLabel: riskTrendLabel, timeOfDayRisk } = useRiskPrediction();
 
   // 30-day stability scores (oldest to newest for graph), with null for missing days
   const thirtyDayData = useMemo(() => {
@@ -411,6 +413,106 @@ function StabilityTimelineScreen() {
   const badge14NoCrisis = consistentCheckInDays >= 14 || crisisActivationsCount === 0;
   const badge10Rebuild = rebuildActionsCount >= 10;
 
+  const weeklyInsights = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 6);
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = today.toISOString().split('T')[0];
+
+    const recentCheckIns = checkIns
+      .filter(c => c.date >= startStr && c.date <= endStr)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const stabilityValues = recentCheckIns.map(c => c.stabilityScore);
+    const stabilityTrend = stabilityValues.length > 0 ? computeTrend(stabilityValues) : 'stable';
+
+    const weeklyPledges = pledges.filter(p => p.date >= startStr && p.date <= endStr);
+    const completedActions = recentCheckIns.length + weeklyPledges.length;
+
+    const tagCounts: Record<string, number> = {};
+    for (const ci of recentCheckIns) {
+      if (!ci.emotionalTags) continue;
+      for (const tag of ci.emotionalTags) {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      }
+    }
+
+    let topEmotionTag: string | null = null;
+    let topEmotionCount = 0;
+    for (const [tag, count] of Object.entries(tagCounts)) {
+      if (count > topEmotionCount) {
+        topEmotionTag = tag;
+        topEmotionCount = count;
+      }
+    }
+
+    const emotionLabel = topEmotionTag
+      ? topEmotionTag === 'anxious'
+        ? 'anxiety'
+        : topEmotionTag === 'lonely'
+          ? 'loneliness'
+          : topEmotionTag === 'ashamed'
+            ? 'shame'
+            : topEmotionTag === 'angry'
+              ? 'anger'
+              : topEmotionTag === 'hopeful'
+                ? 'hope'
+                : 'feeling numb'
+      : null;
+
+    const period = timeOfDayRisk?.highRiskPeriod;
+    const periodLabel =
+      period === 'night'
+        ? 'late nights'
+        : period === 'evening'
+          ? 'evenings'
+          : period === 'afternoon'
+            ? 'afternoons'
+            : period === 'morning'
+              ? 'mornings'
+              : null;
+
+    const stabilitySentence =
+      stabilityTrend === 'up'
+        ? 'Your stability improved this week.'
+        : stabilityTrend === 'down'
+          ? 'Your stability dipped this week — that awareness matters.'
+          : 'Your stability held fairly steady this week.';
+
+    let triggerSentence = '';
+    if (emotionLabel && periodLabel) {
+      triggerSentence = `${emotionLabel.charAt(0).toUpperCase() + emotionLabel.slice(1)} and ${periodLabel} were your most common triggers.`;
+    } else if (emotionLabel) {
+      triggerSentence = `${emotionLabel.charAt(0).toUpperCase() + emotionLabel.slice(1)} was your most common trigger.`;
+    } else if (periodLabel) {
+      triggerSentence = `${periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1)} were your most vulnerable times.`;
+    } else {
+      triggerSentence = 'You did not record clear trigger patterns yet — keep logging check-ins.';
+    }
+
+    const riskSentence =
+      riskTrendLabel && riskTrendLabel.length > 0
+        ? `Relapse risk was ${riskTrendLabel.toLowerCase().trim()} overall.`
+        : '';
+
+    const actionsSentence =
+      completedActions > 0
+        ? `You completed ${completedActions} recovery actions.`
+        : 'You can strengthen next week by completing a few small recovery actions.';
+
+    const narrativeParts = [stabilitySentence, triggerSentence, riskSentence, actionsSentence].filter(Boolean);
+
+    return {
+      stabilityTrend,
+      relapseRiskTrendLabel: riskTrendLabel || 'Stable',
+      topEmotionTrigger: emotionLabel,
+      highRiskTimeLabel: periodLabel,
+      completedActions,
+      narrative: narrativeParts.join(' '),
+    };
+  }, [checkIns, pledges, timeOfDayRisk, riskTrendLabel]);
+
   const planCompletedSet = useMemo(() => {
     const set = new Set<string>();
     checkIns.forEach(c => set.add(c.date));
@@ -427,6 +529,11 @@ function StabilityTimelineScreen() {
     >
       <View style={styles.taglineCard}>
         <Text style={styles.tagline}>You are building stability.</Text>
+      </View>
+
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryTitle}>Weekly RecoveryInsights</Text>
+        <Text style={styles.summaryLabel}>{weeklyInsights.narrative}</Text>
       </View>
 
       <View style={styles.chartCard}>

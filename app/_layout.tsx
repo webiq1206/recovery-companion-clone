@@ -53,6 +53,7 @@ function RootLayoutNav() {
   return (
     <>
       <Stack
+<<<<<<< HEAD
       screenOptions={{
         headerBackTitle: "Back",
         headerStyle: { backgroundColor: Colors.background },
@@ -96,6 +97,52 @@ function RootLayoutNav() {
       <Stack.Screen name="first-day" options={{ title: 'Your First Day', headerShown: false, animation: defaultAnimation }} />
       <Stack.Screen name="daily-guidance" options={{ title: 'Your Day', animation: defaultAnimation }} />
     </Stack>
+=======
+        screenOptions={{
+          headerBackTitle: "Back",
+          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: Colors.text,
+          contentStyle: { backgroundColor: Colors.background },
+          animation: defaultAnimation,
+          animationDuration: 250,
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="new-journal" options={{ title: 'New Entry', presentation: 'modal', animation: modalAnimation }} />
+        <Stack.Screen name="journal-detail" options={{ title: 'Journal Entry' }} />
+        <Stack.Screen name="motivation-package" options={{ title: 'Motivation' }} />
+        <Stack.Screen name="workbook-section" options={{ title: 'Exercises' }} />
+        <Stack.Screen name="crisis-mode" options={{ headerShown: false, presentation: 'fullScreenModal', animation: fadeAnimation }} />
+        <Stack.Screen name="daily-checkin" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
+        <Stack.Screen name="checkin" options={{ title: 'Daily Check-In', animation: modalAnimation }} />
+        <Stack.Screen name="emergency" options={{ headerShown: false, presentation: 'fullScreenModal', animation: fadeAnimation }} />
+        <Stack.Screen name="companion-chat" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
+        <Stack.Screen name="recovery-rooms" options={{ title: 'Recovery Rooms' }} />
+        <Stack.Screen name="room-session" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
+        <Stack.Screen name="premium-upgrade" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
+        <Stack.Screen name="how-to-use" options={{ title: 'How to Use', animation: modalAnimation }} />
+        <Stack.Screen name="relapse-detection" options={{ title: 'Relapse Detection', animation: defaultAnimation }} />
+        <Stack.Screen name="provider-portal" options={{ title: 'Provider Portal', animation: defaultAnimation }} />
+        <Stack.Screen name="client-detail" options={{ title: 'Client Detail', animation: defaultAnimation }} />
+        <Stack.Screen name="compliance-mode" options={{ title: 'Compliance Mode', animation: defaultAnimation }} />
+        <Stack.Screen name="security-settings" options={{ title: 'Security & Privacy', animation: defaultAnimation }} />
+        <Stack.Screen name="retention-insights" options={{ title: 'Recovery Insights', animation: defaultAnimation }} />
+        <Stack.Screen name="insights" options={{ title: 'Insights', animation: defaultAnimation }} />
+        <Stack.Screen name="enterprise-dashboard" options={{ headerShown: false, animation: defaultAnimation }} />
+        <Stack.Screen name="enterprise-heatmaps" options={{ title: 'Analytics', animation: defaultAnimation }} />
+        <Stack.Screen name="enterprise-reports" options={{ title: 'Reports', animation: defaultAnimation }} />
+        <Stack.Screen name="enterprise-billing" options={{ title: 'Billing', animation: defaultAnimation }} />
+        <Stack.Screen name="enterprise-whitelabel" options={{ title: 'White Label', animation: defaultAnimation }} />
+        <Stack.Screen name="insights-explained" options={{ title: 'Insights Explained', animation: defaultAnimation }} />
+        <Stack.Screen name="recovery-stages-explained" options={{ title: 'Recovery Stages', animation: defaultAnimation }} />
+        <Stack.Screen name="early-warning-explained" options={{ title: 'Early Warning', animation: defaultAnimation }} />
+        <Stack.Screen name="recovery-insights-explained" options={{ title: 'Recovery Insights', animation: defaultAnimation }} />
+        <Stack.Screen name="protection-profile" options={{ title: 'Protection Profile', animation: defaultAnimation }} />
+        <Stack.Screen name="first-day" options={{ title: 'Your First Day', headerShown: false, animation: defaultAnimation }} />
+        <Stack.Screen name="wizard" options={{ title: 'Guided Wizard', animation: defaultAnimation }} />
+      </Stack>
+>>>>>>> 75b52c54d2e5ec0c8d295246829ed77117437b62
       <RelapseFlowGate />
     </>
   );

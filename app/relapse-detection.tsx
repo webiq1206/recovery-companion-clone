@@ -437,6 +437,7 @@ export default function RelapseDetectionScreen() {
 
   const overallScore = currentPrediction?.overallRisk ?? 0;
   const showCrisisPrompt = currentIntensity.showCrisisButton || overallScore >= 65;
+  const isHighRisk = riskCategory === 'high';
 
   return (
     <>
@@ -506,6 +507,27 @@ export default function RelapseDetectionScreen() {
             </Pressable>
           )}
 
+          {isHighRisk && (
+            <Pressable
+              style={styles.relapsePlanCard}
+              onPress={() => router.push('/relapse-plan' as any)}
+              testID="relapse-plan-cta-relapse-detection"
+            >
+              <View style={styles.relapsePlanLeft}>
+                <View style={styles.relapsePlanIconWrap}>
+                  <Shield size={18} color="#E53935" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
+                  <Text style={styles.relapsePlanSubtitle}>
+                    Review your warning signs, triggers, and coping tools before taking any action.
+                  </Text>
+                </View>
+              </View>
+              <ChevronRight size={18} color="#E53935" />
+            </Pressable>
+          )}
+
           {hasAutoIntervention && (
             <View style={styles.autoInterventionBanner}>
               <Zap size={14} color="#FB8C00" />
@@ -515,19 +537,27 @@ export default function RelapseDetectionScreen() {
             </View>
           )}
 
-          {activeAlerts.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Active Alerts</Text>
-              {activeAlerts.slice(0, 3).map((alert) => (
-                <AlertCard
-                  key={alert.id}
-                  alert={alert}
-                  onDismiss={() => dismissAlert(alert.id)}
-                  onAct={() => actOnAlert(alert.id)}
-                />
-              ))}
-            </View>
-          )}
+          {activeAlerts.length > 0 && (() => {
+            const byTitle = new Map<string, RiskAlert>();
+            for (const a of activeAlerts) {
+              const existing = byTitle.get(a.title);
+              if (!existing || new Date(a.createdAt) > new Date(existing.createdAt)) byTitle.set(a.title, a);
+            }
+            const uniqueAlerts = Array.from(byTitle.values()).slice(0, 3);
+            return (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Active Alerts</Text>
+                {uniqueAlerts.map((alert) => (
+                  <AlertCard
+                    key={alert.id}
+                    alert={alert}
+                    onDismiss={() => dismissAlert(alert.id)}
+                    onAct={() => actOnAlert(alert.id)}
+                  />
+                ))}
+              </View>
+            );
+          })()}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Risk Factors</Text>
@@ -1131,6 +1161,41 @@ const styles = StyleSheet.create({
     color: '#EF5350',
   },
   crisisSubtitle: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+  relapsePlanCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E5393510',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E5393525',
+  },
+  relapsePlanLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  relapsePlanIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#E53935',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  relapsePlanTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#E53935',
+  },
+  relapsePlanSubtitle: {
     fontSize: 11,
     color: Colors.textMuted,
     marginTop: 2,

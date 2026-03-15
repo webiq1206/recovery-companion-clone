@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,59 +9,15 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
+=======
+import React from 'react';
+import { Redirect } from 'expo-router';
+>>>>>>> 75b52c54d2e5ec0c8d295246829ed77117437b62
 import { useRecovery } from '@/providers/RecoveryProvider';
 import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
-import { ProtectionScoreCircle } from '@/components/ProtectionScoreCircle';
-import { calculateStability } from '@/utils/stabilityEngine';
-import type { ProtectionStatus } from '@/utils/protectionScore';
-import { CheckInTimeOfDay } from '@/types';
 
-function getTimeOfDay(): CheckInTimeOfDay {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
-}
-
-export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const {
-    profile,
-    isLoading,
-    todayCheckIns,
-    checkIns,
-  } = useRecovery();
-
-  const period = useMemo(() => getTimeOfDay(), []);
-
-  const stabilityResult = useMemo(() => {
-    const rp = profile.recoveryProfile;
-    const sorted = [...checkIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const previousScores = sorted.slice(0, 7).map(c => c.stabilityScore);
-    const today = new Date().toISOString().split('T')[0];
-    const dailyActionsCompleted = checkIns.filter(c => c.date === today).length;
-    const input = {
-      intensity: rp.struggleLevel,
-      sleepQuality: (rp.sleepQuality === 'fair' ? 'okay' : rp.sleepQuality === 'excellent' ? 'good' : rp.sleepQuality === 'poor' ? 'poor' : 'good') as 'poor' | 'okay' | 'good',
-      triggers: rp.triggers ?? [],
-      supportLevel: rp.supportAvailability,
-      dailyActionsCompleted,
-      relapseLogged: (rp.relapseCount ?? 0) > 0,
-    };
-    return calculateStability(input, previousScores);
-  }, [profile.recoveryProfile, checkIns]);
-
-  const userRebuildGoal = useMemo(() => {
-    const goals = profile.recoveryProfile?.goals;
-    if (Array.isArray(goals) && goals.length > 0) return goals[0];
-    return 'your next milestone';
-  }, [profile.recoveryProfile?.goals]);
-
-  const showSupportBanner = stabilityResult.score < 40;
-
-  const TrendIcon = stabilityResult.trend === 'rising' ? TrendingUp : stabilityResult.trend === 'declining' ? TrendingDown : Minus;
-  const trendLabel = stabilityResult.trend === 'rising' ? '↑' : stabilityResult.trend === 'declining' ? '↓' : '→';
+export default function HomeScreenRedirect() {
+  const { profile, isLoading } = useRecovery();
 
   if (isLoading) {
     return <HomeLoadingSkeleton />;
@@ -70,6 +27,7 @@ export default function HomeScreen() {
     return <Redirect href={'/onboarding' as any} />;
   }
 
+<<<<<<< HEAD
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top }]}>
       <ScrollView
@@ -490,3 +448,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
 });
+=======
+  return <Redirect href={'/(tabs)/(home)/today-hub' as any} />;
+}
+>>>>>>> 75b52c54d2e5ec0c8d295246829ed77117437b62

@@ -576,6 +576,66 @@ export function getEmotionalInsight(
     };
   }
 
+  // Look for emotional tag patterns across a slightly wider window
+  const tagWindow = checkIns.slice(0, 20);
+  let highCravingDays = 0;
+  let anxiousOnHighCravingDays = 0;
+  let lonelyDays = 0;
+  let lonelyHighCravingDays = 0;
+  let lowMoodDays = 0;
+  let numbOnLowMoodDays = 0;
+
+  for (const entry of tagWindow) {
+    const tags = entry.emotionalTags ?? [];
+    const hasAnxious = tags.includes('anxious');
+    const hasLonely = tags.includes('lonely');
+    const hasNumb = tags.includes('numb');
+    const highCraving = entry.cravingLevel >= 70;
+    const lowMood = entry.mood <= 30;
+
+    if (highCraving) {
+      highCravingDays += 1;
+      if (hasAnxious) {
+        anxiousOnHighCravingDays += 1;
+      }
+      if (hasLonely) {
+        lonelyHighCravingDays += 1;
+      }
+    }
+
+    if (hasLonely) {
+      lonelyDays += 1;
+    }
+
+    if (lowMood) {
+      lowMoodDays += 1;
+      if (hasNumb) {
+        numbOnLowMoodDays += 1;
+      }
+    }
+  }
+
+  if (highCravingDays >= 3 && anxiousOnHighCravingDays / highCravingDays >= 0.6) {
+    return {
+      insight: "You often tag feeling anxious on days when your cravings spike. Planning grounding or connection time on anxious days might help soften those waves.",
+      supportType: 'pattern',
+    };
+  }
+
+  if (lonelyDays >= 3 && lonelyHighCravingDays >= 2 && lonelyHighCravingDays / lonelyDays >= 0.5) {
+    return {
+      insight: "There’s a pattern where loneliness and stronger cravings tend to show up together for you. Building in small moments of connection on lonely days could protect your recovery.",
+      supportType: 'pattern',
+    };
+  }
+
+  if (lowMoodDays >= 3 && numbOnLowMoodDays >= 2 && numbOnLowMoodDays / lowMoodDays >= 0.5) {
+    return {
+      insight: "On lower-mood days you often tag feeling numb or shut down. Gentle, low-effort activities that reconnect you with your body or people you trust might help you feel less stuck.",
+      supportType: 'pattern',
+    };
+  }
+
   if (avgCraving > 70 && moodTrend < -15) {
     return {
       insight: pickRandom([

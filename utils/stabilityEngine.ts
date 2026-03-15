@@ -17,6 +17,10 @@ export type MomentumLevel =
   | 'Strengthening'
   | 'Advancing';
 
+export type RecoveryStabilityRiskLevel = 'High Risk' | 'Fragile' | 'Guarded' | 'Steady';
+
+export type RecoveryTrendDirection = StabilityTrend;
+
 export type StabilityInput = {
   intensity?: number; // 1–5
   sleepQuality?: 'poor' | 'okay' | 'good';
@@ -39,6 +43,13 @@ export type StabilityResult = {
   };
 };
 
+export type RecoveryStabilityIndicator = {
+  stabilityScore: number; // 0–100
+  riskLevel: RecoveryStabilityRiskLevel;
+  trendDirection: RecoveryTrendDirection;
+  explanation: string;
+};
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -57,11 +68,92 @@ const SUPPORT_RISK: Record<string, number> = {
   strong: 0,
 };
 
+export function getRecoveryRiskLevel(score: number): RecoveryStabilityRiskLevel {
+  if (score < 30) return 'High Risk';
+  if (score < 50) return 'Fragile';
+  if (score < 70) return 'Guarded';
+  return 'Steady';
+}
+
 function getStatus(score: number): StabilityStatus {
   if (score < 40) return 'Extra support';
   if (score < 60) return 'Guarded';
   if (score < 80) return 'Strengthening';
   return 'Stable';
+}
+
+function buildExplanation(
+  data: StabilityInput & {
+    mood?: number;
+    cravings?: number;
+    stress?: number;
+    sleepScore?: number;
+    missedCheckIns?: number;
+  },
+  result: StabilityResult
+): string {
+  const reasons: string[] = [];
+
+  const mood = typeof data.mood === 'number' ? data.mood : undefined;
+  const cravings = typeof data.cravings === 'number' ? data.cravings : undefined;
+  const stress = typeof data.stress === 'number' ? data.stress : undefined;
+  const sleepScore = typeof data.sleepScore === 'number' ? data.sleepScore : undefined;
+  const missedCheckIns =
+    typeof data.missedCheckIns === 'number' && data.missedCheckIns > 0
+      ? data.missedCheckIns
+      : 0;
+
+  if (sleepScore !== undefined && sleepScore < 40) {
+    reasons.push('sleep disruption');
+  } else if (data.sleepQuality === 'poor') {
+    reasons.push('poor sleep');
+  }
+
+  if (stress !== undefined && stress > 65) {
+    reasons.push('high stress');
+  }
+
+  if (cravings !== undefined && cravings > 65) {
+    reasons.push('strong cravings');
+  }
+
+  if (mood !== undefined && mood < 40) {
+    reasons.push('low mood');
+  }
+
+  const triggerCount = Array.isArray(data.triggers) ? data.triggers.length : 0;
+  if (triggerCount >= 3) {
+    reasons.push('exposure to triggers');
+  }
+
+  if (missedCheckIns >= 2) {
+    reasons.push('missed check-ins');
+  }
+
+  const support = data.supportLevel ?? 'limited';
+  if (support === 'none') {
+    reasons.push('limited support');
+  }
+
+  if (data.relapseLogged) {
+    reasons.push('a recent slip');
+  }
+
+  if (reasons.length === 0) {
+    if (result.score >= 70) {
+      return 'Strong sleep, emotional balance, and support are helping stability today.';
+    }
+    return 'Mixed signals are creating some instability today.';
+  }
+
+  const primary =
+    reasons.length === 1
+      ? reasons[0]
+      : `${reasons[0]} and ${reasons[1]}`;
+
+  return `${primary.charAt(0).toUpperCase() + primary.slice(
+    1
+  )} are lowering stability today.`;
 }
 
 function getTrend(previousScores: number[]): StabilityTrend {
@@ -177,5 +269,28 @@ export function calculateStability(
     momentumScore,
     momentumLevel,
     drivers,
+  };
+}
+
+export function calculateRecoveryStabilityIndicator(
+  data: StabilityInput & {
+    mood?: number;
+    cravings?: number;
+    stress?: number;
+    sleepScore?: number;
+    missedCheckIns?: number;
+  },
+  previousScores?: number[]
+): RecoveryStabilityIndicator {
+  const stability = calculateStability(data, previousScores);
+  const riskLevel = getRecoveryRiskLevel(stability.score);
+  const trendDirection = stability.trend;
+  const explanation = buildExplanation(data, stability);
+
+  return {
+    stabilityScore: stability.score,
+    riskLevel,
+    trendDirection,
+    explanation,
   };
 }

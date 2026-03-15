@@ -19,6 +19,12 @@ import {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+<<<<<<< HEAD
+=======
+// 6 screens: Identity, Addiction, RecoveryPosition, RecoveryAssessment, RiskAndSupport, RebuildGoal
+const TOTAL_STEPS = 6;
+
+>>>>>>> 75b52c54d2e5ec0c8d295246829ed77117437b62
 const RECOVERY_STAGES: { value: RecoveryStage; label: string; desc: string; icon: React.ReactNode }[] = [
   {
     value: 'crisis',
@@ -66,6 +72,22 @@ const SUPPORT_OPTIONS: { value: SupportAvailability; label: string; desc: string
   { value: 'strong', label: 'Strong support', desc: 'Reliable network around me' },
 ];
 
+const TIME_IN_RECOVERY_OPTIONS = [
+  'Just getting started',
+  'Under 30 days',
+  '1–3 months',
+  '3–12 months',
+  '1+ year',
+];
+
+const RELAPSE_FREQUENCY_OPTIONS = [
+  'No relapses in the last year',
+  'One relapse in the last year',
+  'A few relapses in the last year',
+  'Monthly or more often',
+  'I haven\'t had a long period of sobriety yet',
+];
+
 const GOAL_OPTIONS = [
   'Stay sober one day at a time',
   'Improve my health',
@@ -97,6 +119,10 @@ export default function OnboardingScreen() {
   const [struggleLevel, setStruggleLevel] = useState<StruggleLevel>(3);
   const [sleepQuality, setSleepQuality] = useState<SleepQualityLevel>('fair');
   const [supportAvailability, setSupportAvailability] = useState<SupportAvailability>('limited');
+  const [timeInRecovery, setTimeInRecovery] = useState<string>('');
+  const [relapseFrequency, setRelapseFrequency] = useState<string>('');
+  const [emotionalBaseline, setEmotionalBaseline] = useState<number>(3);
+  const [cravingBaseline, setCravingBaseline] = useState<number>(3);
   const [privacyControls, setPrivacyControls] = useState<PrivacyControls>({
     isAnonymous: false,
     shareProgress: false,
@@ -173,6 +199,19 @@ export default function OnboardingScreen() {
     setter(list.includes(item) ? list.filter(i => i !== item) : [...list, item]);
   }, []);
 
+  const mapRiskScoreToLevel = (riskScore: number): 'low' | 'moderate' | 'high' | 'critical' => {
+    if (riskScore >= 75) return 'critical';
+    if (riskScore >= 50) return 'high';
+    if (riskScore >= 25) return 'moderate';
+    return 'low';
+  };
+
+  const mapSupportToLevel = (support: SupportAvailability): 'low' | 'medium' | 'high' => {
+    if (support === 'none') return 'low';
+    if (support === 'limited') return 'medium';
+    return 'high';
+  };
+
   const handleComplete = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
@@ -187,11 +226,16 @@ export default function OnboardingScreen() {
       riskScore: 0,
       interventionIntensity: 'moderate',
       baselineStabilityScore: 50,
+      emotionalBaseline,
+      cravingBaseline,
+      supportLevel: mapSupportToLevel(supportAvailability),
     };
 
     rp.riskScore = calculateRiskScore(rp);
     rp.interventionIntensity = calculateInterventionIntensity(rp.riskScore);
     rp.baselineStabilityScore = calculateBaselineStability(rp);
+    rp.baselineStability = rp.baselineStabilityScore;
+    rp.relapseRiskLevel = mapRiskScoreToLevel(rp.riskScore);
 
     const finalPrivacy: PrivacyControls = {
       ...privacyControls,
@@ -209,8 +253,23 @@ export default function OnboardingScreen() {
       recoveryProfile: rp,
     });
 
-    router.replace('/protection-profile' as any);
-  }, [name, isAnonymous, addictions, recoveryStage, triggers, goals, struggleLevel, sleepQuality, supportAvailability, privacyControls, updateProfile, router]);
+    router.replace('/recovery-snapshot' as any);
+  }, [
+    name,
+    isAnonymous,
+    addictions,
+    recoveryStage,
+    triggers,
+    goals,
+    struggleLevel,
+    sleepQuality,
+    supportAvailability,
+    privacyControls,
+    emotionalBaseline,
+    cravingBaseline,
+    updateProfile,
+    router,
+  ]);
 
   const canProceed = (): boolean => {
     if (currentStepId == null) return false;
@@ -244,7 +303,11 @@ export default function OnboardingScreen() {
       case 'identity':
         return (
           <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
+<<<<<<< HEAD
             <Text style={[styles.stepLabel, { marginTop: 24 }]}>{stepLabel}</Text>
+=======
+            <Text style={[styles.stepLabel, { marginTop: 24 }]}>STEP 1 OF {TOTAL_STEPS}</Text>
+>>>>>>> 75b52c54d2e5ec0c8d295246829ed77117437b62
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.name.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.name.subtitle}</Text>
 
@@ -345,12 +408,114 @@ export default function OnboardingScreen() {
           </View>
         );
 
+<<<<<<< HEAD
       case 'calibration':
+=======
+      case 3: {
+        // RecoveryAssessmentScreen: time in recovery + relapse frequency + emotional/craving baseline + sleep quality
+>>>>>>> 75b52c54d2e5ec0c8d295246829ed77117437b62
         return (
           <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
             <Text style={styles.stepLabel}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.struggle.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.struggle.subtitle}</Text>
+
+            <Text style={[styles.stepLabel, { marginTop: 4 }]}>Time in recovery</Text>
+            <View style={styles.chipsWrap}>
+              {TIME_IN_RECOVERY_OPTIONS.map((option) => {
+                const selected = timeInRecovery === option;
+                return (
+                  <Pressable
+                    key={option}
+                    style={[styles.chipSmall, selected && styles.chipSmallSelected]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setTimeInRecovery(option);
+                    }}
+                    testID={`time-${option}`}
+                  >
+                    <Text style={[styles.chipSmallText, selected && styles.chipSmallTextSelected]}>
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.stepLabel, { marginTop: 8 }]}>Relapse frequency</Text>
+            <View style={styles.chipsWrap}>
+              {RELAPSE_FREQUENCY_OPTIONS.map((option) => {
+                const selected = relapseFrequency === option;
+                return (
+                  <Pressable
+                    key={option}
+                    style={[styles.chipSmall, selected && styles.chipSmallSelected]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setRelapseFrequency(option);
+                    }}
+                    testID={`relapse-${option}`}
+                  >
+                    <Text style={[styles.chipSmallText, selected && styles.chipSmallTextSelected]}>
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.stepLabel, { marginTop: 16 }]}>Emotional baseline</Text>
+            <View style={styles.struggleDots}>
+              {([1, 2, 3, 4, 5] as const).map((n) => {
+                const selected = emotionalBaseline === n;
+                return (
+                  <Pressable
+                    key={`emotion-${n}`}
+                    style={[
+                      styles.struggleDot,
+                      {
+                        borderColor: selected ? Colors.primary : Colors.border,
+                        backgroundColor: selected ? 'rgba(46,196,182,0.12)' : Colors.cardBackground,
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setEmotionalBaseline(n);
+                    }}
+                    testID={`emotional-${n}`}
+                  >
+                    <Text style={[styles.struggleDotText, { color: selected ? Colors.primary : Colors.text }]}>{n}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.stepLabel, { marginTop: 16 }]}>Craving baseline</Text>
+            <View style={styles.struggleDots}>
+              {([1, 2, 3, 4, 5] as const).map((n) => {
+                const selected = cravingBaseline === n;
+                return (
+                  <Pressable
+                    key={`craving-${n}`}
+                    style={[
+                      styles.struggleDot,
+                      {
+                        borderColor: selected ? Colors.primary : Colors.border,
+                        backgroundColor: selected ? 'rgba(46,196,182,0.12)' : Colors.cardBackground,
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setCravingBaseline(n);
+                    }}
+                    testID={`craving-${n}`}
+                  >
+                    <Text style={[styles.struggleDotText, { color: selected ? Colors.primary : Colors.text }]}>{n}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
             <View style={styles.struggleContainer}>
               <Text style={styles.struggleValue}>{struggleLevel}</Text>
               <Text style={styles.struggleLabel}>

@@ -16,6 +16,7 @@ export const checkInsRouter = createTRPCRouter({
       emotionalState: z.number().min(1).max(10),
       stabilityScore: z.number(),
       reflection: z.string().optional(),
+      emotionalTags: z.array(z.string()).max(3).optional(),
       isEncrypted: z.boolean().default(false),
     }))
     .mutation(async ({ input }) => {
