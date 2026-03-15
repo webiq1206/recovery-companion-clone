@@ -23,6 +23,7 @@ import {
   PhoneCall,
   Brain,
   BookOpenCheck,
+  HandHeart,
 } from 'lucide-react-native';
 
 type IconComponent = ComponentType<{ size?: number; color?: string }>;
@@ -38,6 +39,7 @@ export type UiTodayPlan = TodayPlan & {
 
 const ACTION_ICON_MAP: Record<string, IconComponent> = {
   'daily-checkin': Sun,
+  'daily-pledge': HandHeart,
   'grounding-checkin': Sun,
   'rebuild-step': BookOpenCheck,
   'connection-touchpoint': Users,

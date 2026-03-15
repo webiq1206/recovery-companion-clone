@@ -325,6 +325,18 @@ export function generateTodayPlan(input: TodayPlanInput): TodayPlan {
 
   applyStageProgramActions(input, priorityActions, optionalActions);
 
+  // Daily pledge is always the second action under Today's Plan
+  const dailyPledgeAction: TodayPlanAction = {
+    id: 'daily-pledge',
+    title: "Daily Pledge",
+    subtitle: "Commit to today and track your intention.",
+    route: '/(tabs)/pledges',
+    kind: 'awareness',
+  };
+  const existingPledgeIndex = priorityActions.findIndex((a) => a.id === 'daily-pledge');
+  if (existingPledgeIndex >= 0) priorityActions.splice(existingPledgeIndex, 1);
+  priorityActions.splice(1, 0, dailyPledgeAction);
+
   return {
     priorityActions,
     optionalActions,
