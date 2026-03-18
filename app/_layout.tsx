@@ -4,7 +4,6 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useCallback } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { RecoveryProvider } from "@/providers/RecoveryProvider";
 import { ConnectionProvider } from "@/providers/ConnectionProvider";
 import { RecoveryRoomsProvider } from "@/providers/RecoveryRoomsProvider";
 import { SubscriptionProvider } from "@/providers/SubscriptionProvider";
@@ -16,8 +15,6 @@ import { ComplianceProvider } from "@/providers/ComplianceProvider";
 import { SecurityProvider, useSecurity } from "@/providers/SecurityProvider";
 import { StageDetectionProvider } from "@/providers/StageDetectionProvider";
 import { RetentionProvider } from "@/providers/RetentionProvider";
-import { EnterpriseProvider } from "@/providers/EnterpriseProvider";
-import { ProviderModeProvider } from "@/providers/ProviderModeProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LockScreen from "@/components/LockScreen";
@@ -84,11 +81,7 @@ function RootLayoutNav() {
         <Stack.Screen name="security-settings" options={{ title: 'Security & Privacy', animation: defaultAnimation }} />
         <Stack.Screen name="retention-insights" options={{ title: 'Recovery Insights', animation: defaultAnimation }} />
         <Stack.Screen name="insights" options={{ title: 'Insights', animation: defaultAnimation }} />
-        <Stack.Screen name="enterprise-dashboard" options={{ headerShown: false, animation: defaultAnimation }} />
-        <Stack.Screen name="enterprise-heatmaps" options={{ title: 'Analytics', animation: defaultAnimation }} />
-        <Stack.Screen name="enterprise-reports" options={{ title: 'Reports', animation: defaultAnimation }} />
-        <Stack.Screen name="enterprise-billing" options={{ title: 'Billing', animation: defaultAnimation }} />
-        <Stack.Screen name="enterprise-whitelabel" options={{ title: 'White Label', animation: defaultAnimation }} />
+        <Stack.Screen name="enterprise-layout" options={{ headerShown: false, animation: defaultAnimation }} />
         <Stack.Screen name="insights-explained" options={{ title: 'Insights Explained', animation: defaultAnimation }} />
         <Stack.Screen name="recovery-stages-explained" options={{ title: 'Recovery Stages', animation: defaultAnimation }} />
         <Stack.Screen name="early-warning-explained" options={{ title: 'Early Warning', animation: defaultAnimation }} />
@@ -116,33 +109,27 @@ function SecuredApp() {
 
   return (
     <SubscriptionProvider>
-      <RecoveryProvider>
-        <StageDetectionProvider>
-          <EngagementProvider>
-            <RiskPredictionProvider>
-              <ConnectionProvider>
-                <RecoveryRoomsProvider>
-                  <CommunityProvider>
-                    <TherapistProvider>
-                      <ComplianceProvider>
-                        <RetentionProvider>
-                          <EnterpriseProvider>
-                            <ProviderModeProvider>
-                              <NotificationProvider>
-                                <RootLayoutNav />
-                              </NotificationProvider>
-                            </ProviderModeProvider>
-                          </EnterpriseProvider>
-                        </RetentionProvider>
-                      </ComplianceProvider>
-                    </TherapistProvider>
-                  </CommunityProvider>
-                </RecoveryRoomsProvider>
-              </ConnectionProvider>
-            </RiskPredictionProvider>
-          </EngagementProvider>
-        </StageDetectionProvider>
-      </RecoveryProvider>
+      <StageDetectionProvider>
+        <EngagementProvider>
+          <RiskPredictionProvider>
+            <ConnectionProvider>
+              <RecoveryRoomsProvider>
+                <CommunityProvider>
+                  <TherapistProvider>
+                    <ComplianceProvider>
+                      <RetentionProvider>
+                        <NotificationProvider>
+                          <RootLayoutNav />
+                        </NotificationProvider>
+                      </RetentionProvider>
+                    </ComplianceProvider>
+                  </TherapistProvider>
+                </CommunityProvider>
+              </RecoveryRoomsProvider>
+            </ConnectionProvider>
+          </RiskPredictionProvider>
+        </EngagementProvider>
+      </StageDetectionProvider>
     </SubscriptionProvider>
   );
 }
