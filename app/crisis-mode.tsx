@@ -14,6 +14,7 @@ import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useUser } from '@/core/domains/useUser';
 import { useSupportContacts } from '@/core/domains/useSupportContacts';
+import { useRelapse } from '@/core/domains/useRelapse';
 import { generateCrisisSupportMessage } from '@/constants/companion';
 import { getToolsForContext } from '@/features/tools/registry';
 import type { ToolId } from '@/features/tools/types';
@@ -44,6 +45,7 @@ export default function CrisisModeScreen() {
   const router = useRouter();
   const { profile } = useUser();
   const { emergencyContacts } = useSupportContacts();
+  const { logCrisisActivation } = useRelapse();
   useHydrateToolUsageStore();
   const logToolUsage = useToolUsageStore.use.logToolUsage();
 
@@ -64,6 +66,11 @@ export default function CrisisModeScreen() {
   const slideAnim = useRef(new Animated.Value(30)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const landingPulse = useRef(new Animated.Value(0.6)).current;
+
+  // Log a crisis activation domain event when the flow is first opened.
+  useEffect(() => {
+    logCrisisActivation();
+  }, [logCrisisActivation]);
 
   useEffect(() => {
     fadeAnim.setValue(0);
