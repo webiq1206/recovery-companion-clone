@@ -5,7 +5,16 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { UserProfile, Pledge, JournalEntry, MediaItem, WorkbookAnswer, EmergencyContact, DailyCheckIn, CheckInTimeOfDay, RebuildData, ReplacementHabit, RoutineBlock, PurposeGoal, ConfidenceMilestone, AccountabilityData, CommitmentContract, AccountabilityPartner, DriftAlert, ContractCheckIn, RecoveryProfile, PrivacyControls, IdentityProgramData, IdentityExerciseResponse, IdentityValue, TimelineEvent, RelapsePlan, NearMissEvent } from '@/types';
 import { calculateStability } from '@/utils/stabilityEngine';
 import { useRecoveryProfileStore } from '@/stores/useRecoveryProfileStore';
-import { useCheckInsStore } from '@/stores/useCheckInsStore';
+import {
+  useCheckInsStore,
+  useTodayCheckIns,
+  useTodayCheckIn,
+  useMorningCheckIn,
+  useCurrentCheckInPeriod,
+  useCurrentPeriodCheckIn,
+  useHydrateCheckInsStore,
+} from '@/stores/useCheckInsStore';
+import { useHydrateRecoveryProfileStore, useDaysSober } from '@/stores/useRecoveryProfileStore';
 import {
   STORAGE_KEYS,
   RECOVERY_KEYS_TO_CLEAR,
@@ -50,10 +59,18 @@ export function calculateBaselineStability(rp: RecoveryProfile): number {
 
 export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   const queryClient = useQueryClient();
+  useHydrateRecoveryProfileStore();
+  useHydrateCheckInsStore();
   const profileStore = useRecoveryProfileStore();
   const checkInsStore = useCheckInsStore();
-  const { profile, timelineEvents, relapsePlan, showRelapseModal, daysSober, updateProfile, logRelapse, logCrisisActivation, dismissRelapseModal, saveRelapsePlan } = profileStore;
-  const { checkIns, nearMissEvents, addCheckIn, logNearMiss, todayCheckIns, todayCheckIn, morningCheckIn, currentCheckInPeriod, currentPeriodCheckIn } = checkInsStore;
+  const daysSober = useDaysSober();
+  const { profile, timelineEvents, relapsePlan, showRelapseModal, updateProfile, logRelapse, logCrisisActivation, dismissRelapseModal, saveRelapsePlan, isLoading: profileIsLoading } = profileStore;
+  const { checkIns, nearMissEvents, addCheckIn, logNearMiss, isLoading: checkInsIsLoading } = checkInsStore;
+  const todayCheckIns = useTodayCheckIns();
+  const todayCheckIn = useTodayCheckIn();
+  const morningCheckIn = useMorningCheckIn();
+  const currentCheckInPeriod = useCurrentCheckInPeriod();
+  const currentPeriodCheckIn = useCurrentPeriodCheckIn();
 
   const [pledges, setPledges] = useState<Pledge[]>([]);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
@@ -563,8 +580,8 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   }, [pledges]);
 
   const isLoading =
-    profileStore.isLoading ||
-    checkInsStore.isLoading ||
+    profileIsLoading ||
+    checkInsIsLoading ||
     pledgesQuery.isLoading ||
     journalQuery.isLoading ||
     mediaQuery.isLoading ||

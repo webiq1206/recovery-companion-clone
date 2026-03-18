@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ShieldAlert, ShieldCheck, Shield, TrendingUp, AlertTriangle, ChevronRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { useRecoveryProfileStore } from '@/stores/useRecoveryProfileStore';
+import { useHydrateRecoveryProfileStore, useRecoveryProfileStore } from '@/stores/useRecoveryProfileStore';
 import { calculateProtectionScore, type ProtectionStatus } from '@/utils/protectionScore';
 import { ProtectionScoreCircle } from '@/components/ProtectionScoreCircle';
 
@@ -45,6 +45,7 @@ function getProtectionBadgeMeta(level: ProtectionStatus) {
 export default function ProtectionProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  useHydrateRecoveryProfileStore();
   const { profile } = useRecoveryProfileStore();
 
   const rp = profile.recoveryProfile;

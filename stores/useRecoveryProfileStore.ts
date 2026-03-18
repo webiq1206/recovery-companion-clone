@@ -3,8 +3,9 @@
  * Consumed by RecoveryProvider (facade). Can be used directly by screens for a lighter dependency.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 import type { UserProfile, TimelineEvent, RelapsePlan } from '@/types';
 import {
   STORAGE_KEYS,
@@ -13,169 +14,113 @@ import {
   loadStorageItem,
   saveStorageItem,
 } from '@/core/persistence';
+import { createSelectors } from '@/stores/zustand/createSelectors';
 
-export function useRecoveryProfileStore() {
-  const queryClient = useQueryClient();
-  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
-  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
-  const [relapsePlan, setRelapsePlan] = useState<RelapsePlan | null>(null);
-  const [showRelapseModal, setShowRelapseModal] = useState(false);
+type RecoveryProfileState = {
+  profile: UserProfile;
+  timelineEvents: TimelineEvent[];
+  relapsePlan: RelapsePlan | null;
+  showRelapseModal: boolean;
+  isLoading: boolean;
+  hasHydrated: boolean;
 
-  const profileQuery = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      const stored = await loadStorageItem<string | null>(STORAGE_KEYS.PROFILE, null);
-      return stored ? migrateProfile(JSON.parse(stored)) : DEFAULT_PROFILE;
+  hydrate: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => void;
+  logRelapse: () => void;
+  logCrisisActivation: () => void;
+  dismissRelapseModal: () => void;
+  saveRelapsePlan: (plan: RelapsePlan) => void;
+};
+
+function computeDaysSober(profile: UserProfile, now = new Date()): number {
+  const soberDate = new Date(profile.soberDate);
+  return Math.max(0, Math.floor((now.getTime() - soberDate.getTime()) / 86400000));
+}
+
+const baseUseRecoveryProfileStore = create<RecoveryProfileState>()(
+  subscribeWithSelector((set, get) => ({
+    profile: DEFAULT_PROFILE,
+    timelineEvents: [],
+    relapsePlan: null,
+    showRelapseModal: false,
+    isLoading: true,
+    hasHydrated: false,
+
+    hydrate: async () => {
+      if (get().hasHydrated) return;
+      set({ isLoading: true });
+      const [profileRaw, timelineEvents, relapsePlan] = await Promise.all([
+        loadStorageItem<string | null>(STORAGE_KEYS.PROFILE, null),
+        loadStorageItem<TimelineEvent[]>(STORAGE_KEYS.TIMELINE_EVENTS, []),
+        loadStorageItem<RelapsePlan | null>(STORAGE_KEYS.RELAPSE_PLAN, null),
+      ]);
+
+      const profile = profileRaw ? migrateProfile(JSON.parse(profileRaw)) : DEFAULT_PROFILE;
+      set({ profile, timelineEvents, relapsePlan, isLoading: false, hasHydrated: true });
     },
-    staleTime: Infinity,
-  });
 
-  const timelineQuery = useQuery({
-    queryKey: ['timelineEvents'],
-    queryFn: () =>
-      loadStorageItem<TimelineEvent[]>(STORAGE_KEYS.TIMELINE_EVENTS, []),
-    staleTime: Infinity,
-  });
+    updateProfile: (updates) => {
+      const updated = { ...get().profile, ...updates };
+      set({ profile: updated });
+      void saveStorageItem(STORAGE_KEYS.PROFILE, updated);
+    },
 
-  const relapsePlanQuery = useQuery({
-    queryKey: ['relapsePlan'],
-    queryFn: () =>
-      loadStorageItem<RelapsePlan | null>(STORAGE_KEYS.RELAPSE_PLAN, null),
-    staleTime: Infinity,
-  });
+    logRelapse: () => {
+      const profile = get().profile;
+      const rp = profile.recoveryProfile ?? DEFAULT_PROFILE.recoveryProfile;
+      const updatedProfile: UserProfile = {
+        ...profile,
+        recoveryProfile: { ...rp, relapseCount: (rp.relapseCount ?? 0) + 1 },
+      };
+
+      const today = new Date().toISOString().split('T')[0];
+      const event: TimelineEvent = {
+        id: `relapse-${Date.now()}`,
+        type: 'relapse',
+        date: today,
+      };
+      const updatedEvents = [event, ...get().timelineEvents];
+
+      set({ profile: updatedProfile, timelineEvents: updatedEvents, showRelapseModal: true });
+      void saveStorageItem(STORAGE_KEYS.PROFILE, updatedProfile);
+      void saveStorageItem(STORAGE_KEYS.TIMELINE_EVENTS, updatedEvents);
+    },
+
+    logCrisisActivation: () => {
+      const today = new Date().toISOString().split('T')[0];
+      const event: TimelineEvent = {
+        id: `crisis-${Date.now()}`,
+        type: 'crisis_activation',
+        date: today,
+      };
+      const updatedEvents = [event, ...get().timelineEvents];
+      set({ timelineEvents: updatedEvents });
+      void saveStorageItem(STORAGE_KEYS.TIMELINE_EVENTS, updatedEvents);
+    },
+
+    dismissRelapseModal: () => {
+      set({ showRelapseModal: false });
+    },
+
+    saveRelapsePlan: (plan) => {
+      set({ relapsePlan: plan });
+      void saveStorageItem(STORAGE_KEYS.RELAPSE_PLAN, plan);
+    },
+  }))
+);
+
+export const useRecoveryProfileStore = createSelectors(baseUseRecoveryProfileStore);
+
+export function useDaysSober(): number {
+  const profile = useRecoveryProfileStore.use.profile();
+  return useMemo(() => computeDaysSober(profile), [profile.soberDate]);
+}
+
+export function useHydrateRecoveryProfileStore() {
+  const hydrate = useRecoveryProfileStore.use.hydrate();
+  const hasHydrated = useRecoveryProfileStore.use.hasHydrated();
 
   useEffect(() => {
-    if (profileQuery.data) setProfile(profileQuery.data);
-  }, [profileQuery.data]);
-
-  useEffect(() => {
-    if (timelineQuery.data) setTimelineEvents(timelineQuery.data);
-  }, [timelineQuery.data]);
-
-  useEffect(() => {
-    if (relapsePlanQuery.data !== undefined) {
-      setRelapsePlan(relapsePlanQuery.data);
-    }
-  }, [relapsePlanQuery.data]);
-
-  const saveProfileMutation = useMutation({
-    mutationFn: (newProfile: UserProfile) =>
-      saveStorageItem(STORAGE_KEYS.PROFILE, newProfile),
-    onSuccess: (data) => {
-      setProfile(data);
-      queryClient.setQueryData(['profile'], data);
-    },
-  });
-
-  const saveTimelineMutation = useMutation({
-    mutationFn: (events: TimelineEvent[]) =>
-      saveStorageItem(STORAGE_KEYS.TIMELINE_EVENTS, events),
-    onSuccess: (data) => {
-      setTimelineEvents(data);
-      queryClient.setQueryData(['timelineEvents'], data);
-    },
-  });
-
-  const saveRelapsePlanMutation = useMutation({
-    mutationFn: (plan: RelapsePlan | null) =>
-      saveStorageItem(STORAGE_KEYS.RELAPSE_PLAN, plan),
-    onSuccess: (data) => {
-      setRelapsePlan(data);
-      queryClient.setQueryData(['relapsePlan'], data);
-    },
-  });
-
-  const updateProfile = useCallback(
-    (updates: Partial<UserProfile>) => {
-      const updated = { ...profile, ...updates };
-      setProfile(updated);
-      saveProfileMutation.mutate(updated);
-    },
-    [profile]
-  );
-
-  const logRelapse = useCallback(() => {
-    const rp = profile.recoveryProfile ?? DEFAULT_PROFILE.recoveryProfile;
-    const updatedProfile: UserProfile = {
-      ...profile,
-      recoveryProfile: { ...rp, relapseCount: (rp.relapseCount ?? 0) + 1 },
-    };
-    setProfile(updatedProfile);
-    saveProfileMutation.mutate(updatedProfile);
-
-    const today = new Date().toISOString().split('T')[0];
-    const event: TimelineEvent = {
-      id: `relapse-${Date.now()}`,
-      type: 'relapse',
-      date: today,
-    };
-    const updatedEvents = [event, ...timelineEvents];
-    setTimelineEvents(updatedEvents);
-    saveTimelineMutation.mutate(updatedEvents);
-    setShowRelapseModal(true);
-  }, [profile, timelineEvents]);
-
-  const logCrisisActivation = useCallback(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const event: TimelineEvent = {
-      id: `crisis-${Date.now()}`,
-      type: 'crisis_activation',
-      date: today,
-    };
-    const updatedEvents = [event, ...timelineEvents];
-    setTimelineEvents(updatedEvents);
-    saveTimelineMutation.mutate(updatedEvents);
-  }, [timelineEvents]);
-
-  const dismissRelapseModal = useCallback(() => {
-    setShowRelapseModal(false);
-  }, []);
-
-  const saveRelapsePlan = useCallback((plan: RelapsePlan) => {
-    setRelapsePlan(plan);
-    saveRelapsePlanMutation.mutate(plan);
-  }, []);
-
-  const daysSober = useMemo(() => {
-    const soberDate = new Date(profile.soberDate);
-    const now = new Date();
-    return Math.max(
-      0,
-      Math.floor((now.getTime() - soberDate.getTime()) / 86400000)
-    );
-  }, [profile.soberDate]);
-
-  const isLoading =
-    profileQuery.isLoading ||
-    timelineQuery.isLoading ||
-    relapsePlanQuery.isLoading;
-
-  return useMemo(
-    () => ({
-      profile,
-      timelineEvents,
-      relapsePlan,
-      showRelapseModal,
-      daysSober,
-      isLoading: isLoading && profileQuery.isLoading,
-      updateProfile,
-      logRelapse,
-      logCrisisActivation,
-      dismissRelapseModal,
-      saveRelapsePlan,
-    }),
-    [
-      profile,
-      timelineEvents,
-      relapsePlan,
-      showRelapseModal,
-      daysSober,
-      isLoading,
-      updateProfile,
-      logRelapse,
-      logCrisisActivation,
-      dismissRelapseModal,
-      saveRelapsePlan,
-    ]
-  );
+    if (!hasHydrated) void hydrate();
+  }, [hasHydrated, hydrate]);
 }

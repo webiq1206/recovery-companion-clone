@@ -1,134 +1,108 @@
 /**
  * Check-ins slice: checkIns, nearMissEvents, and derived today/period state.
- * Consumed by RecoveryProvider (facade). Can be used directly by check-in screens.
+ * Client state lives in zustand; persistence is orchestrated via `core/persistence`.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { DailyCheckIn, CheckInTimeOfDay, NearMissEvent } from '@/types';
-import {
-  STORAGE_KEYS,
-  loadStorageItem,
-  saveStorageItem,
-} from '@/core/persistence';
+import { useEffect, useMemo } from 'react';
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 
-export function useCheckInsStore() {
-  const queryClient = useQueryClient();
-  const [checkIns, setCheckIns] = useState<DailyCheckIn[]>([]);
-  const [nearMissEvents, setNearMissEvents] = useState<NearMissEvent[]>([]);
+import type { CheckInTimeOfDay, DailyCheckIn, NearMissEvent } from '@/types';
+import { STORAGE_KEYS, loadStorageItem, saveStorageItem } from '@/core/persistence';
+import { createSelectors } from '@/stores/zustand/createSelectors';
 
-  const checkInsQuery = useQuery({
-    queryKey: ['checkIns'],
-    queryFn: () => loadStorageItem<DailyCheckIn[]>(STORAGE_KEYS.CHECK_INS, []),
-    staleTime: Infinity,
-  });
+type CheckInsState = {
+  checkIns: DailyCheckIn[];
+  nearMissEvents: NearMissEvent[];
+  isLoading: boolean;
+  hasHydrated: boolean;
 
-  const nearMissQuery = useQuery({
-    queryKey: ['nearMissEvents'],
-    queryFn: () =>
-      loadStorageItem<NearMissEvent[]>(STORAGE_KEYS.NEAR_MISS_EVENTS, []),
-    staleTime: Infinity,
-  });
+  hydrate: () => Promise<void>;
+  addCheckIn: (checkIn: DailyCheckIn) => void;
+  logNearMiss: (event: NearMissEvent) => void;
+};
 
-  useEffect(() => {
-    if (checkInsQuery.data) setCheckIns(checkInsQuery.data);
-  }, [checkInsQuery.data]);
+function getCurrentPeriod(now = new Date()): CheckInTimeOfDay {
+  const hour = now.getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 17) return 'afternoon';
+  return 'evening';
+}
 
-  useEffect(() => {
-    if (nearMissQuery.data) setNearMissEvents(nearMissQuery.data);
-  }, [nearMissQuery.data]);
+const baseUseCheckInsStore = create<CheckInsState>()(
+  subscribeWithSelector((set, get) => ({
+    checkIns: [],
+    nearMissEvents: [],
+    isLoading: true,
+    hasHydrated: false,
 
-  const saveCheckInsMutation = useMutation({
-    mutationFn: (newCheckIns: DailyCheckIn[]) =>
-      saveStorageItem(STORAGE_KEYS.CHECK_INS, newCheckIns),
-    onSuccess: (data) => {
-      setCheckIns(data);
-      queryClient.setQueryData(['checkIns'], data);
+    hydrate: async () => {
+      if (get().hasHydrated) return;
+      set({ isLoading: true });
+      const [checkIns, nearMissEvents] = await Promise.all([
+        loadStorageItem<DailyCheckIn[]>(STORAGE_KEYS.CHECK_INS, []),
+        loadStorageItem<NearMissEvent[]>(STORAGE_KEYS.NEAR_MISS_EVENTS, []),
+      ]);
+      set({ checkIns, nearMissEvents, isLoading: false, hasHydrated: true });
     },
-  });
 
-  const saveNearMissMutation = useMutation({
-    mutationFn: (events: NearMissEvent[]) =>
-      saveStorageItem(STORAGE_KEYS.NEAR_MISS_EVENTS, events),
-    onSuccess: (data) => {
-      setNearMissEvents(data);
-      queryClient.setQueryData(['nearMissEvents'], data);
+    addCheckIn: (checkIn) => {
+      const updated = [checkIn, ...get().checkIns];
+      set({ checkIns: updated });
+      void saveStorageItem(STORAGE_KEYS.CHECK_INS, updated);
     },
-  });
 
-  const addCheckIn = useCallback(
-    (checkIn: DailyCheckIn) => {
-      const updated = [checkIn, ...checkIns];
-      setCheckIns(updated);
-      saveCheckInsMutation.mutate(updated);
+    logNearMiss: (event) => {
+      const updated = [event, ...get().nearMissEvents];
+      set({ nearMissEvents: updated });
+      void saveStorageItem(STORAGE_KEYS.NEAR_MISS_EVENTS, updated);
     },
-    [checkIns]
-  );
+  }))
+);
 
-  const logNearMiss = useCallback(
-    (event: NearMissEvent) => {
-      const updated = [event, ...nearMissEvents];
-      setNearMissEvents(updated);
-      saveNearMissMutation.mutate(updated);
-    },
-    [nearMissEvents]
-  );
+export const useCheckInsStore = createSelectors(baseUseCheckInsStore);
 
-  const todayCheckIns = useMemo(() => {
+// Derived selectors (stable subscriptions)
+export function useTodayCheckIns(): DailyCheckIn[] {
+  const checkIns = useCheckInsStore.use.checkIns();
+  return useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     return checkIns.filter((c) => c.date === today);
   }, [checkIns]);
+}
 
-  const todayCheckIn = useMemo(() => {
+export function useTodayCheckIn(): DailyCheckIn | null {
+  const todayCheckIns = useTodayCheckIns();
+  return useMemo(() => {
     if (todayCheckIns.length === 0) return null;
     return todayCheckIns.reduce((latest, c) =>
-      new Date(c.completedAt).getTime() > new Date(latest.completedAt).getTime()
-        ? c
-        : latest,
+      new Date(c.completedAt).getTime() > new Date(latest.completedAt).getTime() ? c : latest,
     todayCheckIns[0]);
   }, [todayCheckIns]);
+}
 
-  const morningCheckIn = useMemo(() => {
-    return todayCheckIns.find((c) => c.timeOfDay === 'morning') ?? null;
-  }, [todayCheckIns]);
+export function useMorningCheckIn(): DailyCheckIn | null {
+  const todayCheckIns = useTodayCheckIns();
+  return useMemo(() => todayCheckIns.find((c) => c.timeOfDay === 'morning') ?? null, [todayCheckIns]);
+}
 
-  const currentCheckInPeriod = useMemo((): CheckInTimeOfDay => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'morning';
-    if (hour < 17) return 'afternoon';
-    return 'evening';
-  }, []);
+export function useCurrentCheckInPeriod(): CheckInTimeOfDay {
+  // Time-based; keep simple and stable.
+  return useMemo(() => getCurrentPeriod(), []);
+}
 
-  const currentPeriodCheckIn = useMemo(() => {
-    return todayCheckIns.find((c) => c.timeOfDay === currentCheckInPeriod) ?? null;
-  }, [todayCheckIns, currentCheckInPeriod]);
+export function useCurrentPeriodCheckIn(): DailyCheckIn | null {
+  const todayCheckIns = useTodayCheckIns();
+  const period = useCurrentCheckInPeriod();
+  return useMemo(() => todayCheckIns.find((c) => c.timeOfDay === period) ?? null, [todayCheckIns, period]);
+}
 
-  const isLoading = checkInsQuery.isLoading || nearMissQuery.isLoading;
+// Ensure hydration happens once when any consumer mounts.
+export function useHydrateCheckInsStore() {
+  const hydrate = useCheckInsStore.use.hydrate();
+  const hasHydrated = useCheckInsStore.use.hasHydrated();
 
-  return useMemo(
-    () => ({
-      checkIns,
-      nearMissEvents,
-      addCheckIn,
-      logNearMiss,
-      todayCheckIns,
-      todayCheckIn,
-      morningCheckIn,
-      currentCheckInPeriod,
-      currentPeriodCheckIn,
-      isLoading,
-    }),
-    [
-      checkIns,
-      nearMissEvents,
-      addCheckIn,
-      logNearMiss,
-      todayCheckIns,
-      todayCheckIn,
-      morningCheckIn,
-      currentCheckInPeriod,
-      currentPeriodCheckIn,
-      isLoading,
-    ]
-  );
+  useEffect(() => {
+    if (!hasHydrated) void hydrate();
+  }, [hasHydrated, hydrate]);
 }
