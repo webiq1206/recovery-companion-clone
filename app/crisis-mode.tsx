@@ -33,10 +33,17 @@ import * as Haptics from 'expo-haptics';
 import { useUser } from '@/core/domains/useUser';
 import { useSupportContacts } from '@/core/domains/useSupportContacts';
 import { generateCrisisSupportMessage } from '@/constants/companion';
+import { getToolsForContext } from '@/features/tools/registry';
+import type { ToolId } from '@/features/tools/types';
+import { useHydrateToolUsageStore, useToolUsageStore } from '@/features/tools/state/useToolUsageStore';
 
-type CrisisStep = 'landing' | 'breathing' | 'grounding' | 'urge-timer' | 'reset' | 'connect';
+type CrisisStep = 'landing' | ToolId;
 
-const STEPS: CrisisStep[] = ['landing', 'breathing', 'grounding', 'urge-timer', 'reset', 'connect'];
+const CRISIS_TOOL_IDS = getToolsForContext('crisis')
+  .map((t) => t.id)
+  .filter((id): id is Exclude<ToolId, 'journal-prompt'> => id !== 'journal-prompt');
+
+const STEPS: CrisisStep[] = ['landing', ...CRISIS_TOOL_IDS];
 
 const GROUNDING_STEPS = [
   { count: 5, sense: 'SEE', icon: 'eye', prompt: 'Name 5 things you can see', color: '#4FC3F7' },
@@ -81,6 +88,8 @@ export default function CrisisModeScreen() {
   const router = useRouter();
   const { profile } = useUser();
   const { emergencyContacts } = useSupportContacts();
+  useHydrateToolUsageStore();
+  const logToolUsage = useToolUsageStore.use.logToolUsage();
 
   const [currentStep, setCurrentStep] = useState<CrisisStep>('landing');
   const [breathPhase, setBreathPhase] = useState<'in' | 'hold' | 'out'>('in');
@@ -202,7 +211,10 @@ export default function CrisisModeScreen() {
   const goToStep = useCallback((step: CrisisStep) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setCurrentStep(step);
-  }, []);
+    if (step !== 'landing') {
+      logToolUsage({ toolId: step, context: 'crisis', action: 'opened' });
+    }
+  }, [logToolUsage]);
 
   const goNext = useCallback(() => {
     const idx = STEPS.indexOf(currentStep);
@@ -218,21 +230,23 @@ export default function CrisisModeScreen() {
 
   const handleCallContact = useCallback((phone: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    logToolUsage({ toolId: 'connect', context: 'crisis', action: 'completed', meta: { method: 'call', phone } });
     const cleaned = phone.replace(/[^0-9+]/g, '');
     Linking.openURL(`tel:${cleaned}`).catch(() => {
       Alert.alert('Unable to Call', `Please dial ${phone} manually.`);
     });
-  }, []);
+  }, [logToolUsage]);
 
   const handleSMSContact = useCallback((phone: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    logToolUsage({ toolId: 'connect', context: 'crisis', action: 'completed', meta: { method: 'text', phone } });
     const cleaned = phone.replace(/[^0-9+]/g, '');
     const message = encodeURIComponent(`I'm having a tough moment and could use some support. - ${profile.name || 'Me'}`);
     const separator = Platform.OS === 'ios' ? '&' : '?';
     Linking.openURL(`sms:${cleaned}${separator}body=${message}`).catch(() => {
       Alert.alert('Unable to Text', `Please text ${phone} manually.`);
     });
-  }, [profile.name]);
+  }, [logToolUsage, profile.name]);
 
   const groundingIndexRef = useRef(groundingIndex);
   useEffect(() => {
