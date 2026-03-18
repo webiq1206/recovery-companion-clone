@@ -30,6 +30,7 @@ import { CrisisStepNav } from '@/features/crisis/ui/CrisisStepNav';
 import { CrisisCompanionBar } from '@/features/crisis/ui/CrisisCompanionBar';
 import { CrisisRelapsePlanCta } from '@/features/crisis/ui/CrisisRelapsePlanCta';
 import { crisisStyles, CRISIS_COLORS } from '@/features/crisis/ui/styles';
+import { CrisisStateActions, type CrisisStateId } from '@/features/crisis/ui/CrisisStateActions';
 import { GROUNDING_STEPS, RESET_PROMPTS } from '@/features/crisis/ui/constants';
 
 type CrisisStep = 'landing' | ToolId;
@@ -60,6 +61,7 @@ export default function CrisisModeScreen() {
   const [urgeSeconds, setUrgeSeconds] = useState(0);
   const [urgeRunning, setUrgeRunning] = useState(false);
   const [resetIndex, setResetIndex] = useState(0);
+  const [currentState, setCurrentState] = useState<CrisisStateId | null>(null);
 
   const breathCircleAnim = useRef(new Animated.Value(0.4)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -255,15 +257,25 @@ export default function CrisisModeScreen() {
     switch (currentStep) {
       case 'landing':
         return (
-          <CrisisLandingStep
-            fadeAnim={fadeAnim}
-            slideAnim={slideAnim}
-            landingPulse={landingPulse}
-            emergencyContacts={emergencyContacts}
-            onStart={goNext}
-            onQuickCall={handleCallContact}
-            onCall988={() => handleCallContact('988')}
-          />
+          <>
+            <CrisisLandingStep
+              fadeAnim={fadeAnim}
+              slideAnim={slideAnim}
+              landingPulse={landingPulse}
+              emergencyContacts={emergencyContacts}
+              onStart={goNext}
+              onQuickCall={handleCallContact}
+              onCall988={() => handleCallContact('988')}
+            />
+            <CrisisStateActions
+              selectedState={currentState}
+              onSelectState={setCurrentState}
+              onTimer={() => goToStep('urge-timer')}
+              onBreathing={() => goToStep('breathing')}
+              onContactSupport={() => goToStep('connect')}
+              onLeaveEnvironment={() => goToStep('grounding')}
+            />
+          </>
         );
       case 'breathing':
         return (
