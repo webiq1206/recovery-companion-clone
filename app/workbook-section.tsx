@@ -5,7 +5,7 @@ import { Stack } from 'expo-router';
 import { CheckCircle, Circle, ChevronDown, ChevronUp, BookOpen, PenLine, Lightbulb, Dumbbell } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useWorkbook } from '@/core/domains/useWorkbook';
 import { WORKBOOK_SECTIONS } from '@/constants/workbook';
 import { WorkbookQuestion } from '@/types';
 
@@ -33,7 +33,7 @@ const TYPE_LABELS: Record<string, string> = {
 export default function WorkbookSectionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const section = WORKBOOK_SECTIONS.find(s => s.id === id);
-  const { saveWorkbookAnswer, getWorkbookAnswer, getSectionProgress } = useRecovery();
+  const { saveWorkbookAnswer, getWorkbookAnswer, getSectionProgress } = useWorkbook();
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [editingAnswer, setEditingAnswer] = useState<string>('');
 

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useRouter } from 'expo-router';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useRelapse } from '@/core/domains/useRelapse';
 import RelapseResponseModal from '@/components/RelapseResponseModal';
 
 /**
@@ -9,7 +9,7 @@ import RelapseResponseModal from '@/components/RelapseResponseModal';
  */
 export default function RelapseFlowGate() {
   const router = useRouter();
-  const { showRelapseModal, dismissRelapseModal } = useRecovery();
+  const { showRelapseModal, dismissRelapseModal } = useRelapse();
 
   const handleDismiss = useCallback(() => {
     dismissRelapseModal();

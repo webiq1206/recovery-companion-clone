@@ -4,12 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Activity, CheckCircle, Clock } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { useCheckInsStore } from '@/stores/useCheckInsStore';
+import { useCheckin } from '@/core/domains/useCheckin';
 
 export default function CheckInsTabScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { todayCheckIns, checkIns } = useCheckInsStore();
+  const { todayCheckIns, checkIns } = useCheckin();
 
   const todayCount = todayCheckIns.length;
   const totalCount = checkIns.length;

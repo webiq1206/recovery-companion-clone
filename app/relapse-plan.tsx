@@ -5,14 +5,16 @@ import { useRouter, Stack } from 'expo-router';
 import { AlertTriangle, BookOpenCheck, ChevronRight, Shield, Users } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useRelapse } from '@/core/domains/useRelapse';
+import { useSupportContacts } from '@/core/domains/useSupportContacts';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
 export default function RelapsePlanScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { relapsePlan, emergencyContacts, saveRelapsePlan } = useRecovery();
+  const { emergencyContacts } = useSupportContacts();
+  const { relapsePlan, saveRelapsePlan } = useRelapse();
 
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
 

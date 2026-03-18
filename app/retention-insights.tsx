@@ -29,7 +29,10 @@ import {
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useRetention } from '@/providers/RetentionProvider';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { useJournal } from '@/core/domains/useJournal';
+import { usePledges } from '@/core/domains/usePledges';
 import { useEngagement } from '@/providers/EngagementProvider';
 import { RETENTION_LOOPS, MICRO_PROGRESS_DEFINITIONS } from '@/constants/retention';
 import { RetentionLoop, MicroProgressMarker, TriggerReductionMilestone, SupportiveNotification, RetentionLoopType } from '@/types';
@@ -292,12 +295,10 @@ export default function RetentionInsightsScreen() {
     runFullEvaluation,
   } = useRetention();
 
-  const {
-    checkIns,
-    daysSober,
-    journal,
-    currentStreak,
-  } = useRecovery();
+  const { checkIns } = useCheckin();
+  const { daysSober } = useUser();
+  const { journal } = useJournal();
+  const { currentStreak } = usePledges();
 
   const { microWins } = useEngagement();
 

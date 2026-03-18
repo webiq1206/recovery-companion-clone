@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ShieldAlert } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useRelapse } from '@/core/domains/useRelapse';
 
 /** Warm red — distinct but not alarming (not neon) */
 const CRISIS_STRIP_COLOR = '#B85454';
@@ -41,6 +42,7 @@ const styles = StyleSheet.create({
 export function CrisisStrip() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { logCrisisActivation } = useRelapse();
   const bottomOffset = TAB_BAR_HEIGHT + insets.bottom;
 
   return (
@@ -49,6 +51,7 @@ export function CrisisStrip() {
         style={({ pressed }) => [styles.btn, pressed && { opacity: 0.9 }]}
         onPress={() => {
           if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          logCrisisActivation?.();
           router.push('/crisis-mode' as any);
         }}
         testID="crisis-strip-btn"

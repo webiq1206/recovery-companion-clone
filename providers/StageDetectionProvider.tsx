@@ -2,7 +2,9 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { useAppMeta } from '@/core/domains/useAppMeta';
 import {
   RecoveryStage,
   StageTransition,
@@ -312,7 +314,9 @@ function buildTransitionReason(fromStage: RecoveryStage, toStage: RecoveryStage,
 
 export const [StageDetectionProvider, useStageDetection] = createContextHook(() => {
   const queryClient = useQueryClient();
-  const { profile, checkIns, daysSober, stabilityScore, updateProfile } = useRecovery();
+  const { profile, daysSober, updateProfile } = useUser();
+  const { checkIns } = useCheckin();
+  const { stabilityScore } = useAppMeta();
   const [data, setData] = useState<StageDetectionData>(DEFAULT_DATA);
 
   const dataQuery = useQuery({

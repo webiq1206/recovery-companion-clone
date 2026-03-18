@@ -30,7 +30,8 @@ import {
   Check,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useSupportContacts } from '@/core/domains/useSupportContacts';
 import { generateCrisisSupportMessage } from '@/constants/companion';
 
 type CrisisStep = 'landing' | 'breathing' | 'grounding' | 'urge-timer' | 'reset' | 'connect';
@@ -78,7 +79,8 @@ function GroundingIcon({ type, size, color }: { type: string; size: number; colo
 export default function CrisisModeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { emergencyContacts, profile } = useRecovery();
+  const { profile } = useUser();
+  const { emergencyContacts } = useSupportContacts();
 
   const [currentStep, setCurrentStep] = useState<CrisisStep>('landing');
   const [breathPhase, setBreathPhase] = useState<'in' | 'hold' | 'out'>('in');

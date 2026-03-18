@@ -1,10 +1,10 @@
 import React from 'react';
 import { Redirect } from 'expo-router';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
 import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
 
 export default function HomeScreenRedirect() {
-  const { profile, isLoading } = useRecovery();
+  const { profile, isLoading } = useUser();
 
   if (isLoading) {
     return <HomeLoadingSkeleton />;

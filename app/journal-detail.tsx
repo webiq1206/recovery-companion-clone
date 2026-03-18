@@ -2,12 +2,12 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useJournal } from '@/core/domains/useJournal';
 import { MOOD_EMOJIS, MOOD_LABELS } from '@/constants/milestones';
 
 export default function JournalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { journal } = useRecovery();
+  const { journal } = useJournal();
 
   const entry = useMemo(() => journal.find(e => e.id === id), [journal, id]);
 

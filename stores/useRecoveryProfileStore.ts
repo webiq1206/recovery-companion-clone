@@ -115,6 +115,18 @@ export function useRecoveryProfileStore() {
     setShowRelapseModal(true);
   }, [profile, timelineEvents]);
 
+  const logCrisisActivation = useCallback(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const event: TimelineEvent = {
+      id: `crisis-${Date.now()}`,
+      type: 'crisis_activation',
+      date: today,
+    };
+    const updatedEvents = [event, ...timelineEvents];
+    setTimelineEvents(updatedEvents);
+    saveTimelineMutation.mutate(updatedEvents);
+  }, [timelineEvents]);
+
   const dismissRelapseModal = useCallback(() => {
     setShowRelapseModal(false);
   }, []);
@@ -148,6 +160,7 @@ export function useRecoveryProfileStore() {
       isLoading: isLoading && profileQuery.isLoading,
       updateProfile,
       logRelapse,
+      logCrisisActivation,
       dismissRelapseModal,
       saveRelapsePlan,
     }),
@@ -160,6 +173,7 @@ export function useRecoveryProfileStore() {
       isLoading,
       updateProfile,
       logRelapse,
+      logCrisisActivation,
       dismissRelapseModal,
       saveRelapsePlan,
     ]

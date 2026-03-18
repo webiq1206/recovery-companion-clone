@@ -25,8 +25,9 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { getOverallRiskPhrase } from '@/constants/emotionalRisk';
-import { useRecovery } from '@/providers/RecoveryProvider';
 import { DailyCheckIn } from '@/types';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const TIME_BLOCKS = [
@@ -186,7 +187,8 @@ function RiskBar({ value, color, label }: { value: number; color: string; label:
 }
 
 export default function TriggersScreen() {
-  const { checkIns, profile } = useRecovery();
+  const { profile } = useUser();
+  const { checkIns } = useCheckin();
   const [selectedCell, setSelectedCell] = useState<{ day: number; time: string } | null>(null);
   const [expandedInsight, setExpandedInsight] = useState<string | null>(null);
 

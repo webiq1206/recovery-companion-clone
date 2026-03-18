@@ -5,8 +5,9 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useRecovery } from '@/providers/RecoveryProvider';
 import { useRetention } from '@/providers/RetentionProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
 import { calculateStability } from '@/utils/stabilityEngine';
 import {
   getEmotionalReflection,
@@ -38,17 +39,16 @@ const DEFAULT_VALUES: Record<string, number> = {
 };
 
 export function useDailyCheckInFlow() {
+  const { profile, daysSober } = useUser();
   const {
-    profile,
     addCheckIn,
     todayCheckIns,
     morningCheckIn,
     currentCheckInPeriod,
     currentPeriodCheckIn,
     checkIns,
-    daysSober,
     logNearMiss,
-  } = useRecovery();
+  } = useCheckin();
   const { triggerLoop, generateSupportiveNotification } = useRetention();
 
   const isMorning = currentCheckInPeriod === 'morning';

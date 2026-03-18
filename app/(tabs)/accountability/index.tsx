@@ -35,7 +35,10 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useAccountability } from '@/core/domains/useAccountability';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { usePledges } from '@/core/domains/usePledges';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { CommitmentContract, AccountabilityPartner } from '@/types';
 
@@ -144,11 +147,10 @@ export default function AccountabilityScreen() {
     addPartner,
     deletePartner,
     useStreakProtection: triggerStreakProtection,
-    checkIns,
-    daysSober,
-    currentStreak,
-    profile,
-  } = useRecovery();
+  } = useAccountability();
+  const { checkIns } = useCheckin();
+  const { daysSober, profile } = useUser();
+  const { currentStreak } = usePledges();
 
   const [activeTab, setActiveTab] = useState<'contracts' | 'partners' | 'alerts'>('contracts');
   const [showNewContract, setShowNewContract] = useState<boolean>(false);

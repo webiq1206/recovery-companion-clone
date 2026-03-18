@@ -16,7 +16,12 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useSupportContacts } from '@/core/domains/useSupportContacts';
+import { useRebuild } from '@/core/domains/useRebuild';
+import { useAccountability } from '@/core/domains/useAccountability';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { useAppMeta } from '@/core/domains/useAppMeta';
 import type { CheckInTimeOfDay } from '@/types';
 
 type WizardTaskKind = 'onboarding' | 'daily';
@@ -44,15 +49,12 @@ function getCurrentPeriod(): CheckInTimeOfDay {
 export default function IntelligentWizardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const {
-    profile,
-    emergencyContacts,
-    rebuildData,
-    accountabilityData,
-    todayCheckIns,
-    currentCheckInPeriod,
-    stabilityScore,
-  } = useRecovery();
+  const { profile } = useUser();
+  const { emergencyContacts } = useSupportContacts();
+  const { rebuildData } = useRebuild();
+  const { accountabilityData } = useAccountability();
+  const { todayCheckIns, currentCheckInPeriod } = useCheckin();
+  const { stabilityScore } = useAppMeta();
 
   const effectivePeriod = currentCheckInPeriod ?? getCurrentPeriod();
 

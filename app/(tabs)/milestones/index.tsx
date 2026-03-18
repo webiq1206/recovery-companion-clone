@@ -40,7 +40,10 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { useJournal } from '@/core/domains/useJournal';
+import { usePledges } from '@/core/domains/usePledges';
 import { useEngagement } from '@/providers/EngagementProvider';
 import { MILESTONE_DATA } from '@/constants/milestones';
 import { MILESTONE_SHARE_MESSAGES, SHAREABLE_FOOTER, BRAND } from '@/constants/branding';
@@ -542,7 +545,10 @@ const shareStyles = StyleSheet.create({
 });
 
 export default function MilestonesScreen() {
-  const { profile, daysSober, checkIns, journal, currentStreak: pledgeStreak } = useRecovery();
+  const { profile, daysSober } = useUser();
+  const { checkIns } = useCheckin();
+  const { journal } = useJournal();
+  const { currentStreak: pledgeStreak } = usePledges();
   const {
     streak,
     growthDimensions,

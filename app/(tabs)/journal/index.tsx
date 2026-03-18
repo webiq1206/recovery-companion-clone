@@ -5,7 +5,9 @@ import { Plus, BookOpen, Trash2, Lock, CheckCircle, BookMarked, PenLine, Chevron
 import * as Haptics from 'expo-haptics';
 import { Alert } from 'react-native';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useJournal } from '@/core/domains/useJournal';
+import { useUser } from '@/core/domains/useUser';
+import { useWorkbook } from '@/core/domains/useWorkbook';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { MOOD_EMOJIS } from '@/constants/milestones';
 import { WORKBOOK_SECTIONS } from '@/constants/workbook';
@@ -15,7 +17,9 @@ type TabMode = 'journal' | 'workbook';
 
 export default function JournalWorkbookScreen() {
   const router = useRouter();
-  const { journal, deleteJournalEntry, daysSober, getSectionProgress } = useRecovery();
+  const { journal, deleteJournalEntry } = useJournal();
+  const { daysSober } = useUser();
+  const { getSectionProgress } = useWorkbook();
   const { hasFeature } = useSubscription();
   const [activeTab, setActiveTab] = useState<TabMode>('journal');
 

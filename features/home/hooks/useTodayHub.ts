@@ -5,9 +5,10 @@
 
 import type { ComponentType } from 'react';
 import { useMemo } from 'react';
-import { useRecovery } from '@/providers/RecoveryProvider';
 import { useRiskPrediction } from '@/providers/RiskPredictionProvider';
 import { useStageDetection } from '@/providers/StageDetectionProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
 import { calculateStability } from '@/utils/stabilityEngine';
 import {
   generateTodayPlan,
@@ -91,7 +92,8 @@ function getStabilityZoneId(score: number): StabilityZoneId {
 }
 
 export function useTodayHub(): TodayHubViewModel {
-  const { profile, isLoading, checkIns } = useRecovery();
+  const { profile, isLoading } = useUser();
+  const { checkIns } = useCheckin();
   const { currentStage, currentProgram } = useStageDetection();
   const {
     riskCategory,

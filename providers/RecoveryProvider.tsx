@@ -152,7 +152,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   const queryClient = useQueryClient();
   const profileStore = useRecoveryProfileStore();
   const checkInsStore = useCheckInsStore();
-  const { profile, timelineEvents, relapsePlan, showRelapseModal, daysSober, updateProfile, logRelapse, dismissRelapseModal, saveRelapsePlan } = profileStore;
+  const { profile, timelineEvents, relapsePlan, showRelapseModal, daysSober, updateProfile, logRelapse, logCrisisActivation, dismissRelapseModal, saveRelapsePlan } = profileStore;
   const { checkIns, nearMissEvents, addCheckIn, logNearMiss, todayCheckIns, todayCheckIn, morningCheckIn, currentCheckInPeriod, currentPeriodCheckIn } = checkInsStore;
 
   const [pledges, setPledges] = useState<Pledge[]>([]);
@@ -748,6 +748,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     useStreakProtection,
     timelineEvents,
     logRelapse,
+    logCrisisActivation,
     showRelapseModal,
     dismissRelapseModal,
     relapsePlan,
@@ -773,6 +774,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     checkInContract, addPartner, updatePartner, deletePartner,
     dismissAlert, useStreakProtection,
     timelineEvents, logRelapse, showRelapseModal, dismissRelapseModal,
+    logCrisisActivation,
     relapsePlan, saveRelapsePlan,
     nearMissEvents, logNearMiss,
   ]);

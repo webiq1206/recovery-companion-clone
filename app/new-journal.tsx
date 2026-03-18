@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert } from 
 import { useRouter, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useJournal } from '@/core/domains/useJournal';
 import { useEngagement } from '@/providers/EngagementProvider';
 import { useRetention } from '@/providers/RetentionProvider';
 import { MOOD_EMOJIS, MOOD_LABELS } from '@/constants/milestones';
@@ -11,7 +11,7 @@ import { JournalEntry } from '@/types';
 
 export default function NewJournalScreen() {
   const router = useRouter();
-  const { addJournalEntry } = useRecovery();
+  const { addJournalEntry } = useJournal();
   const { recordMicroWin } = useEngagement();
   const { triggerLoop } = useRetention();
   const [title, setTitle] = useState<string>('');

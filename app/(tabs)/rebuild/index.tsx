@@ -50,7 +50,9 @@ import {
   Eye,
   Play,
 } from 'lucide-react-native';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { useRebuild } from '@/core/domains/useRebuild';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import Colors from '@/constants/colors';
 import {
@@ -137,15 +139,15 @@ export default function RebuildScreen() {
     updatePurposeGoal,
     deletePurposeGoal,
     addConfidenceMilestone,
-    daysSober,
-    checkIns,
     startIdentityProgram,
     saveExerciseResponse,
     completeModule,
     advanceIdentityWeek,
     addIdentityValue,
     removeIdentityValue,
-  } = useRecovery();
+  } = useRebuild();
+  const { daysSober } = useUser();
+  const { checkIns } = useCheckin();
 
   const [activeSection, setActiveSection] = useState<ActiveSection>('program');
   const [showAddHabit, setShowAddHabit] = useState(false);

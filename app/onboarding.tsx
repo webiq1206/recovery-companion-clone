@@ -6,7 +6,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ShieldCheck, ChevronRight, ChevronLeft, Eye, EyeOff, Target, AlertTriangle, Heart, Zap, Shield, Lock } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useSupportContacts } from '@/core/domains/useSupportContacts';
+import { useAccountability } from '@/core/domains/useAccountability';
 import { calculateRiskScore, calculateInterventionIntensity, calculateBaselineStability } from '@/providers/RecoveryProvider';
 import { ADDICTION_TYPES } from '@/constants/milestones';
 import { ONBOARDING_COPY, BRAND } from '@/constants/branding';
@@ -97,7 +99,9 @@ const GOAL_OPTIONS = [
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile, emergencyContacts, accountabilityData, updateProfile, isLoading } = useRecovery();
+  const { profile, updateProfile, isLoading } = useUser();
+  const { emergencyContacts } = useSupportContacts();
+  const { accountabilityData } = useAccountability();
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
 

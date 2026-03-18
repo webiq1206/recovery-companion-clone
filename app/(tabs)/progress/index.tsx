@@ -32,7 +32,11 @@ import {
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { useRelapse } from '@/core/domains/useRelapse';
+import { usePledges } from '@/core/domains/usePledges';
+import { useRebuild } from '@/core/domains/useRebuild';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useRiskPrediction } from '@/providers/RiskPredictionProvider';
 import { DailyCheckIn } from '@/types';
@@ -331,7 +335,11 @@ interface TriggerPatternInsight {
 
 function StabilityTimelineScreen() {
   const router = useRouter();
-  const { profile, checkIns, pledges, rebuildData } = useRecovery();
+  const { pledges } = usePledges();
+  const { rebuildData } = useRebuild();
+  const { profile } = useUser();
+  const { checkIns } = useCheckin();
+  const { timelineEvents } = useRelapse();
   const { trendLabel: riskTrendLabel, timeOfDayRisk } = useRiskPrediction();
 
   // 30-day stability scores (oldest to newest for graph), with null for missing days
@@ -369,7 +377,9 @@ function StabilityTimelineScreen() {
   }, [checkIns, pledges]);
 
   const relapseCount = profile.recoveryProfile?.relapseCount ?? 0;
-  const crisisActivationsCount = 0;
+  const crisisActivationsCount = useMemo(() => {
+    return timelineEvents.filter((e) => e.type === 'crisis_activation').length;
+  }, [timelineEvents]);
 
   const sevenDayChange = useMemo(() => {
     const scores = [...checkIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 7).map(c => c.stabilityScore);

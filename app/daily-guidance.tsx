@@ -5,7 +5,14 @@ import { useRouter, Redirect } from 'expo-router';
 import { ChevronRight, Check, Sun, Shield, AlertTriangle, Target, BookOpen, Heart, Users } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { usePledges } from '@/core/domains/usePledges';
+import { useSupportContacts } from '@/core/domains/useSupportContacts';
+import { useAccountability } from '@/core/domains/useAccountability';
+import { useAppMeta } from '@/core/domains/useAppMeta';
+import { useJournal } from '@/core/domains/useJournal';
+import { useRebuild } from '@/core/domains/useRebuild';
 import { getDailyGuidanceActions } from '@/utils/wizardSteps';
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
@@ -28,17 +35,14 @@ function getIconForAction(id: string): React.ReactNode {
 export default function DailyGuidanceScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const {
-    profile,
-    todayCheckIns,
-    todayPledge,
-    emergencyContacts,
-    accountabilityData,
-    stabilityScore,
-    currentCheckInPeriod,
-    journal,
-    rebuildData,
-  } = useRecovery();
+  const { profile } = useUser();
+  const { todayCheckIns, currentCheckInPeriod } = useCheckin();
+  const { todayPledge } = usePledges();
+  const { emergencyContacts } = useSupportContacts();
+  const { accountabilityData } = useAccountability();
+  const { stabilityScore } = useAppMeta();
+  const { journal } = useJournal();
+  const { rebuildData } = useRebuild();
 
   const hasJournalEntryToday = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];

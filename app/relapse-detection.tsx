@@ -36,8 +36,9 @@ import {
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useRiskPrediction } from '@/providers/RiskPredictionProvider';
-import { useRecovery } from '@/providers/RecoveryProvider';
 import { RiskAlert, RiskCategory } from '@/types';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GAUGE_SIZE = 180;
@@ -413,7 +414,8 @@ export default function RelapseDetectionScreen() {
     adaptiveWeights,
     hasAutoIntervention,
   } = useRiskPrediction();
-  const { checkIns, daysSober } = useRecovery();
+  const { daysSober } = useUser();
+  const { checkIns } = useCheckin();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 

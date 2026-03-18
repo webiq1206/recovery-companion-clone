@@ -3,7 +3,12 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Animated,
 import { User, Shield, Eye, EyeOff, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Stethoscope, Lightbulb, Layers, Radio, RefreshCw, Scale, Gauge, PauseCircle, PlayCircle, Activity, Building2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useRelapse } from '@/core/domains/useRelapse';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { usePledges } from '@/core/domains/usePledges';
+import { useJournal } from '@/core/domains/useJournal';
+import { useAppMeta } from '@/core/domains/useAppMeta';
 import { useEngagement } from '@/providers/EngagementProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useNotifications } from '@/providers/NotificationProvider';
@@ -22,7 +27,12 @@ const STAGE_CONFIG: Record<RecoveryStage, { label: string; color: string; icon: 
 const STAGE_ORDER: RecoveryStage[] = ['crisis', 'stabilize', 'rebuild', 'maintain'];
 
 export default function ProfileScreen() {
-  const { profile, updateProfile, daysSober, checkIns, stabilityScore, journal, pledges, currentStreak, resetAllData, logRelapse } = useRecovery();
+  const { stabilityScore, resetAllData } = useAppMeta();
+  const { profile, updateProfile, daysSober } = useUser();
+  const { checkIns } = useCheckin();
+  const { pledges, currentStreak } = usePledges();
+  const { journal } = useJournal();
+  const { logRelapse } = useRelapse();
   const { growthDimensions, overallGrowthScore, notificationPreferences, updateNotificationPrefs, streak } = useEngagement();
   const { isPremium, cancelSubscription } = useSubscription();
   const {

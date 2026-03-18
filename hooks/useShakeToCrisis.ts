@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useRelapse } from '@/core/domains/useRelapse';
 
 const SHAKE_THRESHOLD = 2.2;
 const SHAKE_COOLDOWN_MS = 2000;
@@ -12,6 +13,7 @@ const SHAKE_COOLDOWN_MS = 2000;
  */
 export function useShakeToCrisis() {
   const router = useRouter();
+  const { logCrisisActivation } = useRelapse();
   const lastShakeTime = useRef(0);
   const lastAcc = useRef({ x: 0, y: 0, z: 0 });
 
@@ -33,6 +35,7 @@ export function useShakeToCrisis() {
           if (now - lastShakeTime.current > SHAKE_COOLDOWN_MS) {
             lastShakeTime.current = now;
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            logCrisisActivation?.();
             router.push('/crisis-mode' as any);
           }
         }

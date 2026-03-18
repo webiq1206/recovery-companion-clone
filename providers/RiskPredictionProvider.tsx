@@ -2,7 +2,8 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
 import {
   DailyCheckIn,
   RiskPrediction,
@@ -586,7 +587,8 @@ function generateAutoInterventions(
 
 export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() => {
   const queryClient = useQueryClient();
-  const { checkIns, daysSober, nearMissEvents } = useRecovery();
+  const { daysSober } = useUser();
+  const { checkIns, nearMissEvents } = useCheckin();
   const [data, setData] = useState<RiskPredictionData>(DEFAULT_DATA);
   const dataRef = useRef<RiskPredictionData>(data);
 

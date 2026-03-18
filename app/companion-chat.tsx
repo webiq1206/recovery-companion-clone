@@ -15,7 +15,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Send, ShieldAlert, Sparkles, Heart, Brain, Eye, RefreshCw, MessageCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import {
   CompanionMessage,
@@ -169,7 +170,8 @@ export default function CompanionChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ context?: string }>();
-  const { profile, checkIns, daysSober } = useRecovery();
+  const { profile, daysSober } = useUser();
+  const { checkIns } = useCheckin();
   const { hasFeature } = useSubscription();
   const riskPrediction = useRiskPrediction();
   const isCrisisContext = params.context === 'crisis';

@@ -5,14 +5,18 @@ import { useRouter } from 'expo-router';
 import { ClipboardCheck, Shield, Check, ChevronRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { useCheckin } from '@/core/domains/useCheckin';
+import { usePledges } from '@/core/domains/usePledges';
 import { Pledge } from '@/types';
 import { MOOD_EMOJIS, MOOD_LABELS } from '@/constants/milestones';
 
 export default function FirstDayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { todayCheckIn, todayPledge, addPledge, profile } = useRecovery();
+  const { profile } = useUser();
+  const { todayCheckIn } = useCheckin();
+  const { todayPledge, addPledge } = usePledges();
   const [pledgeMood, setPledgeMood] = useState<number>(3);
 
   const checkInDone = !!todayCheckIn;

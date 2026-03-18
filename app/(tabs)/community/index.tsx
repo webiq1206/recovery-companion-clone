@@ -14,7 +14,6 @@ import {
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useConnection } from '@/providers/ConnectionProvider';
-import { useRecovery } from '@/providers/RecoveryProvider';
 import { TrustedContact, PeerChat, SafeRoom, PeerMessage, RoomMessage, SponsorMessage } from '@/types';
 
 type ConnectionTab = 'circle' | 'peers' | 'rooms' | 'sponsor';

@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { HandHeart, Check, Flame, Sunrise, Shield, Star, Award, Trophy, Crown, Gem, Medal, Infinity, Mountain, Sun, Lock, ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRecovery } from '@/providers/RecoveryProvider';
+import { useUser } from '@/core/domains/useUser';
+import { usePledges } from '@/core/domains/usePledges';
 import { MOOD_EMOJIS, MOOD_LABELS, MILESTONE_DATA } from '@/constants/milestones';
 import { Pledge } from '@/types';
 
@@ -24,19 +25,14 @@ const ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string
 };
 
 export default function PledgesScreen() {
-  const { todayPledge, pledges, currentStreak, addPledge, profile } = useRecovery();
+  const { profile, daysSober } = useUser();
+  const { todayPledge, pledges, currentStreak, addPledge } = usePledges();
   const [selectedMood, setSelectedMood] = useState<number>(3);
   const [note, setNote] = useState<string>('');
   const [milestonesExpanded, setMilestonesExpanded] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<'pledge' | 'milestones'>('pledge');
   const scrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<{ pledge: number; milestones: number }>({ pledge: 0, milestones: 0 });
-
-  const daysSober = useMemo(() => {
-    const soberDate = new Date(profile.soberDate);
-    const now = new Date();
-    return Math.floor((now.getTime() - soberDate.getTime()) / 86400000);
-  }, [profile.soberDate]);
 
   const nextMilestone = useMemo(() => {
     return MILESTONE_DATA.find(m => m.days > daysSober);
