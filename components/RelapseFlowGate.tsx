@@ -29,7 +29,7 @@ export default function RelapseFlowGate() {
   }, [router]);
 
   const handleIdentifyTriggerWindow = useCallback(() => {
-    router.push('/relapse-detection' as any);
+    router.push('/relapse-recovery' as any);
   }, [router]);
 
   return (

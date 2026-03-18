@@ -36,6 +36,9 @@ export interface TimelineEvent {
   id: string;
   type: TimelineEventType;
   date: string; // YYYY-MM-DD
+  // Optional context for richer recovery insights; kept minimal for offline use.
+  triggerLabel?: string;
+  emotionalStateLabel?: string;
 }
 
 export interface UserProfile {
