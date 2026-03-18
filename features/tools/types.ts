@@ -1,5 +1,7 @@
 export type ToolCategory = 'breathing' | 'grounding' | 'urge' | 'journal' | 'support' | 'reset';
 
+export type ToolExperienceCategory = 'calm' | 'handle_urges' | 'emotional_support';
+
 export type ToolContext =
   | 'crisis'
   | 'craving'
@@ -30,6 +32,11 @@ export interface ToolDefinition {
   title: string;
   subtitle: string;
   category: ToolCategory;
+  /**
+   * High-level experience bucket used for the Tools screen.
+   * Maps to product language: Calm, Handle urges, Emotional support.
+   */
+  experienceCategory: ToolExperienceCategory;
   recommendedContexts: ToolContext[];
   route?: ToolRoute;
   icon: {

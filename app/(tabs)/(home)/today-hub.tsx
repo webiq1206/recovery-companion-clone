@@ -141,7 +141,7 @@ export default function TodayHubScreen() {
             ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/daily-guidance' as any);
+              router.push('/tools' as any);
             }}
             testID="todayhub-quick-tools"
           >
