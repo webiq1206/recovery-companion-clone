@@ -2,11 +2,12 @@ import React from "react";
 import { Redirect } from "expo-router";
 
 import ConnectionHub from "../connection/ConnectionHub";
-import { shouldEnableStrictIARedirects } from "@/utils/legacyRoutes";
+import { getStrictRedirectTarget } from "@/utils/legacyRoutes";
 
 export default function CommunityAliasScreen() {
-  if (shouldEnableStrictIARedirects()) {
-    return <Redirect href={"/connection" as any} />;
+  const strictTarget = getStrictRedirectTarget("/(tabs)/community");
+  if (strictTarget) {
+    return <Redirect href={strictTarget as any} />;
   }
 
   return <ConnectionHub />;

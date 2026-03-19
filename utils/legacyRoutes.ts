@@ -29,3 +29,20 @@ export function shouldEnableStrictIARedirects(): boolean {
   return process.env.EXPO_PUBLIC_ENABLE_STRICT_IA_REDIRECTS === '1';
 }
 
+/**
+ * Dev-only helper to validate strict redirect behavior.
+ * Returns null when strict redirects are disabled or no mapping exists.
+ */
+export function getStrictRedirectTarget(legacyPath: string): string | null {
+  if (!shouldEnableStrictIARedirects()) return null;
+  const target = LEGACY_ROUTE_MAP[legacyPath];
+  if (!target) return null;
+
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log(`[IA Strict Redirect] ${legacyPath} -> ${target}`);
+  }
+
+  return target;
+}
+

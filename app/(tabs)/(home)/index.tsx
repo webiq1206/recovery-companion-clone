@@ -3,7 +3,7 @@ import { Redirect } from 'expo-router';
 import { useUser } from '@/core/domains/useUser';
 import { useAppStore } from '@/stores/useAppStore';
 import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
-import { shouldEnableStrictIARedirects } from '@/utils/legacyRoutes';
+import { getStrictRedirectTarget } from '@/utils/legacyRoutes';
 
 export default function HomeScreenRedirect() {
   const { profile, isLoading } = useUser();
@@ -17,8 +17,9 @@ export default function HomeScreenRedirect() {
     return <Redirect href={'/onboarding' as any} />;
   }
 
-  if (shouldEnableStrictIARedirects()) {
-    return <Redirect href={'/home' as any} />;
+  const strictTarget = getStrictRedirectTarget('/(tabs)/(home)');
+  if (strictTarget) {
+    return <Redirect href={strictTarget as any} />;
   }
 
   return <Redirect href={'/(tabs)/(home)/today-hub' as any} />;
