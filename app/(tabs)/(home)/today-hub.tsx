@@ -13,6 +13,7 @@ import { useTodayHub, type UiTodayPlanAction } from '@/features/home/hooks/useTo
 import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
 import { RecoveryStabilityPanel } from '@/components/RecoveryStabilityPanel';
 import { usePersonalization } from '@/features/home/hooks/usePersonalization';
+import { resolveCanonicalRoute } from '@/utils/legacyRoutes';
 
 export default function TodayHubScreen() {
   const insets = useSafeAreaInsets();
@@ -259,7 +260,7 @@ export default function TodayHubScreen() {
             ]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              router.push(primaryAction.route as any);
+              router.push(resolveCanonicalRoute(primaryAction.route) as any);
             }}
             testID="todayhub-primary-action"
           >
@@ -292,7 +293,7 @@ export default function TodayHubScreen() {
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(action.route as any);
+                router.push(resolveCanonicalRoute(action.route) as any);
               }}
               testID={`todayhub-plan-priority-${action.id}`}
             >
@@ -315,7 +316,7 @@ export default function TodayHubScreen() {
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(action.route as any);
+                router.push(resolveCanonicalRoute(action.route) as any);
               }}
               testID={`todayhub-plan-${action.id}`}
             >

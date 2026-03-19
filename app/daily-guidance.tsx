@@ -14,6 +14,7 @@ import { useAppMeta } from '@/core/domains/useAppMeta';
 import { useJournal } from '@/core/domains/useJournal';
 import { useRebuild } from '@/core/domains/useRebuild';
 import { getDailyGuidanceActions } from '@/utils/wizardSteps';
+import { resolveCanonicalRoute } from '@/utils/legacyRoutes';
 import { useAppStore } from '@/stores/useAppStore';
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
@@ -132,7 +133,7 @@ export default function DailyGuidanceScreen() {
                   style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push(action.route as any);
+                    router.push(resolveCanonicalRoute(action.route) as any);
                   }}
                   testID={`daily-guidance-${action.id}`}
                 >

@@ -24,6 +24,7 @@ import { useCheckin } from '@/core/domains/useCheckin';
 import { useAppMeta } from '@/core/domains/useAppMeta';
 import { useAppStore } from '@/stores/useAppStore';
 import type { CheckInTimeOfDay } from '@/types';
+import { resolveCanonicalRoute } from '@/utils/legacyRoutes';
 
 type WizardTaskKind = 'onboarding' | 'daily';
 
@@ -257,7 +258,7 @@ export default function IntelligentWizardScreen() {
 
   const handlePressTask = (task: WizardTask) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(task.route as any);
+    router.push(resolveCanonicalRoute(task.route) as any);
   };
 
   return (

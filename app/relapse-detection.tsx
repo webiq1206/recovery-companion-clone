@@ -39,6 +39,7 @@ import { useRiskPrediction } from '@/providers/RiskPredictionProvider';
 import { RiskAlert, RiskCategory } from '@/types';
 import { useUser } from '@/core/domains/useUser';
 import { useCheckin } from '@/core/domains/useCheckin';
+import { resolveCanonicalRoute } from '@/utils/legacyRoutes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GAUGE_SIZE = 180;
@@ -309,9 +310,9 @@ function AlertCard({ alert, onDismiss, onAct }: { alert: RiskAlert; onDismiss: (
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onAct();
     if (alert.route) {
-      router.push(alert.route as any);
+      router.push(resolveCanonicalRoute(alert.route) as any);
     }
-  }, [alert.route]);
+  }, [alert.route, onAct, router]);
 
   return (
     <View style={[alertStyles.card, { borderLeftColor: severityColor }]}>
