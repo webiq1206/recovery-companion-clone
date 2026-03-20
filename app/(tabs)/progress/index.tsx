@@ -409,9 +409,8 @@ function StabilityTimelineScreen() {
         {/* Hero */}
         <View style={earlyStyles.heroCard}>
           <Text style={earlyStyles.heroTitle}>Your recovery journey has begun</Text>
-          <Text style={earlyStyles.heroDays}>
-            Day {daysSober}
-          </Text>
+          <Text style={earlyStyles.heroDays}>{daysSober}</Text>
+          <Text style={earlyStyles.heroDaysCaption}>Days Completed</Text>
           <Text style={earlyStyles.heroSub}>
             Since {soberDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
           </Text>
@@ -1461,6 +1460,15 @@ const earlyStyles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '900' as const,
     color: Colors.primary,
+    marginTop: 4,
+  },
+  heroDaysCaption: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.primary,
+    marginTop: 2,
+    marginBottom: 2,
+    letterSpacing: 0.3,
   },
   heroSub: {
     fontSize: 13,

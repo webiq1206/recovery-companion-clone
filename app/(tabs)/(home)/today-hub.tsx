@@ -14,8 +14,6 @@ import {
   ArrowRight,
   AlertTriangle,
   Activity,
-  BarChart3,
-  BookOpen,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -386,36 +384,6 @@ export default function TodayHubScreen() {
             </Pressable>
           </>
         )}
-
-        {/* Quick actions (kept as persistent shortcuts) */}
-        <View style={styles.quickRow}>
-          <Pressable
-            style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/journal' as any);
-            }}
-            testID="todayhub-quick-journal"
-          >
-            <View style={styles.quickIconWrap}>
-              <BookOpen size={18} color={Colors.primary} />
-            </View>
-            <Text style={styles.quickLabel}>Journal</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.quickCard, pressed && styles.pressed]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/progress' as any);
-            }}
-            testID="todayhub-quick-progress"
-          >
-            <View style={styles.quickIconWrap}>
-              <BarChart3 size={18} color={Colors.primary} />
-            </View>
-            <Text style={styles.quickLabel}>Progress</Text>
-          </Pressable>
-        </View>
 
         {showRelapsePlanCta && (
           <Pressable
@@ -823,36 +791,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 2,
-  },
-  quickRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 18,
-  },
-  quickCard: {
-    flex: 1,
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  quickIconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-  },
-  quickLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.text,
   },
   planTitle: {
     fontSize: 16,
