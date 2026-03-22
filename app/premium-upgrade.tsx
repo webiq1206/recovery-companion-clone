@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Animated,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -450,7 +450,7 @@ export default function PremiumUpgradeScreen() {
         </Pressable>
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -532,7 +532,7 @@ export default function PremiumUpgradeScreen() {
         <Text style={styles.disclaimer}>
           Downgrading preserves all your progress and journal entries. Payment will be charged at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.
         </Text>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

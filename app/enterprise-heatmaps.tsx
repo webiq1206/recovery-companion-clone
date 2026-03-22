@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Animated,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import {
   BarChart3,
@@ -162,7 +162,7 @@ export default function EnterpriseHeatmaps() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Analytics', headerStyle: { backgroundColor: Colors.background }, headerTintColor: Colors.text }} />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScreenScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim }}>
           <View style={styles.toggleRow}>
             <Pressable
@@ -272,7 +272,7 @@ export default function EnterpriseHeatmaps() {
 
           <View style={{ height: 40 }} />
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

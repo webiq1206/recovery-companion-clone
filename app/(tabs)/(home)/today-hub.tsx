@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Animated as RNAnimated,
   Alert,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Redirect, usePathname } from 'expo-router';
 import {
@@ -143,7 +143,7 @@ export default function TodayHubScreen() {
 
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top }]}>
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={[
           styles.content,
@@ -491,7 +491,7 @@ export default function TodayHubScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

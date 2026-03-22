@@ -10,6 +10,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
+import { ScreenFlatList } from '@/components/ScreenFlatList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Send, ShieldAlert, Sparkles, Heart, Brain, Eye, RefreshCw, MessageCircle } from 'lucide-react-native';
@@ -350,7 +351,7 @@ export default function CompanionChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
-        <FlatList
+        <ScreenFlatList
           ref={flatListRef}
           data={messages}
           renderItem={renderMessage}

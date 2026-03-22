@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   TextInput,
   Animated,
@@ -11,6 +10,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import {
   Shield,
   Plus,
@@ -606,7 +606,7 @@ export default function AccountabilityScreen() {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -661,7 +661,7 @@ export default function AccountabilityScreen() {
             </View>
           )
         )}
-      </ScrollView>
+      </ScreenScrollView>
 
       <Modal visible={showNewContract} animationType="slide" transparent testID="new-contract-modal">
         <View style={styles.modalOverlay}>

@@ -10,6 +10,7 @@ import {
   ScrollView,
   TextInput,
 } from 'react-native';
+import { useScrollToTopOnFocus } from '@/hooks/useScrollToTopOnFocus';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -309,6 +310,9 @@ export default function DailyCheckInScreen() {
     [PERIOD_CONFIG],
   );
 
+  const scrollRef = useRef<ScrollView>(null);
+  useScrollToTopOnFocus(scrollRef);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const resultFade = useRef(new Animated.Value(0)).current;
@@ -421,6 +425,7 @@ export default function DailyCheckInScreen() {
         </View>
 
         <Animated.ScrollView
+          ref={scrollRef}
           style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
           showsVerticalScrollIndicator={false}
@@ -526,6 +531,7 @@ export default function DailyCheckInScreen() {
       </View>
 
       <Animated.ScrollView
+        ref={scrollRef}
         style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}

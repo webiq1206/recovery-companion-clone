@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
 import {
   BarChart3,
@@ -17,7 +18,7 @@ export default function InsightsHubScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -142,7 +143,7 @@ export default function InsightsHubScreen() {
       </View>
 
       <View style={{ height: 20 }} />
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

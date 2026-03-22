@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -74,7 +75,7 @@ export default function RelapseRecoveryScreen() {
 
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top, paddingBottom: insets.bottom + 12 }]}>
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -237,7 +238,7 @@ export default function RelapseRecoveryScreen() {
             <Text style={styles.secondaryButtonText}>I&apos;m ready to continue</Text>
           </Pressable>
         )}
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

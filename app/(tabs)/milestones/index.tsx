@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Animated,
   Pressable,
   Alert,
@@ -11,6 +10,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import {
   Sunrise,
   Flame,
@@ -630,7 +630,7 @@ export default function MilestonesScreen() {
   }, [overallGrowthScore]);
 
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -784,7 +784,7 @@ export default function MilestonesScreen() {
         milestone={shareableMilestone}
         onClose={() => setShareModalVisible(false)}
       />
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

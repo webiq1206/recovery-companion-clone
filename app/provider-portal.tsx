@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   TextInput,
   Modal,
@@ -11,6 +10,7 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
 import {
   Shield,
@@ -315,7 +315,7 @@ export default function ProviderPortalScreen() {
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'Provider Portal', headerShown: true }} />
-        <ScrollView contentContainerStyle={styles.setupContent} showsVerticalScrollIndicator={false}>
+        <ScreenScrollView contentContainerStyle={styles.setupContent} showsVerticalScrollIndicator={false}>
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             <View style={styles.setupIcon}>
               <Shield size={40} color={Colors.primary} />
@@ -396,7 +396,7 @@ export default function ProviderPortalScreen() {
               <Text style={styles.cancelSetupText}>Cancel</Text>
             </Pressable>
           </Animated.View>
-        </ScrollView>
+        </ScreenScrollView>
       </View>
     );
   }
@@ -404,7 +404,7 @@ export default function ProviderPortalScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Provider Portal', headerShown: true }} />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScreenScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
           <View style={styles.portalHeader}>
             <View style={styles.providerRow}>
@@ -577,7 +577,7 @@ export default function ProviderPortalScreen() {
 
           <View style={{ height: 40 }} />
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
 
       <Modal
         visible={showInvite}

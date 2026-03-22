@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, Alert } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useRouter, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -45,7 +46,7 @@ export default function NewJournalScreen() {
   }, [title, content, mood, addJournalEntry]);
 
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
@@ -114,7 +115,7 @@ export default function NewJournalScreen() {
       >
         <Text style={styles.saveBtnText}>Save Entry</Text>
       </Pressable>
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

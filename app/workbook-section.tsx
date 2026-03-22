@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScreenFlatList } from '@/components/ScreenFlatList';
 import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { CheckCircle, Circle, ChevronDown, ChevronUp, BookOpen, PenLine, Lightbulb, Dumbbell } from 'lucide-react-native';
@@ -157,7 +158,7 @@ export default function WorkbookSectionScreen() {
       keyboardVerticalOffset={100}
     >
       <Stack.Screen options={{ title: section.title }} />
-      <FlatList
+      <ScreenFlatList
         data={section.questions}
         renderItem={renderQuestion}
         keyExtractor={(item) => item.id}

@@ -1,9 +1,11 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, TextInput,
-  Modal, Alert, Animated, KeyboardAvoidingView, Platform, ScrollView,
+  View, Text, StyleSheet, Pressable, TextInput,
+  Modal, Alert, Animated, KeyboardAvoidingView, Platform,
   Linking,
 } from 'react-native';
+import { ScreenFlatList } from '@/components/ScreenFlatList';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -222,7 +224,7 @@ export default function ConnectionScreen() {
         }}
         testID="instant-reach-btn"
       >
-        <PhoneCall size={28} color="#FFFFFF" />
+        <PhoneCall size={22} color="#FFFFFF" />
         <Text style={styles.reachButtonText}>Reach Out Now</Text>
         {availableContacts.length > 0 && (
           <Text style={styles.reachSubtext}>
@@ -292,7 +294,7 @@ export default function ConnectionScreen() {
   }, [handleCallContact, handleSMSContact, handleRemoveContact, updateContactAvailability]);
 
   const renderCircleTab = () => (
-    <FlatList
+    <ScreenFlatList
       data={trustedContacts}
       renderItem={renderContactItem}
       keyExtractor={item => item.id}
@@ -306,19 +308,6 @@ export default function ConnectionScreen() {
             <Text style={styles.sectionTitle}>Your Trusted Circle</Text>
             <Text style={styles.sectionCount}>{trustedContacts.length}</Text>
           </View>
-          <Pressable
-            style={({ pressed }) => [
-              styles.supportResourcesBtn,
-              pressed && { opacity: 0.9 },
-            ]}
-            onPress={() => router.push('/support' as any)}
-            testID="support-resources-btn"
-          >
-            <MessageCircle size={16} color={Colors.primary} />
-            <Text style={styles.supportResourcesBtnText}>
-              Support & Resources
-            </Text>
-          </Pressable>
         </View>
       }
       ListEmptyComponent={
@@ -395,7 +384,7 @@ export default function ConnectionScreen() {
           <Text style={styles.peerSafeText}>All chats are anonymous and private</Text>
         </View>
       </View>
-      <FlatList
+      <ScreenFlatList
         data={peerChats}
         renderItem={renderPeerChatItem}
         keyExtractor={item => item.id}
@@ -500,7 +489,7 @@ export default function ConnectionScreen() {
         </View>
         <ChevronRight size={18} color={Colors.textMuted} />
       </Pressable>
-      <FlatList
+      <ScreenFlatList
         data={safeRooms}
         renderItem={renderRoomItem}
         keyExtractor={item => item.id}
@@ -511,7 +500,7 @@ export default function ConnectionScreen() {
   );
 
   const renderSponsorTab = () => (
-    <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+    <ScreenScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
       <View style={styles.sponsorIntro}>
         <View style={styles.sponsorIntroIcon}>
           <Handshake size={36} color={Colors.primary} />
@@ -702,7 +691,7 @@ export default function ConnectionScreen() {
           <Text style={styles.infoCardText}>Go at your own pace. You can end anytime.</Text>
         </View>
       </View>
-    </ScrollView>
+    </ScreenScrollView>
   );
 
   const renderChatModal = () => {
@@ -739,7 +728,7 @@ export default function ConnectionScreen() {
                 <View style={{ width: 36 }} />
               )}
             </View>
-            <FlatList
+            <ScreenFlatList
               data={chat.messages}
               keyExtractor={item => item.id}
               style={styles.messageList}
@@ -815,7 +804,7 @@ export default function ConnectionScreen() {
                 <View style={{ width: 36 }} />
               )}
             </View>
-            <FlatList
+            <ScreenFlatList
               data={room.messages}
               keyExtractor={item => item.id}
               style={styles.messageList}
@@ -896,6 +885,22 @@ export default function ConnectionScreen() {
         })}
       </View>
 
+      <View style={styles.supportResourcesBelowTabs}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.supportResourcesBtn,
+            pressed && { opacity: 0.9 },
+          ]}
+          onPress={() => router.push('/support' as any)}
+          testID="support-resources-btn"
+        >
+          <MessageCircle size={16} color={Colors.primary} />
+          <Text style={styles.supportResourcesBtnText}>
+            Support & Resources
+          </Text>
+        </Pressable>
+      </View>
+
       {activeTab === 'circle' && renderCircleTab()}
       {activeTab === 'peers' && renderPeersTab()}
       {activeTab === 'rooms' && renderRoomsTab()}
@@ -939,7 +944,7 @@ export default function ConnectionScreen() {
                 </Text>
               </View>
             ) : (
-              <FlatList
+              <ScreenFlatList
                 data={sponsorPairing?.messages ?? []}
                 keyExtractor={item => item.id}
                 style={styles.messageList}
@@ -1099,10 +1104,15 @@ const styles = StyleSheet.create({
   tabRow: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    marginBottom: 4,
+    marginBottom: 0,
     backgroundColor: Colors.surface,
     borderRadius: 14,
     padding: 3,
+  },
+  supportResourcesBelowTabs: {
+    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 10,
   },
   tabItem: {
     flex: 1,
@@ -1133,12 +1143,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   reachSection: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   reachButton: {
     backgroundColor: '#1A4A3A',
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#2A6A5A',
@@ -1148,15 +1159,15 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   reachButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700' as const,
     color: '#FFFFFF',
-    marginTop: 10,
+    marginTop: 8,
   },
   reachSubtext: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#7DC9A0',
-    marginTop: 4,
+    marginTop: 3,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1191,8 +1202,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginTop: 12,
-    marginBottom: 6,
   },
   supportResourcesBtnText: {
     fontSize: 13,

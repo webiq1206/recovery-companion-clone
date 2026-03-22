@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Modal,
   Alert,
@@ -11,6 +10,7 @@ import {
   Platform,
   Share,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import {
   FileText,
@@ -98,7 +98,7 @@ export default function EnterpriseReports() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Reports', headerStyle: { backgroundColor: Colors.background }, headerTintColor: Colors.text }} />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScreenScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim }}>
           <View style={styles.headerRow}>
             <View>
@@ -186,7 +186,7 @@ export default function EnterpriseReports() {
 
           <View style={{ height: 40 }} />
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
 
       <Modal visible={showGenerate} transparent animationType="slide">
         <View style={styles.modalOverlay}>

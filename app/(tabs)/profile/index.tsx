@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Animated, TextInput, Modal } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { User, Shield, Eye, EyeOff, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Stethoscope, Lightbulb, Layers, Radio, RefreshCw, Scale, Gauge, PauseCircle, PlayCircle, Activity, Building2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -255,7 +256,7 @@ export default function ProfileScreen() {
   const privacyControls = profile.privacyControls ?? { isAnonymous: false, shareProgress: false, shareMood: false, allowCommunityMessages: true };
 
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -877,7 +878,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

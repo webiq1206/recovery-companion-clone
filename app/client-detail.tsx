@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Alert,
   Animated,
   Share,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
@@ -210,7 +210,7 @@ export default function ClientDetailScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: client.name }} />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScreenScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim }}>
           <View style={styles.headerCard}>
             <View style={styles.headerTop}>
@@ -618,7 +618,7 @@ export default function ClientDetailScreen() {
 
           <View style={{ height: 40 }} />
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

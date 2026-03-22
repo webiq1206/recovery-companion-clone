@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Animated,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import {
   Zap,
@@ -402,7 +402,7 @@ export default function TriggersScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Triggers' }} />
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -616,7 +616,7 @@ export default function TriggersScreen() {
         </AnimatedCard>
 
         <View style={styles.bottomSpacer} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

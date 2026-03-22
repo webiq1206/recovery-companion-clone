@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { Activity, Brain, Shield, Heart, Users, TrendingUp, BarChart3, Info, Zap, Moon, Compass } from 'lucide-react-native';
 import Colors from '@/constants/colors';
@@ -39,7 +40,7 @@ function FactorRow({ label, description }: { label: string; description: string 
 
 export default function InsightsExplainedScreen() {
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -276,7 +277,7 @@ export default function InsightsExplainedScreen() {
       </View>
 
       <View style={styles.bottomSpacer} />
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

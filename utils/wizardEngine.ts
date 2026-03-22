@@ -124,8 +124,9 @@ const SETUP_STEPS: SetupStep[] = [
   },
   {
     id: 'emergency-contacts',
-    title: 'Add crisis support contacts',
-    description: 'Add 1-3 trusted people so Crisis Mode can connect you quickly.',
+    title: 'Add trusted circle contacts',
+    description:
+      'Add 1-3 trusted people so you can reach them quickly from Connection and during Crisis Mode.',
     route: '/connection',
     ctaLabel: 'Add contacts',
   },
@@ -481,7 +482,7 @@ function buildCandidateActions(input: WizardEngineInput): CandidateAction[] {
 
   candidates.push({
     id: 'add-emergency-contact',
-    title: 'Add a Crisis Contact',
+    title: 'Add a Trusted Circle Contact',
     subtitle: 'Someone to reach when things get hard. Stored only on your device.',
     route: '/connection',
     kind: 'connection',

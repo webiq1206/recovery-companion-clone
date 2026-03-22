@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, Animated, Dimensions, Switch, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, Animated, Dimensions, Switch, Image } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -306,7 +307,7 @@ export default function OnboardingScreen() {
     switch (currentStepId) {
       case 'identity':
         return (
-          <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
+          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
             <Text style={[styles.stepLabel, { marginTop: 24 }]}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.name.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.name.subtitle}</Text>
@@ -344,7 +345,7 @@ export default function OnboardingScreen() {
                 />
               </>
             )}
-          </ScrollView>
+          </ScreenScrollView>
         );
 
       case 'addiction':
@@ -356,7 +357,7 @@ export default function OnboardingScreen() {
             {addictions.length > 0 && (
               <Text style={styles.selectionCount}>{addictions.length} selected</Text>
             )}
-            <ScrollView style={styles.optionsList} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
+            <ScreenScrollView style={styles.optionsList} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
               {ADDICTION_TYPES.map((type) => {
                 const selected = addictions.includes(type);
                 return (
@@ -371,7 +372,7 @@ export default function OnboardingScreen() {
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </ScreenScrollView>
           </View>
         );
 
@@ -410,7 +411,7 @@ export default function OnboardingScreen() {
 
       case 'calibration':
         return (
-          <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
+          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
             <Text style={styles.stepLabel}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.struggle.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.struggle.subtitle}</Text>
@@ -564,12 +565,12 @@ export default function OnboardingScreen() {
                 );
               })}
             </View>
-          </ScrollView>
+          </ScreenScrollView>
         );
 
       case 'triggers':
         return (
-          <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
+          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
             <Text style={styles.stepLabel}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.triggers.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.triggers.subtitle}</Text>
@@ -618,12 +619,12 @@ export default function OnboardingScreen() {
                 );
               })}
             </View>
-          </ScrollView>
+          </ScreenScrollView>
         );
 
       case 'goals':
         return (
-          <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
+          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={styles.optionsListContent}>
             <View style={styles.stepIconWrap}>
               <Target size={28} color={Colors.primary} />
             </View>
@@ -677,7 +678,7 @@ export default function OnboardingScreen() {
                 />
               </View>
             </View>
-          </ScrollView>
+          </ScreenScrollView>
         );
 
       default:
@@ -688,7 +689,7 @@ export default function OnboardingScreen() {
   if (!hasStarted) {
     return (
       <View style={[styles.container, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }]}>
-        <ScrollView
+        <ScreenScrollView
           style={styles.stepContent}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.optionsListContent}
@@ -715,7 +716,7 @@ export default function OnboardingScreen() {
               <Text style={styles.trustText}>Anonymous option</Text>
             </View>
           </View>
-        </ScrollView>
+        </ScreenScrollView>
 
         <View style={[styles.bottomRow, { justifyContent: 'center' }]}>
           <Pressable

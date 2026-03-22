@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { RefreshCw, Leaf, TrendingUp, Shield, Users, Info, Zap, ArrowRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
@@ -50,7 +51,7 @@ function LoopCycleStep({ step, text, color }: { step: number; text: string; colo
 
 export default function RecoveryInsightsExplainedScreen() {
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -271,7 +272,7 @@ export default function RecoveryInsightsExplainedScreen() {
       </View>
 
       <View style={styles.bottomSpacer} />
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

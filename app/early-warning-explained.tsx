@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { Info, AlertTriangle, Activity, Crosshair, Shield, ArrowRight, Zap, BarChart3 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
@@ -50,7 +51,7 @@ function RiskLevelRow({ color, label, range }: { color: string; label: string; r
 
 export default function EarlyWarningExplainedScreen() {
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -272,7 +273,7 @@ export default function EarlyWarningExplainedScreen() {
       </View>
 
       <View style={styles.bottomSpacer} />
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

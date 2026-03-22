@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, Modal } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Shield, Lock, Fingerprint, Eye, EyeOff, FileText, BarChart3, ChevronRight, Trash2, ShieldCheck, ShieldAlert, ShieldOff, Clock, Activity, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -153,7 +154,7 @@ export default function SecuritySettingsScreen() {
   }
 
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -411,7 +412,7 @@ export default function SecuritySettingsScreen() {
             <Text style={styles.modalSubtitle}>
               {auditLog.length} events • Last 500 entries retained
             </Text>
-            <ScrollView style={styles.auditList} showsVerticalScrollIndicator={true}>
+            <ScreenScrollView style={styles.auditList} showsVerticalScrollIndicator={true}>
               {auditLog.length === 0 ? (
                 <View style={styles.emptyState}>
                   <FileText size={32} color={Colors.textMuted} />
@@ -434,11 +435,11 @@ export default function SecuritySettingsScreen() {
                   </View>
                 ))
               )}
-            </ScrollView>
+            </ScreenScrollView>
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

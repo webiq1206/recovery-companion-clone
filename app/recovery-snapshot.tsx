@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AlertTriangle, ArrowRight, Heart } from 'lucide-react-native';
@@ -62,7 +63,7 @@ export default function RecoverySnapshotScreen() {
         { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
       ]}
     >
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -126,7 +127,7 @@ export default function RecoverySnapshotScreen() {
           <Text style={styles.sectionLabel}>Recommended focus (next 14 days)</Text>
           <Text style={styles.focusText}>{focusRecommendation}</Text>
         </View>
-      </ScrollView>
+      </ScreenScrollView>
 
       <View style={styles.footer}>
         <Pressable

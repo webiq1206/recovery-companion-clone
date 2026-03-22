@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Animated,
   Dimensions,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import {
@@ -451,7 +451,7 @@ export default function RelapseDetectionScreen() {
           headerTintColor: Colors.text,
         }}
       />
-      <ScrollView
+      <ScreenScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -613,7 +613,7 @@ export default function RelapseDetectionScreen() {
 
           <View style={{ height: 40 }} />
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
     </>
   );
 }

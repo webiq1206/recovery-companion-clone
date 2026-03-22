@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Animated, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Animated, Pressable, Dimensions } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { Heart, ChevronLeft, ChevronRight, Quote } from 'lucide-react-native';
@@ -52,7 +53,7 @@ export default function MotivationPackageScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScreenScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Stack.Screen options={{ title: pkg.title }} />
 
       <View style={[styles.headerBanner, { backgroundColor: pkg.color + '20' }]}>
@@ -99,7 +100,7 @@ export default function MotivationPackageScreen() {
           </View>
         ))}
       </View>
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

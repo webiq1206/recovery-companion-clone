@@ -1,9 +1,11 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, TextInput,
+  View, Text, StyleSheet, Pressable, TextInput,
   Modal, Alert, Animated, KeyboardAvoidingView, Platform,
-  ScrollView,
 } from 'react-native';
+import type { FlatList } from 'react-native';
+import { ScreenFlatList } from '@/components/ScreenFlatList';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
@@ -211,7 +213,7 @@ export default function RoomSessionScreen() {
   };
 
   const renderInfoView = () => (
-    <ScrollView contentContainerStyle={styles.infoContent} showsVerticalScrollIndicator={false}>
+    <ScreenScrollView contentContainerStyle={styles.infoContent} showsVerticalScrollIndicator={false}>
       <View style={styles.infoSection}>
         <Text style={styles.infoSectionTitle}>About This Room</Text>
         <Text style={styles.infoDescription}>{room.description}</Text>
@@ -284,11 +286,11 @@ export default function RoomSessionScreen() {
         <LogOut size={16} color={Colors.danger} />
         <Text style={styles.leaveBtnText}>Leave Room</Text>
       </Pressable>
-    </ScrollView>
+    </ScreenScrollView>
   );
 
   const renderScheduleView = () => (
-    <ScrollView contentContainerStyle={styles.infoContent} showsVerticalScrollIndicator={false}>
+    <ScreenScrollView contentContainerStyle={styles.infoContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.scheduleHeader}>Upcoming Sessions</Text>
       {room.scheduledSessions.length === 0 ? (
         <View style={styles.emptySchedule}>
@@ -318,7 +320,7 @@ export default function RoomSessionScreen() {
           </View>
         ))
       )}
-    </ScrollView>
+    </ScreenScrollView>
   );
 
   return (
@@ -402,7 +404,7 @@ export default function RoomSessionScreen() {
             </Pressable>
           )}
 
-          <FlatList
+          <ScreenFlatList
             ref={flatListRef}
             data={room.messages}
             renderItem={renderMessageItem}

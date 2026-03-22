@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ShieldAlert, ShieldCheck, Shield, TrendingUp, AlertTriangle, ChevronRight } from 'lucide-react-native';
@@ -93,7 +94,7 @@ export default function ProtectionProfileScreen() {
         { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 },
       ]}
     >
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -170,7 +171,7 @@ export default function ProtectionProfileScreen() {
             </View>
           </View>
         </View>
-      </ScrollView>
+      </ScreenScrollView>
 
       <View style={styles.bottomRow}>
         <Pressable style={styles.primaryCta} onPress={handleStartPlan} testID="start-protection-plan">

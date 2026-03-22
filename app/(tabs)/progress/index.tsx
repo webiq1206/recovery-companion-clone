@@ -1,14 +1,15 @@
-import React, { useMemo, useRef, useEffect, useCallback, useState } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback, useState, Suspense, lazy } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Animated,
   Dimensions,
   Pressable,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import {
   Clock,
   TrendingUp,
@@ -41,13 +42,22 @@ import { usePledges } from '@/core/domains/usePledges';
 import { useRebuild } from '@/core/domains/useRebuild';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useRiskPrediction } from '@/providers/RiskPredictionProvider';
-import { DailyCheckIn } from '@/types';
 import { PremiumSectionOverlay } from '@/components/PremiumGate';
 import { getStabilityPhrase, getMoodPhrase, getCravingsPhrase } from '@/constants/emotionalRisk';
+import {
+  buildProgressStabilitySeries,
+  countNonNullScores,
+  type StabilityWindowDays,
+} from '@/utils/progressStabilitySeries';
+
+/** Load SVG chart only when Progress mounts — avoids native RNSVG init on cold start / other tabs. */
+const StabilityRollingChartLazy = lazy(() =>
+  import('@/components/progress/StabilityRollingChart').then((mod) => ({ default: mod.StabilityRollingChart })),
+);
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 72;
-const CHART_HEIGHT = 100;
+const CHART_HEIGHT = 112;
 
 const RECOVERY_STAGES = [
   { minDays: 0, label: 'Withdrawal', color: '#EF5350', desc: 'Your body is adjusting. Every hour counts.' },
@@ -165,6 +175,73 @@ function getStabilityStatusLabel(score: number): string {
   return 'High Risk';
 }
 
+const WINDOW_OPTIONS: StabilityWindowDays[] = [7, 14, 30];
+
+function ProgressStabilityChartCard({
+  windowDays,
+  onChangeWindow,
+  dates,
+  scores,
+  pointCount,
+  planCompletedSet,
+}: {
+  windowDays: StabilityWindowDays;
+  onChangeWindow: (d: StabilityWindowDays) => void;
+  dates: string[];
+  scores: (number | null)[];
+  pointCount: number;
+  planCompletedSet: Set<string>;
+}) {
+  return (
+    <View style={styles.chartCard} testID="progress-stability-chart-card">
+      <Text style={styles.chartTitle}>Rolling stability</Text>
+      <View style={styles.chartWindowRow}>
+        {WINDOW_OPTIONS.map((d) => {
+          const active = windowDays === d;
+          return (
+            <Pressable
+              key={d}
+              onPress={() => {
+                Haptics.selectionAsync();
+                onChangeWindow(d);
+              }}
+              style={[styles.chartWindowChip, active && styles.chartWindowChipActive]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={`${d} day chart`}
+            >
+              <Text style={[styles.chartWindowChipText, active && styles.chartWindowChipTextActive]}>{d}d</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {pointCount >= 2 && dates.length >= 2 ? (
+        <Suspense
+          fallback={
+            <View style={[styles.emptyChart, { height: CHART_HEIGHT + 36 }]}>
+              <ActivityIndicator color={Colors.primary} />
+            </View>
+          }
+        >
+          <StabilityRollingChartLazy
+            dates={dates}
+            scores={scores}
+            width={CHART_WIDTH}
+            height={CHART_HEIGHT}
+            color={Colors.primary}
+            planCompletedSet={planCompletedSet}
+            windowDays={windowDays}
+          />
+        </Suspense>
+      ) : (
+        <View style={styles.emptyChart}>
+          <Text style={styles.emptyChartText}>Complete daily check-ins on at least two days to see stability over time.</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 function StabilityTimelineScreen() {
   const router = useRouter();
   const { pledges } = usePledges();
@@ -177,26 +254,22 @@ function StabilityTimelineScreen() {
   const { timelineEvents } = useRelapse();
   const { trendLabel: riskTrendLabel, timeOfDayRisk } = useRiskPrediction();
 
-  // 30-day stability scores (oldest to newest for graph), with null for missing days
-  const thirtyDayData = useMemo(() => {
-    const today = new Date();
-    const dayKeys: string[] = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      dayKeys.push(d.toISOString().split('T')[0]);
-    }
-    const byDate = new Map<string, number>();
-    const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
-    const sorted = [...sourceCheckIns].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    sorted.forEach(c => {
-      const day = c.date;
-      if (dayKeys.includes(day)) byDate.set(day, c.stabilityScore);
-    });
-    return dayKeys.map(d => byDate.get(d) ?? null);
-  }, [centralDailyCheckIns, checkIns]);
+  const sourceCheckIns = useMemo(
+    () => (centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns),
+    [centralDailyCheckIns, checkIns],
+  );
 
-  const stabilityScoresForChart = useMemo(() => thirtyDayData.map(v => v ?? 50), [thirtyDayData]);
+  const [stabilityWindowDays, setStabilityWindowDays] = useState<StabilityWindowDays>(14);
+
+  const stabilitySeries = useMemo(
+    () => buildProgressStabilitySeries(sourceCheckIns, stabilityWindowDays),
+    [sourceCheckIns, stabilityWindowDays],
+  );
+
+  const stabilityPointCount = useMemo(
+    () => countNonNullScores(stabilitySeries.scores),
+    [stabilitySeries.scores],
+  );
 
   const dailyPlansCompleted = useMemo(() => {
     const today = new Date();
@@ -205,13 +278,12 @@ function StabilityTimelineScreen() {
       const d = new Date(today);
       d.setDate(d.getDate() - (29 - i));
       const dateStr = d.toISOString().split('T')[0];
-      const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
       const hasCheckIn = sourceCheckIns.some(c => c.date === dateStr);
       const hasPledge = pledges.some(p => p.date === dateStr);
       if (hasCheckIn || hasPledge) count++;
     }
     return count;
-  }, [centralDailyCheckIns, checkIns, pledges]);
+  }, [sourceCheckIns, pledges]);
 
   const relapseCount = centralProgress.relapseCount ?? (profile.recoveryProfile?.relapseCount ?? 0);
   const crisisActivationsCount = useMemo(() => {
@@ -219,7 +291,6 @@ function StabilityTimelineScreen() {
   }, [timelineEvents]);
 
   const sevenDayChange = useMemo(() => {
-    const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
     const scores = [...sourceCheckIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 7).map(c => c.stabilityScore);
     if (scores.length < 2) return 0;
     const recent = scores.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(3, scores.length);
@@ -227,7 +298,7 @@ function StabilityTimelineScreen() {
     if (older.length === 0) return 0;
     const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
     return Math.round(recent - olderAvg);
-  }, [centralDailyCheckIns, checkIns]);
+  }, [sourceCheckIns]);
 
   const weeklyPlansCompleted = useMemo(() => {
     const today = new Date();
@@ -236,11 +307,10 @@ function StabilityTimelineScreen() {
       const d = new Date(today);
       d.setDate(d.getDate() - (6 - i));
       const dateStr = d.toISOString().split('T')[0];
-      const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
       if (sourceCheckIns.some(c => c.date === dateStr) || pledges.some(p => p.date === dateStr)) count++;
     }
     return count;
-  }, [centralDailyCheckIns, checkIns, pledges]);
+  }, [sourceCheckIns, pledges]);
 
   const rebuildActionsCount = useMemo(() => rebuildData.habits.reduce((s, h) => s + (h.streak || 0), 0), [rebuildData.habits]);
 
@@ -251,13 +321,12 @@ function StabilityTimelineScreen() {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
-      const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
       const has = sourceCheckIns.some(c => c.date === dateStr) || pledges.some(p => p.date === dateStr);
       if (has) streak++;
       else break;
     }
     return streak;
-  }, [centralDailyCheckIns, checkIns, pledges]);
+  }, [sourceCheckIns, pledges]);
 
   const badge7CheckIns = consistentCheckInDays >= 7;
   const badge14NoCrisis = consistentCheckInDays >= 14 || crisisActivationsCount === 0;
@@ -270,7 +339,7 @@ function StabilityTimelineScreen() {
     const startStr = start.toISOString().split('T')[0];
     const endStr = today.toISOString().split('T')[0];
 
-    const recentCheckIns = checkIns
+    const recentCheckIns = sourceCheckIns
       .filter(c => c.date >= startStr && c.date <= endStr)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -361,36 +430,33 @@ function StabilityTimelineScreen() {
       completedActions,
       narrative: narrativeParts.join(' '),
     };
-  }, [checkIns, pledges, timeOfDayRisk, riskTrendLabel]);
+  }, [sourceCheckIns, pledges, timeOfDayRisk, riskTrendLabel]);
 
   const planCompletedSet = useMemo(() => {
     const set = new Set<string>();
-    const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
     sourceCheckIns.forEach(c => set.add(c.date));
     pledges.forEach(p => set.add(p.date));
     return set;
-  }, [centralDailyCheckIns, checkIns, pledges]);
+  }, [sourceCheckIns, pledges]);
 
   const uniqueCheckInDays = useMemo(() => {
-    const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
     return new Set(sourceCheckIns.map((c) => c.date)).size;
-  }, [centralDailyCheckIns, checkIns]);
+  }, [sourceCheckIns]);
 
   const isEarlyDays = uniqueCheckInDays < 7;
 
   const latestScore = useMemo(() => {
-    const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
     if (sourceCheckIns.length === 0) return 50;
     const sorted = [...sourceCheckIns].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
     return sorted[0].stabilityScore;
-  }, [centralDailyCheckIns, checkIns]);
+  }, [sourceCheckIns]);
 
   if (isEarlyDays) {
     const soberDate = new Date((centralProfile ?? profile).soberDate);
     return (
-      <ScrollView
+      <ScreenScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -483,18 +549,29 @@ function StabilityTimelineScreen() {
           </View>
         </View>
 
+        {uniqueCheckInDays >= 2 ? (
+          <ProgressStabilityChartCard
+            windowDays={stabilityWindowDays}
+            onChangeWindow={setStabilityWindowDays}
+            dates={stabilitySeries.dates}
+            scores={stabilitySeries.scores}
+            pointCount={stabilityPointCount}
+            planCompletedSet={planCompletedSet}
+          />
+        ) : null}
+
         <View style={earlyStyles.reinforcementCard}>
           <Sparkles size={16} color={Colors.primary} />
           <Text style={earlyStyles.reinforcementText}>
             {getReinforcementMessage(daysSober)}
           </Text>
         </View>
-      </ScrollView>
+      </ScreenScrollView>
     );
   }
 
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -519,22 +596,14 @@ function StabilityTimelineScreen() {
         <Text style={styles.summaryLabel}>{weeklyInsights.narrative}</Text>
       </View>
 
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>30-day stability</Text>
-        {stabilityScoresForChart.length >= 2 ? (
-          <StabilityTimelineLineChart
-            data={stabilityScoresForChart}
-            color={Colors.primary}
-            planCompletedSet={planCompletedSet}
-            relapseCount={relapseCount}
-            crisisCount={crisisActivationsCount}
-          />
-        ) : (
-          <View style={styles.emptyChart}>
-            <Text style={styles.emptyChartText}>Complete daily check-ins to see your stability over time.</Text>
-          </View>
-        )}
-      </View>
+      <ProgressStabilityChartCard
+        windowDays={stabilityWindowDays}
+        onChangeWindow={setStabilityWindowDays}
+        dates={stabilitySeries.dates}
+        scores={stabilitySeries.scores}
+        pointCount={stabilityPointCount}
+        planCompletedSet={planCompletedSet}
+      />
 
       <View style={styles.momentumCard}>
         <Text style={styles.momentumTitle}>Momentum summary</Text>
@@ -605,148 +674,11 @@ function StabilityTimelineScreen() {
       </Pressable>
 
       <View style={{ height: 40 }} />
-    </ScrollView>
-  );
-}
-
-function StabilityTimelineLineChart({
-  data,
-  color,
-  planCompletedSet,
-  relapseCount,
-  crisisCount,
-}: {
-  data: number[];
-  color: string;
-  planCompletedSet: Set<string>;
-  relapseCount: number;
-  crisisCount: number;
-}) {
-  const points = data.length >= 2 ? data : [];
-  if (points.length < 2) {
-    return (
-      <View style={[chartStyles.container, { height: CHART_HEIGHT, alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={{ color: Colors.textMuted, fontSize: 12 }}>Need more data</Text>
-      </View>
-    );
-  }
-  const max = Math.max(...points, 1);
-  const min = Math.min(...points, 0);
-  const range = max - min || 1;
-  const stepX = CHART_WIDTH / (points.length - 1);
-  const today = new Date();
-
-  return (
-    <View style={[chartStyles.container, { height: CHART_HEIGHT + 24 }]}>
-      <View style={{ height: CHART_HEIGHT, width: CHART_WIDTH, position: 'relative' }}>
-        {points.map((val, i) => {
-          if (i === points.length - 1) return null;
-          const x1 = i * stepX;
-          const y1 = CHART_HEIGHT - ((val - min) / range) * (CHART_HEIGHT - 8) - 4;
-          const x2 = (i + 1) * stepX;
-          const y2 = CHART_HEIGHT - ((points[i + 1] - min) / range) * (CHART_HEIGHT - 8) - 4;
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-          return (
-            <View
-              key={`line-${i}`}
-              style={{
-                position: 'absolute',
-                left: x1,
-                top: y1,
-                width: length,
-                height: 2.5,
-                backgroundColor: color,
-                borderRadius: 1.5,
-                transform: [{ rotate: `${angle}deg` }],
-                transformOrigin: 'left center',
-                opacity: 0.8,
-              }}
-            />
-          );
-        })}
-        {points.map((val, i) => {
-          const x = i * stepX;
-          const y = CHART_HEIGHT - ((val - min) / range) * (CHART_HEIGHT - 8) - 4;
-          const dayOffset = points.length - 1 - i;
-          const d = new Date(today);
-          d.setDate(d.getDate() - dayOffset);
-          const dateStr = d.toISOString().split('T')[0];
-          const planDone = planCompletedSet.has(dateStr);
-          return (
-            <View key={`dot-${i}`}>
-              <View
-                style={{
-                  position: 'absolute',
-                  left: x - 4,
-                  top: y - 4,
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: i === points.length - 1 ? color : 'transparent',
-                  borderWidth: 2,
-                  borderColor: color,
-                }}
-              />
-              {planDone && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    left: x - 5,
-                    top: CHART_HEIGHT - 2,
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: '#4CAF50',
-                  }}
-                />
-              )}
-            </View>
-          );
-        })}
-      </View>
-      <View style={[chartStyles.labelsRow, { marginTop: 8 }]}>
-        <Text style={chartStyles.label}>30d ago</Text>
-        <Text style={[chartStyles.label, { flex: 1, textAlign: 'center' }]}>Stability score</Text>
-        <Text style={chartStyles.label}>Today</Text>
-      </View>
-    </View>
+    </ScreenScrollView>
   );
 }
 
 export default StabilityTimelineScreen;
-
-const chartStyles = StyleSheet.create({
-  container: {
-    marginTop: 12,
-  },
-  barsRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: CHART_HEIGHT,
-    gap: 4,
-  },
-  barWrapper: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    height: CHART_HEIGHT,
-  },
-  bar: {
-    borderRadius: 4,
-  },
-  labelsRow: {
-    flexDirection: 'row',
-    marginTop: 6,
-  },
-  label: {
-    fontSize: 9,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-});
 
 const styles = StyleSheet.create({
   container: {
@@ -957,6 +889,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.text,
+  },
+  chartWindowRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 2,
+  },
+  chartWindowChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  chartWindowChipActive: {
+    backgroundColor: 'rgba(46, 196, 182, 0.15)',
+    borderColor: Colors.primary,
+  },
+  chartWindowChipText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.textMuted,
+  },
+  chartWindowChipTextActive: {
+    color: Colors.primary,
   },
   emptyChart: {
     height: 80,

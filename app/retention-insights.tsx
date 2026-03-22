@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Animated,
   Pressable,
   Dimensions,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import {
   Leaf,
@@ -338,7 +338,7 @@ export default function RetentionInsightsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Recovery Insights' }} />
-      <ScrollView
+      <ScreenScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -455,7 +455,7 @@ export default function RetentionInsightsScreen() {
         )}
 
         <View style={{ height: 50 }} />
-      </ScrollView>
+      </ScreenScrollView>
     </>
   );
 }

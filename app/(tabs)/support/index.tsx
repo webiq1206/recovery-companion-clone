@@ -8,6 +8,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import {
   Phone,
@@ -260,7 +261,7 @@ export default function SupportScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Support & Resources' }} />
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -330,7 +331,7 @@ export default function SupportScreen() {
             If you are in immediate danger, please call 911.
           </Text>
         </View>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

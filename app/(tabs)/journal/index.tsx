@@ -1,5 +1,7 @@
 import React, { useCallback, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { ScreenFlatList } from '@/components/ScreenFlatList';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useRouter } from 'expo-router';
 import { Plus, BookOpen, Trash2, Lock, CheckCircle, BookMarked, PenLine, ChevronRight, Crown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -150,7 +152,7 @@ export default function JournalWorkbookScreen() {
 
       {activeTab === 'journal' ? (
         <View style={styles.journalContainer}>
-          <FlatList
+          <ScreenFlatList
             data={journal}
             renderItem={renderJournalItem}
             keyExtractor={(item) => item.id}
@@ -167,7 +169,7 @@ export default function JournalWorkbookScreen() {
           </Pressable>
         </View>
       ) : (
-        <ScrollView style={styles.workbookContainer} contentContainerStyle={styles.workbookContent} showsVerticalScrollIndicator={false}>
+        <ScreenScrollView style={styles.workbookContainer} contentContainerStyle={styles.workbookContent} showsVerticalScrollIndicator={false}>
           {!hasPremium ? (
             <Pressable
               style={({ pressed }) => [styles.upgradeBanner, pressed && { opacity: 0.85 }]}
@@ -257,7 +259,7 @@ export default function JournalWorkbookScreen() {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </ScreenScrollView>
       )}
     </View>
   );

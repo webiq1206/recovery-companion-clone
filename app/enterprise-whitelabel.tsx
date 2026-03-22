@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   TextInput,
   Animated,
@@ -11,6 +10,7 @@ import {
   Alert,
   Switch,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import {
   Palette,
@@ -125,7 +125,7 @@ export default function EnterpriseWhiteLabel() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'White Label', headerStyle: { backgroundColor: Colors.background }, headerTintColor: Colors.text }} />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScreenScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim }}>
           <View style={styles.enableRow}>
             <View>
@@ -343,7 +343,7 @@ export default function EnterpriseWhiteLabel() {
 
           <View style={{ height: 40 }} />
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Modal,
   TextInput,
@@ -11,6 +10,7 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
 import {
   Building2,
@@ -152,7 +152,7 @@ export default function EnterpriseDashboard() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScreenScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
           <View style={styles.header}>
             <Pressable style={styles.backBtn} onPress={() => router.back()} testID="back-btn">
@@ -334,7 +334,7 @@ export default function EnterpriseDashboard() {
 
           <View style={{ height: 40 }} />
         </Animated.View>
-      </ScrollView>
+      </ScreenScrollView>
 
       <Modal visible={showAddMember} transparent animationType="slide">
         <View style={styles.modalOverlay}>

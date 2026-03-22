@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Wind, Timer, BookOpen } from 'lucide-react-native';
@@ -64,7 +65,7 @@ export default function ToolsScreen() {
         Quick, interactive tools to help you calm down, ride out urges, and feel supported.
       </Text>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -104,7 +105,7 @@ export default function ToolsScreen() {
             </View>
           );
         })}
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

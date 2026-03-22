@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
 import { AlertTriangle, BookOpenCheck, ChevronRight, Shield, Users } from 'lucide-react-native';
@@ -159,7 +160,7 @@ export default function RelapsePlanScreen() {
         })}
       </View>
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -293,7 +294,7 @@ export default function RelapsePlanScreen() {
             />
           </View>
         )}
-      </ScrollView>
+      </ScreenScrollView>
 
       <View style={styles.footer}>
         <Pressable

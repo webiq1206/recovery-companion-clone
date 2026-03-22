@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { ShieldAlert, Anchor, Hammer, Trophy, Info, ArrowRight, Zap, BarChart3, Brain, Heart, Clock, TrendingUp } from 'lucide-react-native';
 import Colors from '@/constants/colors';
@@ -39,7 +40,7 @@ function SignalRow({ label, description }: { label: string; description: string 
 
 export default function RecoveryStagesExplainedScreen() {
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -269,7 +270,7 @@ export default function RecoveryStagesExplainedScreen() {
       </View>
 
       <View style={styles.bottomSpacer} />
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

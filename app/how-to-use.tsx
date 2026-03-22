@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Animated,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import {
@@ -192,7 +192,7 @@ export default function HowToUseScreen() {
           headerTintColor: Colors.text,
         }}
       />
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -397,7 +397,7 @@ export default function HowToUseScreen() {
         </View>
 
         <View style={styles.bottomSpacer} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

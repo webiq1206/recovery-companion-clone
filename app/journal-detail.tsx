@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import Colors from '@/constants/colors';
 import { useJournal } from '@/core/domains/useJournal';
@@ -35,7 +36,7 @@ export default function JournalDetailScreen() {
   });
 
   return (
-    <ScrollView
+    <ScreenScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -54,7 +55,7 @@ export default function JournalDetailScreen() {
       <View style={styles.divider} />
 
       <Text style={styles.bodyText}>{entry.content}</Text>
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

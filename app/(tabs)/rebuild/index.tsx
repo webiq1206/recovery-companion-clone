@@ -3,13 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Animated,
   Platform,
   Dimensions,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useRouter as useRebuildRouter } from 'expo-router';
 import { Pressable } from 'react-native';
 import {
@@ -758,7 +758,7 @@ export default function RebuildScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ title: 'Rebuild', headerShown: true }} />
 
-      <ScrollView
+      <ScreenScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -834,7 +834,7 @@ export default function RebuildScreen() {
         )}
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </ScreenScrollView>
 
       <RebuildEncouragementToast message={encouragementMessage} fade={encouragementFade} Colors={Colors} styles={styles} />
 

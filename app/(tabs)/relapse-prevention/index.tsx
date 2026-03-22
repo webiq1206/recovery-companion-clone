@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ShieldAlert, AlertTriangle, Target, FileText, Activity } from 'lucide-react-native';
@@ -11,7 +12,7 @@ export default function RelapsePreventionTabScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
@@ -110,7 +111,7 @@ export default function RelapsePreventionTabScreen() {
             </Text>
           </View>
         </Pressable>
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   TextInput,
   Alert,
@@ -11,6 +10,7 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
 import {
   Shield,
@@ -306,7 +306,7 @@ export default function ComplianceModeScreen() {
     return (
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
         <Stack.Screen options={{ title: 'Compliance Mode' }} />
-        <ScrollView contentContainerStyle={styles.disabledContent} showsVerticalScrollIndicator={false}>
+        <ScreenScrollView contentContainerStyle={styles.disabledContent} showsVerticalScrollIndicator={false}>
           <View style={styles.disabledHero}>
             <View style={styles.shieldCircle}>
               <Shield size={40} color={Colors.textMuted} />
@@ -359,7 +359,7 @@ export default function ComplianceModeScreen() {
           <Text style={styles.footerNote}>
             You can disable this at any time from settings.
           </Text>
-        </ScrollView>
+        </ScreenScrollView>
 
         <Modal visible={showSetup} animationType="slide" transparent onRequestClose={() => setShowSetup(false)}>
           <View style={styles.modalOverlay}>
@@ -372,7 +372,7 @@ export default function ComplianceModeScreen() {
               </View>
               <Text style={styles.modalSubtitle}>Enter your court order details</Text>
 
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <ScreenScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={styles.inputLabel}>Case ID *</Text>
                 <TextInput
                   style={styles.input}
@@ -425,7 +425,7 @@ export default function ComplianceModeScreen() {
                 >
                   <Text style={styles.setupBtnText}>Activate Compliance Mode</Text>
                 </Pressable>
-              </ScrollView>
+              </ScreenScrollView>
             </View>
           </View>
         </Modal>
@@ -436,7 +436,7 @@ export default function ComplianceModeScreen() {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Stack.Screen options={{ title: 'Compliance Mode' }} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScreenScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.statusHeader}>
           <View style={styles.statusBadge}>
             <View style={styles.statusDot} />
@@ -660,7 +660,7 @@ export default function ComplianceModeScreen() {
             Compliance data is stored only on this device. Share reports with your officer as needed.
           </Text>
         </View>
-      </ScrollView>
+      </ScreenScrollView>
 
       <Modal visible={showExcuseModal} animationType="fade" transparent onRequestClose={() => setShowExcuseModal(false)}>
         <View style={styles.modalOverlay}>
@@ -703,7 +703,7 @@ export default function ComplianceModeScreen() {
               </Pressable>
             </View>
             <Text style={styles.modalSubtitle}>{recentLogs.length} entries</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScreenScrollView showsVerticalScrollIndicator={false}>
               {recentLogs.length === 0 ? (
                 <View style={styles.emptyLog}>
                   <FileText size={32} color={Colors.textMuted} />
@@ -729,7 +729,7 @@ export default function ComplianceModeScreen() {
                   );
                 })
               )}
-            </ScrollView>
+            </ScreenScrollView>
           </View>
         </View>
       </Modal>

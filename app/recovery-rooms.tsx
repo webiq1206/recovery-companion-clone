@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, TextInput,
+  View, Text, StyleSheet, Pressable, TextInput,
   Modal, Alert, Animated, ScrollView, Platform,
 } from 'react-native';
+import { ScreenFlatList } from '@/components/ScreenFlatList';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -337,7 +338,7 @@ export default function RecoveryRoomsScreen() {
   const renderContent = () => {
     if (viewMode === 'sessions') {
       return (
-        <FlatList
+        <ScreenFlatList
           data={upcomingSessions}
           renderItem={renderSessionCard}
           keyExtractor={item => item.id}
@@ -355,7 +356,7 @@ export default function RecoveryRoomsScreen() {
     }
 
     return (
-      <FlatList
+      <ScreenFlatList
         data={filteredRooms}
         renderItem={renderRoomCard}
         keyExtractor={item => item.id}

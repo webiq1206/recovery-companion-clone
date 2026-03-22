@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Animated, LayoutChangeEvent } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, Animated, LayoutChangeEvent, type ScrollView } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HandHeart, Check, Flame, Sunrise, Shield, Star, Award, Trophy, Crown, Gem, Medal, Infinity, Mountain, Sun, Lock, ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -31,7 +32,7 @@ export default function PledgesScreen() {
   const [note, setNote] = useState<string>('');
   const [milestonesExpanded, setMilestonesExpanded] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<'pledge' | 'milestones'>('pledge');
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollView | null>(null);
   const sectionOffsets = useRef<{ pledge: number; milestones: number }>({ pledge: 0, milestones: 0 });
 
   const nextMilestone = useMemo(() => {
@@ -195,7 +196,7 @@ export default function PledgesScreen() {
 
   if (todayPledge) {
     return (
-      <ScrollView
+      <ScreenScrollView
         ref={scrollRef}
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -247,12 +248,12 @@ export default function PledgesScreen() {
         ))}
         <View onLayout={(e: LayoutChangeEvent) => { sectionOffsets.current.milestones = e.nativeEvent.layout.y; }} />
         {renderMilestonesSection()}
-      </ScrollView>
+      </ScreenScrollView>
     );
   }
 
   return (
-    <ScrollView
+    <ScreenScrollView
       ref={scrollRef}
       style={styles.container}
       contentContainerStyle={styles.content}
@@ -326,7 +327,7 @@ export default function PledgesScreen() {
 
       <View onLayout={(e: LayoutChangeEvent) => { sectionOffsets.current.milestones = e.nativeEvent.layout.y; }} />
       {renderMilestonesSection()}
-    </ScrollView>
+    </ScreenScrollView>
   );
 }
 

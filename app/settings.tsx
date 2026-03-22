@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Switch,
   Alert,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
 import {
   Eye,
@@ -117,7 +117,7 @@ export default function SettingsScreen() {
           headerTintColor: Colors.text,
         }}
       />
-      <ScrollView
+      <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -698,7 +698,7 @@ export default function SettingsScreen() {
         </Pressable>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </ScreenScrollView>
     </View>
   );
 }
