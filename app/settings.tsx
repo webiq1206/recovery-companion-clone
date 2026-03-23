@@ -6,6 +6,9 @@ import {
   Pressable,
   Switch,
   Alert,
+  Linking,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
@@ -25,6 +28,7 @@ import {
   PauseCircle,
   PlayCircle,
   Gauge,
+  Crown,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -53,7 +57,11 @@ export default function SettingsScreen() {
   const { profile, updateProfile } = useUser();
   const { resetAllData } = useAppMeta();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
-  const { isPremium, cancelSubscription } = useSubscription();
+  const {
+    isPremium,
+    restoreMutation,
+    activatePremiumMutation,
+  } = useSubscription();
   const {
     intensity,
     setIntensity,
@@ -108,6 +116,53 @@ export default function SettingsScreen() {
     );
   }, [resetAllData]);
 
+  const handleRestorePurchases = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    restoreMutation.mutate(undefined, {
+      onSuccess: (result) => {
+        if (result.restored) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Alert.alert('Restored', 'Your premium access has been restored.');
+        } else {
+          activatePremiumMutation.mutate(undefined, {
+            onSuccess: () => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Premium Activated', 'Your premium access has been restored.');
+            },
+            onError: () => {
+              Alert.alert('No Purchase Found', 'We couldn\'t find a previous purchase to restore.');
+            },
+          });
+        }
+      },
+      onError: () => {
+        activatePremiumMutation.mutate(undefined, {
+          onSuccess: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert('Premium Activated', 'Your premium access has been restored.');
+          },
+          onError: () => {
+            Alert.alert('Error', 'Unable to restore purchases. Please try again.');
+          },
+        });
+      },
+    });
+  }, [restoreMutation, activatePremiumMutation]);
+
+  const openManageSubscription = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS === 'ios') {
+      Linking.openURL('https://apps.apple.com/account/subscriptions');
+    } else if (Platform.OS === 'android') {
+      Linking.openURL('https://play.google.com/store/account/subscriptions');
+    } else {
+      Alert.alert(
+        'Manage subscription',
+        'Use the App Store or Google Play on your phone to manage your subscription.',
+      );
+    }
+  }, []);
+
   return (
     <View style={styles.wrapper}>
       <Stack.Screen
@@ -122,8 +177,128 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* Subscription */}
+        <Text style={styles.sectionLabel}>SUBSCRIPTION</Text>
+        <View style={styles.groupCard}>
+          <View style={styles.groupRow}>
+            <View style={styles.groupRowLeft}>
+              <View
+                style={[
+                  styles.settingIcon,
+                  { backgroundColor: isPremium ? 'rgba(212,165,116,0.15)' : 'rgba(46,196,182,0.12)' },
+                ]}
+              >
+                {isPremium ? (
+                  <Crown size={17} color="#D4A574" />
+                ) : (
+                  <Sparkles size={17} color={Colors.primary} />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingLabel}>
+                  {isPremium ? 'Premium' : 'Freemium (Free)'}
+                </Text>
+                <Text style={styles.settingValue}>
+                  {isPremium
+                    ? 'Full access to AI, programs, rooms & more'
+                    : 'Core tools free — upgrade for premium features'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.groupSeparator} />
+
+          <Pressable
+            style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/subscription-plans' as any);
+            }}
+            testID="settings-plans-benefits"
+          >
+            <View style={styles.settingLeft}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingLabel}>Plans & benefits</Text>
+                <Text style={styles.settingValue}>
+                  See Freemium vs Premium side by side
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={16} color={Colors.textMuted} />
+          </Pressable>
+
+          {!isPremium ? (
+            <>
+              <View style={styles.groupSeparator} />
+              <Pressable
+                style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/premium-upgrade' as any);
+                }}
+                testID="settings-upgrade"
+              >
+                <View style={styles.settingLeft}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.settingLabel}>Upgrade to Premium</Text>
+                    <Text style={styles.settingValue}>Pricing & subscribe</Text>
+                  </View>
+                </View>
+                <ChevronRight size={16} color={Colors.textMuted} />
+              </Pressable>
+            </>
+          ) : null}
+
+          <View style={styles.groupSeparator} />
+          <Pressable
+            style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
+            onPress={openManageSubscription}
+          >
+            <View style={styles.settingLeft}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingLabel}>Manage in store</Text>
+                <Text style={styles.settingValue}>
+                  {Platform.OS === 'ios'
+                    ? 'App Store subscriptions'
+                    : Platform.OS === 'android'
+                      ? 'Google Play subscriptions'
+                      : 'Subscription management'}
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={16} color={Colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.groupSeparator} />
+          <Pressable
+            style={({ pressed }) => [
+              styles.settingRow,
+              pressed && { opacity: 0.85 },
+              restoreMutation.isPending && { opacity: 0.6 },
+            ]}
+            onPress={handleRestorePurchases}
+            disabled={restoreMutation.isPending}
+            testID="settings-restore"
+          >
+            <View style={styles.settingLeft}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingLabel}>Restore purchases</Text>
+                <Text style={styles.settingValue}>
+                  If you subscribed on another device
+                </Text>
+              </View>
+            </View>
+            {restoreMutation.isPending ? (
+              <ActivityIndicator size="small" color={Colors.textSecondary} />
+            ) : (
+              <ChevronRight size={16} color={Colors.textMuted} />
+            )}
+          </Pressable>
+        </View>
+
         {/* Privacy & Identity */}
-        <Text style={styles.sectionLabel}>PRIVACY & IDENTITY</Text>
+        <Text style={[styles.sectionLabel, { marginTop: 28 }]}>PRIVACY & IDENTITY</Text>
         <View style={styles.groupCard}>
           <View style={styles.groupRow}>
             <View style={styles.groupRowLeft}>

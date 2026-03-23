@@ -66,25 +66,17 @@ const DEFAULT_STATE: SubscriptionState = {
 
 const FREE_FEATURES: Set<PremiumFeature> = new Set([]);
 
-const PREMIUM_FEATURES: Set<PremiumFeature> = new Set([
-  'predictive_engine',
-  'advanced_analytics',
-  'deep_exercises',
-  'ai_companion',
-  'rebuild_programs',
-  'therapist_export',
-  'recovery_rooms',
-  'advanced_accountability',
-]);
-
+/** All premium-only keys; see `constants/subscriptionPlans.ts` for marketing copy and tier matrix. */
 const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: string }> = {
   predictive_engine: {
     title: 'Predictive Relapse Engine',
-    description: 'AI-powered early warning system that detects vulnerability patterns before they escalate.',
+    description:
+      'Full Premium early-warning engine (bundled with advanced analytics). Core charts and insights may still appear on Freemium; deep predictive modeling requires Premium.',
   },
   advanced_analytics: {
     title: 'Advanced Analytics',
-    description: 'Deep insights into emotional growth, trigger reduction, and recovery trajectory.',
+    description:
+      'Deep trajectory analytics and trend surfaces beyond core progress. Works with the predictive engine for subscribers.',
   },
   deep_exercises: {
     title: 'Deep Emotional Exercises',

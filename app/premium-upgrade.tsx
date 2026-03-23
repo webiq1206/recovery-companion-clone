@@ -14,14 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Crown,
   ArrowLeft,
-  Shield,
-  Brain,
-  BarChart3,
-  Heart,
-  Hammer,
-  FileText,
-  Users,
-  ShieldCheck,
   Check,
   Sparkles,
   Zap,
@@ -31,67 +23,12 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
+import {
+  FREEMIUM_HIGHLIGHTS,
+  FREEMIUM_SECTION_TITLE,
+  PREMIUM_FEATURE_CARDS,
+} from '@/constants/subscriptionPlans';
 import { useSubscription } from '@/providers/SubscriptionProvider';
-
-const PREMIUM_FEATURES = [
-  {
-    icon: Brain,
-    title: 'AI Adaptive Guidance',
-    desc: 'Personalized companion that learns your patterns and adapts support to your recovery stage.',
-    color: '#7C9AE0',
-  },
-  {
-    icon: Shield,
-    title: 'Predictive Relapse Engine',
-    desc: 'Early warning system that detects vulnerability before it escalates.',
-    color: '#E07C7C',
-  },
-  {
-    icon: BarChart3,
-    title: 'Advanced Analytics',
-    desc: 'Deep insights into emotional growth, trigger trends, and stability trajectory.',
-    color: '#2EC4B6',
-  },
-  {
-    icon: Heart,
-    title: 'Deep Emotional Exercises',
-    desc: 'Guided therapeutic exercises for processing emotions and building inner strength.',
-    color: '#E0A07C',
-  },
-  {
-    icon: Hammer,
-    title: 'Life Rebuild Programs',
-    desc: 'Structured habit replacement, routine building, and identity reconstruction tools.',
-    color: '#7CE0A0',
-  },
-  {
-    icon: Users,
-    title: 'Recovery Rooms',
-    desc: 'Join moderated small-group sessions with peers on similar journeys.',
-    color: '#C07CE0',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Advanced Accountability',
-    desc: 'Drift alerts, partner connections, and commitment contract analytics.',
-    color: '#E0D47C',
-  },
-  {
-    icon: FileText,
-    title: 'Therapist Export Tools',
-    desc: 'Generate progress reports and summaries to share with your care team.',
-    color: '#7CBFE0',
-  },
-];
-
-const FREE_FEATURES = [
-  'Crisis tools & emergency support',
-  'Daily sobriety tracking',
-  'Stability score monitoring',
-  'Basic journal entries',
-  'Pledge & milestone tracking',
-  'Community connection',
-];
 
 interface PlanOption {
   id: string;
@@ -137,7 +74,7 @@ const FALLBACK_PLANS: PlanOption[] = [
   },
 ];
 
-const FeatureItem = React.memo(({ item, index }: { item: typeof PREMIUM_FEATURES[0]; index: number }) => {
+const FeatureItem = React.memo(({ item, index }: { item: (typeof PREMIUM_FEATURE_CARDS)[number]; index: number }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
@@ -509,9 +446,9 @@ export default function PremiumUpgradeScreen() {
         <View style={styles.freeSection}>
           <View style={styles.freeLabelRow}>
             <Sparkles size={14} color={Colors.primary} />
-            <Text style={styles.freeSectionTitle}>Always Free</Text>
+            <Text style={styles.freeSectionTitle}>{FREEMIUM_SECTION_TITLE}</Text>
           </View>
-          {FREE_FEATURES.map((feat, i) => (
+          {FREEMIUM_HIGHLIGHTS.map((feat, i) => (
             <View key={i} style={styles.freeItem}>
               <Check size={14} color={Colors.primary} strokeWidth={3} />
               <Text style={styles.freeItemText}>{feat}</Text>
@@ -524,7 +461,7 @@ export default function PremiumUpgradeScreen() {
             <Crown size={14} color="#D4A574" />
             <Text style={styles.premiumSectionTitle}>Premium Features</Text>
           </View>
-          {PREMIUM_FEATURES.map((item, index) => (
+          {PREMIUM_FEATURE_CARDS.map((item, index) => (
             <FeatureItem key={index} item={item} index={index} />
           ))}
         </View>

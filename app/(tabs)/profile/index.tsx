@@ -38,7 +38,7 @@ export default function ProfileScreen() {
   const centralProgress = useAppStore((s) => s.progress);
   const logRelapseToCentralStore = useAppStore.use.logRelapse();
   const { growthDimensions, overallGrowthScore, notificationPreferences, updateNotificationPrefs, streak } = useEngagement();
-  const { isPremium, cancelSubscription } = useSubscription();
+  const { isPremium } = useSubscription();
   const {
     intensity,
     setIntensity,
@@ -305,6 +305,63 @@ export default function ProfileScreen() {
           </View>
         )}
       </Animated.View>
+
+      {!isPremium ? (
+        <View style={styles.upgradeRow}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <Sparkles size={14} color={Colors.primary} />
+              <Text style={styles.upgradeTitle}>Freemium</Text>
+            </View>
+            <Text style={styles.upgradeSubtitle}>
+              Core recovery tools are free. Compare plans or upgrade for AI, programs, and more.
+            </Text>
+          </View>
+          <View style={{ gap: 8 }}>
+            <Pressable
+              style={({ pressed }) => [styles.comparePlansBtn, pressed && { opacity: 0.85 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/subscription-plans' as any);
+              }}
+              testID="profile-compare-plans"
+            >
+              <Text style={styles.comparePlansBtnText}>Compare</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.upgradePremiumBtn, pressed && { opacity: 0.85 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/premium-upgrade' as any);
+              }}
+              testID="profile-upgrade-premium"
+            >
+              <Crown size={14} color="#1a1a1a" />
+              <Text style={styles.upgradePremiumBtnText}>Upgrade</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.subscriptionCard}>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Crown size={20} color="#D4A574" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.upgradeTitle}>Premium active</Text>
+              <Text style={styles.upgradeSubtitle}>Thank you for supporting your recovery.</Text>
+            </View>
+          </View>
+          <Pressable
+            style={({ pressed }) => [styles.manageSub, pressed && { opacity: 0.85 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/subscription-plans' as any);
+            }}
+            testID="profile-plans-link"
+          >
+            <Text style={styles.manageSubText}>Plans</Text>
+          </Pressable>
+        </View>
+      )}
 
       {/* Recovery Stage */}
       <View style={styles.stageCard}>
@@ -1297,6 +1354,44 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderWidth: 1,
     borderColor: 'rgba(212,165,116,0.2)',
+  },
+  upgradeTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  upgradeSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 16,
+  },
+  comparePlansBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: Colors.surface,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  comparePlansBtnText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  upgradePremiumBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#D4A574',
+  },
+  upgradePremiumBtnText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#1a1a1a',
   },
   dangerRow: {
     flexDirection: 'row',

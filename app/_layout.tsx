@@ -76,6 +76,16 @@ function RootLayoutNav() {
         <Stack.Screen name="recovery-rooms" options={{ title: 'Recovery Rooms' }} />
         <Stack.Screen name="room-session" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
         <Stack.Screen name="premium-upgrade" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
+        <Stack.Screen
+          name="subscription-plans"
+          options={{
+            title: 'Plans & benefits',
+            presentation: 'modal',
+            animation: modalAnimation,
+            headerStyle: { backgroundColor: Colors.background },
+            headerTintColor: Colors.text,
+          }}
+        />
         <Stack.Screen name="how-to-use" options={{ title: 'How to Use', animation: modalAnimation }} />
         <Stack.Screen name="relapse-detection" options={{ title: 'Relapse Detection', animation: defaultAnimation }} />
         <Stack.Screen name="provider-portal" options={{ title: 'Provider Portal', animation: defaultAnimation }} />
