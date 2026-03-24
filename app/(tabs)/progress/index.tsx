@@ -30,6 +30,17 @@ import {
   Sunset,
   CloudMoon,
   Check,
+  Trophy,
+  Crown,
+  Gem,
+  Medal,
+  Infinity,
+  Mountain,
+  Star,
+  Award,
+  Flame,
+  Sunrise,
+  Lock,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -44,6 +55,7 @@ import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useRiskPrediction } from '@/providers/RiskPredictionProvider';
 import { PremiumSectionOverlay } from '@/components/PremiumGate';
 import { getStabilityPhrase, getMoodPhrase, getCravingsPhrase } from '@/constants/emotionalRisk';
+import { MILESTONE_DATA } from '@/constants/milestones';
 import {
   buildProgressStabilitySeries,
   countNonNullScores,
@@ -148,14 +160,6 @@ interface TriggerPatternInsight {
   description: string;
 }
 
-const EARLY_MILESTONES = [
-  { day: 1, label: 'Day 1', message: 'You started. That decision alone is powerful.' },
-  { day: 3, label: '3 Days', message: 'You made it through the hardest beginning.' },
-  { day: 7, label: '1 Week', message: 'A full week of choosing yourself.' },
-  { day: 14, label: '2 Weeks', message: 'Real patterns are forming.' },
-  { day: 30, label: '1 Month', message: "A month of building something new." },
-];
-
 const EARLY_ENCOURAGEMENT: Record<string, string> = {
   'day1': "Every journey starts with a single step. You've taken yours.",
   'day2-3': "The hardest days are the first ones. You're still here.",
@@ -176,6 +180,20 @@ function getStabilityStatusLabel(score: number): string {
 }
 
 const WINDOW_OPTIONS: StabilityWindowDays[] = [7, 14, 30];
+const ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
+  sunrise: Sunrise,
+  flame: Flame,
+  shield: Shield,
+  star: Star,
+  award: Award,
+  trophy: Trophy,
+  crown: Crown,
+  gem: Gem,
+  medal: Medal,
+  infinity: Infinity,
+  mountain: Mountain,
+  sun: Sun,
+};
 
 function ProgressStabilityChartCard({
   windowDays,
@@ -260,6 +278,7 @@ function StabilityTimelineScreen() {
   );
 
   const [stabilityWindowDays, setStabilityWindowDays] = useState<StabilityWindowDays>(14);
+  const [milestonesExpanded, setMilestonesExpanded] = useState<boolean>(false);
 
   const stabilitySeries = useMemo(
     () => buildProgressStabilitySeries(sourceCheckIns, stabilityWindowDays),
@@ -331,6 +350,8 @@ function StabilityTimelineScreen() {
   const badge7CheckIns = consistentCheckInDays >= 7;
   const badge14NoCrisis = consistentCheckInDays >= 14 || crisisActivationsCount === 0;
   const badge10Rebuild = rebuildActionsCount >= 10;
+  const nextMilestone = useMemo(() => MILESTONE_DATA.find(m => m.days > daysSober), [daysSober]);
+  const unlockedCount = useMemo(() => MILESTONE_DATA.filter(m => m.days <= daysSober).length, [daysSober]);
 
   const weeklyInsights = useMemo(() => {
     const today = new Date();
@@ -490,46 +511,6 @@ function StabilityTimelineScreen() {
           </Text>
         </View>
 
-        {/* Milestone timeline */}
-        <Text style={earlyStyles.sectionTitle}>Milestones ahead</Text>
-        <View style={earlyStyles.milestoneCard}>
-          {EARLY_MILESTONES.map((m, i) => {
-            const isReached = daysSober >= m.day;
-            const isNext =
-              !isReached && (i === 0 || daysSober >= EARLY_MILESTONES[i - 1].day);
-            return (
-              <View
-                key={m.day}
-                style={[
-                  earlyStyles.milestoneRow,
-                  isNext && earlyStyles.milestoneRowActive,
-                ]}
-              >
-                <View
-                  style={[
-                    earlyStyles.milestoneDot,
-                    isReached && earlyStyles.milestoneDotDone,
-                    isNext && earlyStyles.milestoneDotActive,
-                  ]}
-                >
-                  {isReached && <Check size={12} color="#FFF" />}
-                </View>
-                <View style={earlyStyles.milestoneTextWrap}>
-                  <Text
-                    style={[
-                      earlyStyles.milestoneLabel,
-                      isReached && earlyStyles.milestoneLabelDone,
-                    ]}
-                  >
-                    {m.label}
-                  </Text>
-                  <Text style={earlyStyles.milestoneMsg}>{m.message}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-
         {/* Simple stats */}
         <Text style={earlyStyles.sectionTitle}>Your progress so far</Text>
         <View style={earlyStyles.statsRow}>
@@ -565,6 +546,77 @@ function StabilityTimelineScreen() {
           <Text style={earlyStyles.reinforcementText}>
             {getReinforcementMessage(daysSober)}
           </Text>
+        </View>
+
+        <View style={styles.milestonesSection}>
+          <View style={styles.milestonesDivider}>
+            <View style={styles.milestonesDividerLine} />
+            <Text style={styles.milestonesDividerLabel}>MILESTONES</Text>
+            <View style={styles.milestonesDividerLine} />
+          </View>
+          <View style={styles.milestonesSectionHeader}>
+            <View style={styles.milestonesTitleRow}>
+              <Trophy size={18} color={Colors.primary} />
+              <Text style={styles.milestonesSectionTitle}>Milestones</Text>
+            </View>
+            <Text style={styles.milestonesSubtitle}>
+              {unlockedCount}/{MILESTONE_DATA.length} unlocked
+              {nextMilestone ? ` · ${nextMilestone.days - daysSober}d to next` : ''}
+            </Text>
+          </View>
+
+          {(milestonesExpanded ? MILESTONE_DATA : MILESTONE_DATA.slice(0, 4)).map((milestone, index, arr) => {
+            const unlocked = daysSober >= milestone.days;
+            const IconComponent = ICON_MAP[milestone.icon] ?? Star;
+            const progress = unlocked ? 1 : Math.min(daysSober / milestone.days, 1);
+            return (
+              <View key={milestone.days} style={styles.msCard} testID={`progress-milestone-${milestone.days}`}>
+                <View style={styles.msLeft}>
+                  <View style={[styles.msIconContainer, unlocked ? styles.msIconUnlocked : styles.msIconLocked]}>
+                    {unlocked ? <IconComponent size={18} color={Colors.white} /> : <Lock size={14} color={Colors.textMuted} />}
+                  </View>
+                  {index < arr.length - 1 && (
+                    <View style={[styles.msConnector, unlocked && styles.msConnectorUnlocked]} />
+                  )}
+                </View>
+                <View style={styles.msRight}>
+                  <View style={styles.msHeader}>
+                    <Text style={[styles.msTitle, !unlocked && styles.msTextLocked]}>{milestone.title}</Text>
+                    <Text style={[styles.msDays, unlocked && styles.msDaysUnlocked]}>{milestone.days}d</Text>
+                  </View>
+                  <Text style={[styles.msDesc, !unlocked && styles.msTextLocked]} numberOfLines={2}>
+                    {milestone.description}
+                  </Text>
+                  {!unlocked && (
+                    <View style={styles.msProgressContainer}>
+                      <View style={styles.msProgressBg}>
+                        <View style={[styles.msProgressFill, { width: `${progress * 100}%` }]} />
+                      </View>
+                    </View>
+                  )}
+                  {unlocked && <Text style={styles.msUnlockedText}>Achieved</Text>}
+                </View>
+              </View>
+            );
+          })}
+
+          <Pressable
+            style={styles.msToggle}
+            onPress={() => {
+              Haptics.selectionAsync();
+              setMilestonesExpanded(!milestonesExpanded);
+            }}
+            testID="progress-toggle-milestones"
+          >
+            {milestonesExpanded ? (
+              <ChevronUp size={16} color={Colors.primary} />
+            ) : (
+              <ChevronDown size={16} color={Colors.primary} />
+            )}
+            <Text style={styles.msToggleText}>
+              {milestonesExpanded ? 'Show Less' : `Show All ${MILESTONE_DATA.length} Milestones`}
+            </Text>
+          </Pressable>
         </View>
       </ScreenScrollView>
     );
@@ -672,6 +724,94 @@ function StabilityTimelineScreen() {
         </View>
         <ChevronRight size={16} color={Colors.textMuted} />
       </Pressable>
+
+      <Pressable
+        style={styles.detectionLink}
+        onPress={() => { Haptics.selectionAsync(); router.push('/retention-insights' as any); }}
+        testID="timeline-retention-insights-link"
+      >
+        <View style={styles.detectionLinkLeft}>
+          <View style={styles.detectionLinkIcon}>
+            <TrendingUp size={16} color={Colors.primary} />
+          </View>
+          <View>
+            <Text style={styles.detectionLinkTitle}>View retention insights</Text>
+            <Text style={styles.detectionLinkSub}>Engagement and long-term recovery signals</Text>
+          </View>
+        </View>
+        <ChevronRight size={16} color={Colors.textMuted} />
+      </Pressable>
+
+      <View style={styles.milestonesSection}>
+        <View style={styles.milestonesDivider}>
+          <View style={styles.milestonesDividerLine} />
+          <Text style={styles.milestonesDividerLabel}>MILESTONES</Text>
+          <View style={styles.milestonesDividerLine} />
+        </View>
+        <View style={styles.milestonesSectionHeader}>
+          <View style={styles.milestonesTitleRow}>
+            <Trophy size={18} color={Colors.primary} />
+            <Text style={styles.milestonesSectionTitle}>Milestones</Text>
+          </View>
+          <Text style={styles.milestonesSubtitle}>
+            {unlockedCount}/{MILESTONE_DATA.length} unlocked
+            {nextMilestone ? ` · ${nextMilestone.days - daysSober}d to next` : ''}
+          </Text>
+        </View>
+
+        {(milestonesExpanded ? MILESTONE_DATA : MILESTONE_DATA.slice(0, 4)).map((milestone, index, arr) => {
+          const unlocked = daysSober >= milestone.days;
+          const IconComponent = ICON_MAP[milestone.icon] ?? Star;
+          const progress = unlocked ? 1 : Math.min(daysSober / milestone.days, 1);
+          return (
+            <View key={milestone.days} style={styles.msCard} testID={`progress-milestone-${milestone.days}`}>
+              <View style={styles.msLeft}>
+                <View style={[styles.msIconContainer, unlocked ? styles.msIconUnlocked : styles.msIconLocked]}>
+                  {unlocked ? <IconComponent size={18} color={Colors.white} /> : <Lock size={14} color={Colors.textMuted} />}
+                </View>
+                {index < arr.length - 1 && (
+                  <View style={[styles.msConnector, unlocked && styles.msConnectorUnlocked]} />
+                )}
+              </View>
+              <View style={styles.msRight}>
+                <View style={styles.msHeader}>
+                  <Text style={[styles.msTitle, !unlocked && styles.msTextLocked]}>{milestone.title}</Text>
+                  <Text style={[styles.msDays, unlocked && styles.msDaysUnlocked]}>{milestone.days}d</Text>
+                </View>
+                <Text style={[styles.msDesc, !unlocked && styles.msTextLocked]} numberOfLines={2}>
+                  {milestone.description}
+                </Text>
+                {!unlocked && (
+                  <View style={styles.msProgressContainer}>
+                    <View style={styles.msProgressBg}>
+                      <View style={[styles.msProgressFill, { width: `${progress * 100}%` }]} />
+                    </View>
+                  </View>
+                )}
+                {unlocked && <Text style={styles.msUnlockedText}>Achieved</Text>}
+              </View>
+            </View>
+          );
+        })}
+
+        <Pressable
+          style={styles.msToggle}
+          onPress={() => {
+            Haptics.selectionAsync();
+            setMilestonesExpanded(!milestonesExpanded);
+          }}
+          testID="progress-toggle-milestones"
+        >
+          {milestonesExpanded ? (
+            <ChevronUp size={16} color={Colors.primary} />
+          ) : (
+            <ChevronDown size={16} color={Colors.primary} />
+          )}
+          <Text style={styles.msToggleText}>
+            {milestonesExpanded ? 'Show Less' : `Show All ${MILESTONE_DATA.length} Milestones`}
+          </Text>
+        </Pressable>
+      </View>
 
       <View style={{ height: 40 }} />
     </ScreenScrollView>
@@ -1091,6 +1231,156 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
   },
+  milestonesDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  milestonesDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  milestonesDividerLabel: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: Colors.textMuted,
+    letterSpacing: 2,
+  },
+  milestonesSection: {
+    marginTop: 18,
+    marginBottom: 20,
+    paddingTop: 8,
+  },
+  milestonesSectionHeader: {
+    marginBottom: 16,
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  milestonesTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  milestonesSectionTitle: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  milestonesSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginLeft: 26,
+  },
+  msCard: {
+    flexDirection: 'row',
+    minHeight: 80,
+  },
+  msLeft: {
+    alignItems: 'center',
+    width: 40,
+    marginRight: 12,
+  },
+  msIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  msIconUnlocked: {
+    backgroundColor: Colors.primary,
+  },
+  msIconLocked: {
+    backgroundColor: Colors.cardBackground,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+  },
+  msConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: Colors.border,
+    marginTop: -2,
+    marginBottom: -2,
+  },
+  msConnectorUnlocked: {
+    backgroundColor: Colors.primary,
+  },
+  msRight: {
+    flex: 1,
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  msHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  msTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  msDays: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.textMuted,
+  },
+  msDaysUnlocked: {
+    color: Colors.primary,
+  },
+  msDesc: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 17,
+  },
+  msTextLocked: {
+    opacity: 0.5,
+  },
+  msProgressContainer: {
+    marginTop: 8,
+  },
+  msProgressBg: {
+    height: 3,
+    backgroundColor: Colors.surface,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  msProgressFill: {
+    height: 3,
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
+  },
+  msUnlockedText: {
+    fontSize: 11,
+    color: Colors.primary,
+    fontWeight: '600' as const,
+    marginTop: 4,
+  },
+  msToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  msToggleText: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '600' as const,
+  },
 });
 
 const trigStyles = StyleSheet.create({
@@ -1457,60 +1747,6 @@ const earlyStyles = StyleSheet.create({
     fontWeight: '700' as const,
     color: Colors.text,
     marginBottom: 10,
-  },
-  milestoneCard: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 20,
-    gap: 14,
-  },
-  milestoneRow: {
-    flexDirection: 'row' as const,
-    alignItems: 'flex-start' as const,
-    gap: 12,
-    opacity: 0.5,
-  },
-  milestoneRowActive: {
-    opacity: 1,
-  },
-  milestoneDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    marginTop: 2,
-  },
-  milestoneDotDone: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-    opacity: 1,
-  },
-  milestoneDotActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '20',
-  },
-  milestoneTextWrap: {
-    flex: 1,
-  },
-  milestoneLabel: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: Colors.textSecondary,
-  },
-  milestoneLabelDone: {
-    color: Colors.text,
-  },
-  milestoneMsg: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    marginTop: 2,
   },
   statsRow: {
     flexDirection: 'row' as const,

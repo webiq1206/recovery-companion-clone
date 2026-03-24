@@ -1,47 +1,23 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Animated, LayoutChangeEvent, type ScrollView } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { LinearGradient } from 'expo-linear-gradient';
-import { HandHeart, Check, Flame, Sunrise, Shield, Star, Award, Trophy, Crown, Gem, Medal, Infinity, Mountain, Sun, Lock, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { HandHeart, Check, Flame } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useUser } from '@/core/domains/useUser';
 import { usePledges } from '@/core/domains/usePledges';
-import { MOOD_EMOJIS, MOOD_LABELS, MILESTONE_DATA } from '@/constants/milestones';
+import { MOOD_EMOJIS, MOOD_LABELS } from '@/constants/milestones';
 import { Pledge } from '@/types';
 
-const ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
-  sunrise: Sunrise,
-  flame: Flame,
-  shield: Shield,
-  star: Star,
-  award: Award,
-  trophy: Trophy,
-  crown: Crown,
-  gem: Gem,
-  medal: Medal,
-  infinity: Infinity,
-  mountain: Mountain,
-  sun: Sun,
-};
-
 export default function PledgesScreen() {
-  const { profile, daysSober } = useUser();
+  const { profile } = useUser();
   const { todayPledge, pledges, currentStreak, addPledge } = usePledges();
   const [selectedMood, setSelectedMood] = useState<number>(3);
   const [note, setNote] = useState<string>('');
-  const [milestonesExpanded, setMilestonesExpanded] = useState<boolean>(false);
-  const [activeSection, setActiveSection] = useState<'pledge' | 'milestones'>('pledge');
+  const [activeSection, setActiveSection] = useState<'pledge'>('pledge');
   const scrollRef = useRef<ScrollView | null>(null);
-  const sectionOffsets = useRef<{ pledge: number; milestones: number }>({ pledge: 0, milestones: 0 });
-
-  const nextMilestone = useMemo(() => {
-    return MILESTONE_DATA.find(m => m.days > daysSober);
-  }, [daysSober]);
-
-  const unlockedCount = useMemo(() => {
-    return MILESTONE_DATA.filter(m => m.days <= daysSober).length;
-  }, [daysSober]);
+  const sectionOffsets = useRef<{ pledge: number }>({ pledge: 0 });
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const checkAnim = useRef(new Animated.Value(0)).current;
 
@@ -72,99 +48,6 @@ export default function PledgesScreen() {
 
   const recentPledges = pledges.slice(0, 7);
 
-  const renderMilestonesSection = useCallback(() => {
-    const displayMilestones = milestonesExpanded ? MILESTONE_DATA : MILESTONE_DATA.slice(0, 4);
-
-    return (
-      <View style={styles.milestonesSection}>
-        <View style={styles.milestonesDivider}>
-          <View style={styles.milestonesDividerLine} />
-          <Text style={styles.milestonesDividerLabel}>MILESTONES</Text>
-          <View style={styles.milestonesDividerLine} />
-        </View>
-        <View style={styles.milestonesSectionHeader}>
-          <View style={styles.milestonesTitleRow}>
-            <Trophy size={18} color={Colors.primary} />
-            <Text style={styles.milestonesSectionTitle}>Milestones</Text>
-          </View>
-          <Text style={styles.milestonesSubtitle}>
-            {unlockedCount}/{MILESTONE_DATA.length} unlocked
-            {nextMilestone ? ` · ${nextMilestone.days - daysSober}d to next` : ''}
-          </Text>
-        </View>
-
-        {displayMilestones.map((milestone, index) => {
-          const unlocked = daysSober >= milestone.days;
-          const IconComponent = ICON_MAP[milestone.icon] ?? Star;
-          const progress = unlocked ? 1 : Math.min(daysSober / milestone.days, 1);
-
-          return (
-            <View
-              key={milestone.days}
-              style={styles.msCard}
-              testID={`milestone-${milestone.days}`}
-            >
-              <View style={styles.msLeft}>
-                <View style={[styles.msIconContainer, unlocked ? styles.msIconUnlocked : styles.msIconLocked]}>
-                  {unlocked ? (
-                    <IconComponent size={18} color={Colors.white} />
-                  ) : (
-                    <Lock size={14} color={Colors.textMuted} />
-                  )}
-                </View>
-                {index < displayMilestones.length - 1 && (
-                  <View style={[styles.msConnector, unlocked && styles.msConnectorUnlocked]} />
-                )}
-              </View>
-
-              <View style={styles.msRight}>
-                <View style={styles.msHeader}>
-                  <Text style={[styles.msTitle, !unlocked && styles.msTextLocked]}>
-                    {milestone.title}
-                  </Text>
-                  <Text style={[styles.msDays, unlocked && styles.msDaysUnlocked]}>
-                    {milestone.days}d
-                  </Text>
-                </View>
-                <Text style={[styles.msDesc, !unlocked && styles.msTextLocked]} numberOfLines={2}>
-                  {milestone.description}
-                </Text>
-                {!unlocked && (
-                  <View style={styles.msProgressContainer}>
-                    <View style={styles.msProgressBg}>
-                      <View style={[styles.msProgressFill, { width: `${progress * 100}%` }]} />
-                    </View>
-                  </View>
-                )}
-                {unlocked && (
-                  <Text style={styles.msUnlockedText}>Achieved</Text>
-                )}
-              </View>
-            </View>
-          );
-        })}
-
-        <Pressable
-          style={styles.msToggle}
-          onPress={() => {
-            Haptics.selectionAsync();
-            setMilestonesExpanded(!milestonesExpanded);
-          }}
-          testID="toggle-milestones"
-        >
-          {milestonesExpanded ? (
-            <ChevronUp size={16} color={Colors.primary} />
-          ) : (
-            <ChevronDown size={16} color={Colors.primary} />
-          )}
-          <Text style={styles.msToggleText}>
-            {milestonesExpanded ? 'Show Less' : `Show All ${MILESTONE_DATA.length} Milestones`}
-          </Text>
-        </Pressable>
-      </View>
-    );
-  }, [milestonesExpanded, daysSober, unlockedCount, nextMilestone]);
-
   const renderNavButtons = useCallback(() => (
     <View style={styles.navButtonsContainer}>
       <Pressable
@@ -178,18 +61,6 @@ export default function PledgesScreen() {
       >
         <HandHeart size={16} color={activeSection === 'pledge' ? Colors.white : Colors.textSecondary} />
         <Text style={[styles.navButtonText, activeSection === 'pledge' && styles.navButtonTextActive]}>Pledge</Text>
-      </Pressable>
-      <Pressable
-        style={[styles.navButton, activeSection === 'milestones' && styles.navButtonActive]}
-        onPress={() => {
-          Haptics.selectionAsync();
-          setActiveSection('milestones');
-          scrollRef.current?.scrollTo({ y: sectionOffsets.current.milestones, animated: true });
-        }}
-        testID="nav-milestones"
-      >
-        <Trophy size={16} color={activeSection === 'milestones' ? Colors.white : Colors.textSecondary} />
-        <Text style={[styles.navButtonText, activeSection === 'milestones' && styles.navButtonTextActive]}>Milestones</Text>
       </Pressable>
     </View>
   ), [activeSection]);
@@ -246,8 +117,6 @@ export default function PledgesScreen() {
             <Check size={16} color={Colors.primary} />
           </View>
         ))}
-        <View onLayout={(e: LayoutChangeEvent) => { sectionOffsets.current.milestones = e.nativeEvent.layout.y; }} />
-        {renderMilestonesSection()}
       </ScreenScrollView>
     );
   }
@@ -325,8 +194,6 @@ export default function PledgesScreen() {
         </View>
       )}
 
-      <View onLayout={(e: LayoutChangeEvent) => { sectionOffsets.current.milestones = e.nativeEvent.layout.y; }} />
-      {renderMilestonesSection()}
     </ScreenScrollView>
   );
 }

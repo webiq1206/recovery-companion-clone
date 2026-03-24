@@ -69,15 +69,15 @@ export const crisisStyles = StyleSheet.create({
     paddingHorizontal: 28,
   },
   landingCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 112,
+    height: 112,
+    borderRadius: 56,
     backgroundColor: CRISIS_COLORS.ACCENT + '10',
     borderWidth: 2,
     borderColor: CRISIS_COLORS.ACCENT + '25',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 36,
+    marginBottom: 20,
   },
   landingTitle: {
     fontSize: 38,
@@ -91,7 +91,7 @@ export const crisisStyles = StyleSheet.create({
     color: CRISIS_COLORS.MUTED,
     textAlign: 'center',
     lineHeight: 28,
-    marginBottom: 48,
+    marginBottom: 20,
   },
   bigButton: {
     flexDirection: 'row',
@@ -148,7 +148,7 @@ export const crisisStyles = StyleSheet.create({
     fontWeight: '500' as const,
   },
   stateActionsContainer: {
-    marginTop: 32,
+    marginTop: 12,
     width: '100%',
     maxWidth: 360,
   },

@@ -664,6 +664,46 @@ export default function ProfileScreen() {
         style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push('/insights' as any);
+        }}
+        testID="insights-hub-link"
+      >
+        <View style={styles.settingLeft}>
+          <View style={[styles.settingIcon, { backgroundColor: 'rgba(66,165,245,0.12)' }]}>
+            <BarChart3 size={17} color="#42A5F5" />
+          </View>
+          <View>
+            <Text style={styles.settingLabel}>Insights Hub</Text>
+            <Text style={styles.settingValue}>Recovery and retention insights in one place</Text>
+          </View>
+        </View>
+        <ChevronRight size={16} color={Colors.textMuted} />
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push('/tools' as any);
+        }}
+        testID="tools-link"
+      >
+        <View style={styles.settingLeft}>
+          <View style={[styles.settingIcon, { backgroundColor: 'rgba(171,71,188,0.12)' }]}>
+            <Sparkles size={17} color="#AB47BC" />
+          </View>
+          <View>
+            <Text style={styles.settingLabel}>Recovery Tools</Text>
+            <Text style={styles.settingValue}>Breathing, urge timer, and quick coping tools</Text>
+          </View>
+        </View>
+        <ChevronRight size={16} color={Colors.textMuted} />
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           router.push('/insights-explained' as any);
         }}
         testID="insights-explained-link"

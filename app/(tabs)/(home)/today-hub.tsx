@@ -357,34 +357,6 @@ export default function TodayHubScreen() {
           </View>
         )}
 
-        {/* Primary action card (from wizard) */}
-        {!dailyGuidance.isComplete && dailyGuidance.primaryAction && (
-          <>
-            <Text style={styles.sectionLabel}>Your next step</Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.primaryActionCard,
-                pressed && styles.pressed,
-              ]}
-              onPress={() => handleActionPress(dailyGuidance.primaryAction!)}
-              testID="todayhub-primary-action"
-            >
-              <View style={styles.primaryIconWrap}>
-                <ArrowRight size={24} color={Colors.primary} />
-              </View>
-              <View style={styles.primaryTextWrap}>
-                <Text style={styles.primaryTitle}>
-                  {dailyGuidance.primaryAction.title}
-                </Text>
-                <Text style={styles.primarySubtitle}>
-                  {dailyGuidance.primaryAction.subtitle}
-                </Text>
-              </View>
-              <ArrowRight size={20} color={Colors.primary} />
-            </Pressable>
-          </>
-        )}
-
         {showRelapsePlanCta && (
           <Pressable
             style={({ pressed }) => [
@@ -424,7 +396,7 @@ export default function TodayHubScreen() {
         {dailyGuidance.actions.length > 0 && (
           <>
             <Text style={styles.planTitle}>
-              {dailyGuidance.isReentryMode ? 'Start here' : "Today's guidance"}
+              {dailyGuidance.isReentryMode ? "Today's plan" : "Today's guidance"}
             </Text>
             <View style={styles.planCard}>
               {dailyGuidance.actions.map((action) => (
@@ -433,12 +405,9 @@ export default function TodayHubScreen() {
                   style={({ pressed }) => [
                     styles.planRow,
                     action.completed && styles.planRowDone,
-                    pressed && !action.completed && styles.pressed,
+                    pressed && styles.pressed,
                   ]}
-                  onPress={() => {
-                    if (!action.completed) handleActionPress(action);
-                  }}
-                  disabled={action.completed}
+                  onPress={() => handleActionPress(action)}
                   testID={`todayhub-action-${action.id}`}
                 >
                   <View

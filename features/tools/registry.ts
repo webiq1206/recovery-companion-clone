@@ -27,6 +27,7 @@ export const TOOL_REGISTRY: ToolDefinition[] = [
     experienceCategory: 'handle_urges',
     recommendedContexts: ['crisis', 'craving', 'relapse_risk', 'any'],
     icon: { key: 'timer' },
+    route: { href: '/tools/urge-timer' },
   },
   {
     id: 'reset',

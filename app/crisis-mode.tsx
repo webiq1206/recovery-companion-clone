@@ -8,6 +8,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
@@ -258,7 +259,15 @@ export default function CrisisModeScreen() {
     switch (currentStep) {
       case 'landing':
         return (
-          <>
+          <ScreenScrollView
+            style={{ flex: 1, width: '100%' }}
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + 160,
+              paddingHorizontal: 20,
+            }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <CrisisLandingStep
               fadeAnim={fadeAnim}
               slideAnim={slideAnim}
@@ -271,13 +280,8 @@ export default function CrisisModeScreen() {
             <CrisisStateActions
               selectedState={currentState}
               onSelectState={setCurrentState}
-              onTimer={() => goToStep('urge-timer')}
-              onBreathing={() => goToStep('breathing')}
-              onContactSupport={() => goToStep('connect')}
-              onOpenSupportResources={() => router.push('/support' as any)}
-              onLeaveEnvironment={() => goToStep('grounding')}
             />
-          </>
+          </ScreenScrollView>
         );
       case 'breathing':
         return (
@@ -355,14 +359,16 @@ export default function CrisisModeScreen() {
 
       {renderStep()}
 
-      <CrisisCompanionBar
-        companionFade={companionFade}
-        message={companionMessage}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push({ pathname: '/companion-chat' as any, params: { context: 'crisis' } });
-        }}
-      />
+      {currentStep !== 'landing' && (
+        <CrisisCompanionBar
+          companionFade={companionFade}
+          message={companionMessage}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push({ pathname: '/companion-chat' as any, params: { context: 'crisis' } });
+          }}
+        />
+      )}
 
       <CrisisRelapsePlanCta
         onPress={() => {
