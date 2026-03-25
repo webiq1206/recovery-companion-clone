@@ -26,6 +26,8 @@ export interface TodayHubViewModel {
     category: 'low' | 'guarded' | 'elevated' | 'high';
     label: string;
     trendLabel: string;
+    whySentence?: string;
+    factors?: { label: string; value: number }[];
   };
   showRelapsePlanCta: boolean;
 }
@@ -46,6 +48,7 @@ export function useTodayHub(): TodayHubViewModel {
     riskCategory,
     riskLabel,
     trendLabel: riskTrendLabel,
+    riskFactors,
   } = useRiskPrediction();
 
   const stabilityResult = useMemo(() => {
@@ -57,10 +60,30 @@ export function useTodayHub(): TodayHubViewModel {
       profile.recoveryProfile ??
       centralProfile?.recoveryProfile;
     const sourceCheckIns = centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns;
-    const sorted = [...sourceCheckIns].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    const previousScores = sorted.slice(0, 7).map((c) => c.stabilityScore);
+    // Use a "last 7 calendar days" window for trend/momentum:
+    //  - group stability scores by date
+    //  - average each day’s available time-of-day check-ins
+    //  - take the 7 most recent distinct days (skip empty days by construction)
+    const stabilityScoresByDate = new Map<string, number[]>();
+    for (const c of sourceCheckIns) {
+      const score = c.stabilityScore;
+      if (typeof score !== 'number' || !Number.isFinite(score)) continue;
+      const arr = stabilityScoresByDate.get(c.date) ?? [];
+      arr.push(score);
+      stabilityScoresByDate.set(c.date, arr);
+    }
+
+    // Most-recent day first; each entry is that day's average stability across
+    // any time-of-day check-ins (morning/afternoon/evening).
+    const previousScores = [...stabilityScoresByDate.keys()]
+      .sort((a, b) => b.localeCompare(a)) // YYYY-MM-DD strings: lexical compare is safe
+      .slice(0, 7)
+      .map((date) => {
+        const scores = stabilityScoresByDate.get(date) ?? [];
+        if (scores.length === 0) return 0;
+        const sum = scores.reduce((s, v) => s + v, 0);
+        return sum / scores.length;
+      });
     const today = new Date().toISOString().split('T')[0];
     const dailyActionsCompleted = sourceCheckIns.filter((c) => c.date === today).length;
 
@@ -82,8 +105,47 @@ export function useTodayHub(): TodayHubViewModel {
       relapseLogged: (rp?.relapseCount ?? 0) > 0,
     };
 
-    return calculateStability(input, previousScores);
+    // Displayed "Comprehensive Stability" is a literal average of the last 7 daily
+    // stability values (skipping empty days by construction).
+    const comprehensiveScore =
+      previousScores.length > 0
+        ? previousScores.reduce((s, v) => s + v, 0) / previousScores.length
+        : 50;
+
+    const stability = calculateStability(input, previousScores);
+    return { ...stability, score: comprehensiveScore };
   }, [centralProfile, centralDailyCheckIns, profile.recoveryProfile, checkIns]);
+
+  const riskExplain = useMemo(() => {
+    const factors = (riskFactors ?? [])
+      .filter((f) => typeof f?.value === 'number' && Number.isFinite(f.value))
+      .map((f) => ({ label: f.label, value: Math.max(0, Math.min(100, Math.round(f.value))) }))
+      .slice(0, 5);
+
+    const labelToPhrase: Record<string, string> = {
+      Behavioral: 'high cravings or stress',
+      Emotional: 'low mood or emotional strain',
+      Triggers: 'trigger exposure',
+      Stability: 'recent stability dips',
+      Isolation: 'isolation',
+      Sleep: 'sleep disruption',
+      Engagement: 'missed check-ins',
+    };
+
+    const topPhrases = factors
+      .filter((f) => f.value >= 50)
+      .slice(0, 2)
+      .map((f) => labelToPhrase[f.label] ?? f.label.toLowerCase());
+
+    const whySentence =
+      topPhrases.length >= 2
+        ? `Likely drivers: ${topPhrases[0]} + ${topPhrases[1]}.`
+        : topPhrases.length === 1
+          ? `Likely driver: ${topPhrases[0]}.`
+          : undefined;
+
+    return { factors, whySentence };
+  }, [riskFactors]);
 
   return useMemo(
     () => ({
@@ -100,6 +162,8 @@ export function useTodayHub(): TodayHubViewModel {
         category: riskCategory,
         label: riskLabel,
         trendLabel: riskTrendLabel || 'Stable',
+        whySentence: riskExplain.whySentence,
+        factors: riskExplain.factors,
       },
       showRelapsePlanCta: riskCategory === 'high',
     }),
@@ -112,6 +176,8 @@ export function useTodayHub(): TodayHubViewModel {
       riskCategory,
       riskLabel,
       riskTrendLabel,
+      riskExplain.whySentence,
+      riskExplain.factors,
     ]
   );
 }

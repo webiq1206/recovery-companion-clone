@@ -195,7 +195,7 @@ export function StabilityRollingChart({
       </Animated.View>
       <View style={styles.labelsRow}>
         <Text style={styles.label}>{windowDays}d ago</Text>
-        <Text style={[styles.label, styles.labelCenter]}>Stability score</Text>
+        <Text style={[styles.label, styles.labelCenter]}>Stability Score</Text>
         <Text style={[styles.label, { textAlign: 'right' }]}>Today</Text>
       </View>
       <Text style={styles.legend}>Solid: daily · Dashed: 3-day average</Text>

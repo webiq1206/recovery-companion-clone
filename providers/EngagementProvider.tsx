@@ -69,7 +69,7 @@ const MICRO_WIN_DEFINITIONS: { trigger: string; title: string; description: stri
   { trigger: 'streak_milestone_30', title: 'Monthly Champion', description: 'A month of dedication and growth', category: 'consistency', icon: 'trophy' },
   { trigger: 'first_reflection', title: 'Inner Explorer', description: 'You started looking inward', category: 'emotional', icon: 'compass' },
   { trigger: 'low_craving_day', title: 'Steady Ground', description: 'Your cravings were manageable today', category: 'resilience', icon: 'mountain' },
-  { trigger: 'high_stability', title: 'Grounded & Stable', description: 'You reached a high stability score', category: 'resilience', icon: 'anchor' },
+  { trigger: 'high_stability', title: 'Grounded & Stable', description: 'You reached high Comprehensive Stability', category: 'resilience', icon: 'anchor' },
 ];
 
 const SUPPORTIVE_MESSAGES = [

@@ -203,6 +203,7 @@ function ProgressStabilityChartCard({
   windowDays,
   onChangeWindow,
   title,
+  showSectionLabel = true,
   dates,
   scores,
   pointCount,
@@ -215,6 +216,7 @@ function ProgressStabilityChartCard({
   windowDays: StabilityWindowDays;
   onChangeWindow: (d: StabilityWindowDays) => void;
   title: string;
+  showSectionLabel?: boolean;
   dates: string[];
   scores: (number | null)[];
   pointCount: number;
@@ -226,12 +228,12 @@ function ProgressStabilityChartCard({
 }) {
   return (
     <View testID="progress-stability-chart-card">
-      <Text style={styles.chartBlockSectionLabel}>Rolling stability</Text>
+      {showSectionLabel ? <Text style={styles.chartBlockSectionLabel}>Rolling stability</Text> : null}
       <View style={styles.chartCard}>
         <View style={styles.chartTitleRow}>
           <Text style={styles.chartTitleMornings}>{title}</Text>
           <Text style={styles.chartCurrentScoreLine}>
-            Current score{' '}
+            Stability Score{' '}
             <Text style={styles.chartCurrentScoreValue}>
               {currentScore != null && Number.isFinite(currentScore) ? String(Math.round(currentScore)) : '—'}
             </Text>
@@ -286,7 +288,6 @@ function StabilityTimelineScreen() {
   const { rebuildData } = useRebuild();
   const { profile, daysSober } = useUser();
   const { checkIns } = useCheckin();
-  const centralProfile = useAppStore((s) => s.userProfile);
   const centralDailyCheckIns = useAppStore((s) => s.dailyCheckIns);
   const centralProgress = useAppStore((s) => s.progress);
   const { timelineEvents } = useRelapse();
@@ -561,7 +562,12 @@ function StabilityTimelineScreen() {
   }, [sourceCheckIns]);
 
   if (isEarlyDays) {
-    const soberDate = new Date((centralProfile ?? profile).soberDate);
+    const soberDate = new Date(profile.soberDate);
+    const formattedSoberDate = soberDate.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
     return (
       <ScreenScrollView
         style={styles.container}
@@ -585,7 +591,7 @@ function StabilityTimelineScreen() {
           <Text style={earlyStyles.heroDays}>{daysSober}</Text>
           <Text style={earlyStyles.heroDaysCaption}>Days Completed</Text>
           <Text style={earlyStyles.heroSub}>
-            Since {soberDate.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+            Since {formattedSoberDate}
           </Text>
         </View>
 
@@ -603,6 +609,7 @@ function StabilityTimelineScreen() {
           windowDays={stabilityWindowDays}
           onChangeWindow={setStabilityWindowDays}
           title="Mornings"
+          showSectionLabel
           dates={stabilitySeries.dates}
           scores={stabilitySeries.scores}
           pointCount={stabilityPointCount}
@@ -615,6 +622,7 @@ function StabilityTimelineScreen() {
           windowDays={stabilityWindowDays}
           onChangeWindow={setStabilityWindowDays}
           title="Afternoons"
+          showSectionLabel={false}
           dates={afternoonStabilitySeries.dates}
           scores={afternoonStabilitySeries.scores}
           pointCount={afternoonStabilityPointCount}
@@ -628,6 +636,7 @@ function StabilityTimelineScreen() {
           windowDays={stabilityWindowDays}
           onChangeWindow={setStabilityWindowDays}
           title="Evenings"
+          showSectionLabel={false}
           dates={eveningStabilitySeries.dates}
           scores={eveningStabilitySeries.scores}
           pointCount={eveningStabilityPointCount}
@@ -641,6 +650,7 @@ function StabilityTimelineScreen() {
           windowDays={stabilityWindowDays}
           onChangeWindow={setStabilityWindowDays}
           title="Daily Average"
+          showSectionLabel={false}
           dates={dailyAverageStabilitySeries.dates}
           scores={dailyAverageStabilitySeries.scores}
           pointCount={dailyAveragePointCount}
@@ -762,6 +772,7 @@ function StabilityTimelineScreen() {
         windowDays={stabilityWindowDays}
         onChangeWindow={setStabilityWindowDays}
         title="Mornings"
+        showSectionLabel
         dates={stabilitySeries.dates}
         scores={stabilitySeries.scores}
         pointCount={stabilityPointCount}
@@ -774,6 +785,7 @@ function StabilityTimelineScreen() {
         windowDays={stabilityWindowDays}
         onChangeWindow={setStabilityWindowDays}
         title="Afternoons"
+        showSectionLabel={false}
         dates={afternoonStabilitySeries.dates}
         scores={afternoonStabilitySeries.scores}
         pointCount={afternoonStabilityPointCount}
@@ -787,6 +799,7 @@ function StabilityTimelineScreen() {
         windowDays={stabilityWindowDays}
         onChangeWindow={setStabilityWindowDays}
         title="Evenings"
+        showSectionLabel={false}
         dates={eveningStabilitySeries.dates}
         scores={eveningStabilitySeries.scores}
         pointCount={eveningStabilityPointCount}
@@ -800,6 +813,7 @@ function StabilityTimelineScreen() {
         windowDays={stabilityWindowDays}
         onChangeWindow={setStabilityWindowDays}
         title="Daily Average"
+        showSectionLabel={false}
         dates={dailyAverageStabilitySeries.dates}
         scores={dailyAverageStabilitySeries.scores}
         pointCount={dailyAveragePointCount}

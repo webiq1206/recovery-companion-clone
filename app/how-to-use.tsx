@@ -132,14 +132,14 @@ const DAILY_STEPS: StepCardProps[] = [
   {
     number: 1,
     title: 'Morning Check-In',
-    description: 'Open Check-In and log your mood, craving level, sleep quality, and stress. This updates your Stability Score and Relapse Risk Score.',
+    description: 'Open Check-In and log your mood, craving level, sleep quality, and stress. This updates your Comprehensive Stability and Relapse Risk Score.',
     icon: <Sun size={16} color="#FFB347" />,
     color: '#FFB347',
   },
   {
     number: 2,
-    title: 'Review Stability Score',
-    description: 'Return to Home. Review your Stability Score and the Today Focus suggestion. Follow the suggested micro-action to strengthen your day.',
+    title: 'Review Comprehensive Stability',
+    description: 'Return to Home. Review your Comprehensive Stability and the Today Focus suggestion. Follow the suggested micro-action to strengthen your day.',
     icon: <Activity size={16} color={Colors.primary} />,
     color: Colors.primary,
   },

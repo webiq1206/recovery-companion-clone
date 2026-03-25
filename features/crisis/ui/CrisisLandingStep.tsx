@@ -34,17 +34,6 @@ export function CrisisLandingStep(props: {
         <ArrowRight size={24} color="#FFFFFF" />
       </Pressable>
 
-      {emergencyContacts.length > 0 && (
-        <Pressable
-          style={({ pressed }) => [crisisStyles.quickCallBtn, pressed && { opacity: 0.7 }]}
-          onPress={() => onQuickCall(emergencyContacts[0].phone)}
-          testID="crisis-quick-call"
-        >
-          <Phone size={20} color={CRISIS_COLORS.ACCENT} />
-          <Text style={crisisStyles.quickCallText}>Call {emergencyContacts[0].name}</Text>
-        </Pressable>
-      )}
-
       <Pressable
         style={({ pressed }) => [crisisStyles.emergencyCallBtn, pressed && { opacity: 0.7 }]}
         onPress={onCall988}

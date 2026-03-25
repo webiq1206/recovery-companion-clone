@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Activity, Minus, Shield, TrendingDown, TrendingUp } from 'lucide-react-native';
 
 import Colors from '@/constants/colors';
@@ -14,6 +14,8 @@ type Props = {
   relapseRiskCategory: RiskCategory;
   relapseRiskLabel: string;
   relapseRiskTrendLabel: string;
+  relapseRiskWhySentence?: string;
+  relapseRiskFactors?: { label: string; value: number }[];
 };
 
 type StabilityZone = {
@@ -41,19 +43,29 @@ export function RecoveryStabilityPanel({
   relapseRiskCategory,
   relapseRiskLabel,
   relapseRiskTrendLabel,
+  relapseRiskWhySentence,
+  relapseRiskFactors,
 }: Props) {
   const clampedScore = Number.isFinite(score) ? Math.max(0, Math.min(100, Math.round(score))) : 0;
   const zone = getStabilityZone(clampedScore);
+  const [showWhy, setShowWhy] = useState<boolean>(false);
 
   const TrendIcon =
     stabilityTrend === 'rising' ? TrendingUp : stabilityTrend === 'declining' ? TrendingDown : Minus;
 
   const trendText = stabilityTrend === 'rising' ? 'Rising' : stabilityTrend === 'declining' ? 'Falling' : 'Stable';
 
+  const topFactors = useMemo(() => {
+    const src = relapseRiskFactors ?? [];
+    return src
+      .filter((f) => f && typeof f.value === 'number' && Number.isFinite(f.value))
+      .slice(0, 5);
+  }, [relapseRiskFactors]);
+
   return (
     <View style={[styles.card, { borderColor: zone.color + '55' }]}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Today&apos;s Stability</Text>
+        <Text style={styles.title}>Comprehensive Stability</Text>
         <View style={[styles.zonePill, { backgroundColor: zone.color + '22' }]}>
           <View style={[styles.zoneDot, { backgroundColor: zone.color }]} />
           <Text style={styles.zoneLabel}>{zone.label}</Text>
@@ -84,7 +96,7 @@ export function RecoveryStabilityPanel({
                     {
                       backgroundColor:
                         relapseRiskCategory === 'high'
-                          ? Colors.danger + '25'
+                          ? Colors.danger
                           : relapseRiskCategory === 'elevated'
                             ? Colors.accent + '25'
                             : relapseRiskCategory === 'guarded'
@@ -93,9 +105,42 @@ export function RecoveryStabilityPanel({
                     },
                   ]}
                 >
-                  <Text style={styles.riskText}>{relapseRiskLabel}</Text>
+                  <Text
+                    style={[
+                      styles.riskText,
+                      relapseRiskCategory === 'high' && { color: Colors.white },
+                    ]}
+                  >
+                    {relapseRiskLabel}
+                  </Text>
                 </View>
               </View>
+
+              {relapseRiskCategory === 'high' && (topFactors.length > 0 || relapseRiskWhySentence) ? (
+                <View style={styles.whyWrap}>
+                  <Pressable
+                    onPress={() => setShowWhy((s) => !s)}
+                    accessibilityRole="button"
+                    accessibilityLabel={showWhy ? 'Hide why risk is high' : 'Show why risk is high'}
+                    style={({ pressed }) => [styles.whyToggle, pressed && { opacity: 0.9 }]}
+                    testID="todayhub-why-high-toggle"
+                  >
+                    <Text style={styles.whyToggleText}>{showWhy ? 'Hide why' : 'Why high?'}</Text>
+                  </Pressable>
+                  {showWhy ? (
+                    <View style={styles.whyBody}>
+                      {relapseRiskWhySentence ? (
+                        <Text style={styles.whySentence}>{relapseRiskWhySentence}</Text>
+                      ) : null}
+                      {topFactors.map((f) => (
+                        <Text key={f.label} style={styles.factorLine}>
+                          {f.label} {Math.round(f.value)}
+                        </Text>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
           </View>
 
@@ -215,6 +260,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  whyWrap: {
+    marginTop: 8,
+  },
+  whyToggle: {
+    alignSelf: 'flex-start',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  whyToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  whyBody: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 4,
+  },
+  whySentence: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginBottom: 2,
+  },
+  factorLine: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.text,
   },
   riskPill: {
     borderRadius: 999,

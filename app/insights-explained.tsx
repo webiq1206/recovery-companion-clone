@@ -55,20 +55,20 @@ export default function InsightsExplainedScreen() {
         </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>STABILITY SCORE</Text>
+      <Text style={styles.sectionTitle}>COMPREHENSIVE STABILITY</Text>
 
       <ExplainerCard
         icon={<Activity size={18} color="#2EC4B6" />}
-        title="What is the Stability Score?"
+        title="What is Comprehensive Stability?"
         accentColor="#2EC4B6"
       >
         <Text style={styles.bodyText}>
-          Your Stability Score is a number from 0 to 100 that reflects how steady and grounded you've been recently. It's your emotional and behavioral baseline - a snapshot of where you stand right now.
+          Your Comprehensive Stability is a number from 0 to 100 that reflects how steady and grounded you've been recently. It's your emotional and behavioral baseline - a snapshot of where you stand right now.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>How it's calculated</Text>
         <Text style={styles.bodyText}>
-          Each daily check-in generates a stability score based on your reported mood, craving level, stress, sleep quality, and environment safety. Your overall Stability Score is the average of your last 7 check-in stability scores.
+          Each daily check-in generates a stability score based on your reported mood, craving level, stress, sleep quality, and environment safety. For each calendar day, we average any check-ins you completed, then your Comprehensive Stability is the literal average of the last 7 days that have data.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What affects it</Text>
@@ -82,7 +82,7 @@ export default function InsightsExplainedScreen() {
         />
         <FactorRow
           label="Stress"
-          description="Lower stress contributes to a higher stability score."
+          description="Lower stress contributes to higher Comprehensive Stability."
         />
         <FactorRow
           label="Sleep Quality"
@@ -110,7 +110,7 @@ export default function InsightsExplainedScreen() {
         </View>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          If you haven't completed any check-ins yet, your Stability Score defaults to 50. The more consistently you check in, the more accurate it becomes.
+          If you haven't completed any check-ins yet, your Comprehensive Stability defaults to 50. The more consistently you check in, the more accurate it becomes.
         </Text>
       </ExplainerCard>
 

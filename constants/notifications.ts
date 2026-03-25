@@ -192,7 +192,7 @@ export const BEHAVIORAL_TEMPLATES: BehavioralNotificationTemplate[] = [
     trigger: 'stability_drop',
     title: 'Checking In',
     messages: [
-      "Your stability score shifted recently. Small adjustments can help.",
+      "Your Comprehensive Stability shifted recently. Small adjustments can help.",
       "Things feel a bit unsteady. That's a signal, not a verdict.",
       "A dip in stability is information, not identity. What do you need right now?",
     ],

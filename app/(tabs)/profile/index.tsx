@@ -110,7 +110,7 @@ export default function ProfileScreen() {
     }
 
     items.push({
-      label: 'Stability Score',
+      label: 'Comprehensive Stability',
       value: `${stabilityScore}/100`,
       color: stabilityScore >= 60 ? Colors.success : stabilityScore >= 40 ? Colors.accentWarm : Colors.danger,
     });
@@ -593,62 +593,6 @@ export default function ProfileScreen() {
           <View>
             <Text style={styles.settingLabel}>Settings</Text>
             <Text style={styles.settingValue}>Privacy, notifications, security, and more</Text>
-          </View>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
-
-      <Text style={[styles.sectionLabel, { marginTop: 28 }]}>DANGER ZONE</Text>
-      <Pressable
-        style={({ pressed }) => [styles.dangerRow, pressed && { opacity: 0.92 }]}
-        onPress={handleClearData}
-        testID="profile-clear-all-data"
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.settingIcon, { backgroundColor: 'rgba(239,83,80,0.12)' }]}>
-            <RotateCcw size={17} color={Colors.danger} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.settingLabel, { color: Colors.danger }]}>Clear All Data</Text>
-            <Text style={styles.settingValue}>
-              Permanently remove recovery data stored on this device. This cannot be undone.
-            </Text>
-          </View>
-        </View>
-      </Pressable>
-
-      {/* Recovery */}
-      <Text style={[styles.sectionLabel, { marginTop: 28 }]}>RECOVERY</Text>
-
-      <Pressable
-        style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          Alert.alert(
-            'Log a setback',
-            "Recording a setback doesn't erase your progress. You'll see supportive next steps and can strengthen your system.",
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Log setback',
-                style: 'default',
-                onPress: () => {
-                  logRelapse();
-                  logRelapseToCentralStore();
-                },
-              },
-            ]
-          );
-        }}
-        testID="log-relapse-link"
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.settingIcon, { backgroundColor: 'rgba(239,83,80,0.12)' }]}>
-            <Heart size={17} color="#EF5350" />
-          </View>
-          <View>
-            <Text style={styles.settingLabel}>Today was hard - log a setback</Text>
-            <Text style={styles.settingValue}>One event doesn't erase your progress</Text>
           </View>
         </View>
         <ChevronRight size={16} color={Colors.textMuted} />

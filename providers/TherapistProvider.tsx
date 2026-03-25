@@ -170,7 +170,7 @@ function generateReport(client: ConnectedClient): ClientReport {
   const recommendations: string[] = [];
 
   if (client.currentStreak > 7) highlights.push(`Maintained ${client.currentStreak}-day check-in streak`);
-  if (client.stabilityScore > 60) highlights.push('Stability score trending positively');
+  if (client.stabilityScore > 60) highlights.push('Comprehensive Stability trending positively');
   if (client.engagementScore > 70) highlights.push('Strong engagement with recovery tools');
   if (client.moodAverage > 60) highlights.push('Mood levels showing improvement');
 
@@ -191,7 +191,7 @@ function generateReport(client: ConnectedClient): ClientReport {
     generatedAt: now.toISOString(),
     periodStart: periodStart.toISOString(),
     periodEnd: now.toISOString(),
-    summary: `${client.name} has been in recovery for ${client.daysSober} days. Current stability score is ${client.stabilityScore}/100 with a ${client.riskTrend} risk trend. Overall engagement remains ${client.engagementScore > 60 ? 'strong' : client.engagementScore > 40 ? 'moderate' : 'low'}.`,
+    summary: `${client.name} has been in recovery for ${client.daysSober} days. Current Comprehensive Stability is ${client.stabilityScore}/100 with a ${client.riskTrend} risk trend. Overall engagement remains ${client.engagementScore > 60 ? 'strong' : client.engagementScore > 40 ? 'moderate' : 'low'}.`,
     stabilityAvg: client.stabilityScore,
     moodAvg: client.moodAverage,
     riskAvg: client.riskLevel,

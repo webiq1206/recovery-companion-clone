@@ -10,16 +10,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Heart, Shield, MessageCircle, Users, Phone, Plus, X,
-  Send, UserPlus, CircleDot, Handshake, ChevronRight,
+  Send, UserPlus, CircleDot, ChevronRight,
   PhoneCall, Trash2, ToggleLeft, ToggleRight, Radio,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useConnection } from '@/providers/ConnectionProvider';
-import { TrustedContact, PeerChat, SafeRoom, PeerMessage, RoomMessage, SponsorMessage } from '@/types';
+import { TrustedContact, PeerChat, SafeRoom, PeerMessage, RoomMessage } from '@/types';
 import { useHydrateToolUsageStore, useToolUsageStore } from '@/features/tools/state/useToolUsageStore';
 
-type ConnectionTab = 'circle' | 'peers' | 'rooms' | 'sponsor';
+type ConnectionTab = 'circle' | 'peers' | 'rooms';
 
 const ROLE_LABELS: Record<TrustedContact['role'], string> = {
   friend: 'Friend',
@@ -43,13 +43,11 @@ export default function ConnectionScreen() {
   useHydrateToolUsageStore();
   const logToolUsage = useToolUsageStore.use.logToolUsage();
   const {
-    trustedContacts, peerChats, safeRooms, sponsorPairing, displayName,
+    trustedContacts, peerChats, safeRooms, displayName,
     isLoading, setUserDisplayName,
     addTrustedContact, removeTrustedContact, updateContactAvailability,
     startPeerChat, sendPeerMessage, endPeerChat,
     joinRoom, leaveRoom, sendRoomMessage,
-    requestSponsorPairing, acceptSponsorPairing, endSponsorPairing,
-    sendSponsorMessage,
   } = useConnection();
 
   const [activeTab, setActiveTab] = useState<ConnectionTab>('circle');
@@ -62,8 +60,6 @@ export default function ConnectionScreen() {
   const [messageText, setMessageText] = useState<string>('');
   const [showNamePrompt, setShowNamePrompt] = useState<boolean>(false);
   const [nameInput, setNameInput] = useState<string>('');
-  const [showSponsorChat, setShowSponsorChat] = useState<boolean>(false);
-  const [sponsorMessageText, setSponsorMessageText] = useState<string>('');
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -172,13 +168,6 @@ export default function ConnectionScreen() {
     setShowNamePrompt(false);
     setNameInput('');
   }, [nameInput, setUserDisplayName]);
-
-  const handleSendSponsorMessage = useCallback(() => {
-    if (!sponsorMessageText.trim()) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    sendSponsorMessage(sponsorMessageText.trim());
-    setSponsorMessageText('');
-  }, [sponsorMessageText, sendSponsorMessage]);
 
   const activeChat = useMemo(() => {
     if (!activeChatId) return null;
@@ -499,7 +488,8 @@ export default function ConnectionScreen() {
     </View>
   );
 
-  const renderSponsorTab = () => (
+  const renderSponsorTab = () => null;
+  /*
     <ScreenScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
       <View style={styles.sponsorIntro}>
         <View style={styles.sponsorIntroIcon}>
@@ -693,6 +683,7 @@ export default function ConnectionScreen() {
       </View>
     </ScreenScrollView>
   );
+  */
 
   const renderChatModal = () => {
     const chat = activeChat;
@@ -862,7 +853,6 @@ export default function ConnectionScreen() {
           { key: 'circle' as const, label: 'Circle', icon: Shield },
           { key: 'peers' as const, label: 'Peers', icon: MessageCircle },
           { key: 'rooms' as const, label: 'Rooms', icon: Users },
-          { key: 'sponsor' as const, label: 'Sponsor', icon: Handshake },
         ]).map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -904,11 +894,11 @@ export default function ConnectionScreen() {
       {activeTab === 'circle' && renderCircleTab()}
       {activeTab === 'peers' && renderPeersTab()}
       {activeTab === 'rooms' && renderRoomsTab()}
-      {activeTab === 'sponsor' && renderSponsorTab()}
 
       {renderChatModal()}
       {renderRoomModal()}
 
+      {/*
       <Modal visible={showSponsorChat} animationType="slide" transparent>
         <KeyboardAvoidingView
           style={styles.modalOverlay}
@@ -1080,6 +1070,7 @@ export default function ConnectionScreen() {
           </View>
         </View>
       </Modal>
+      */}
     </Animated.View>
   );
 }

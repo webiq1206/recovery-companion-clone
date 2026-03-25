@@ -30,6 +30,7 @@ import { useTodayHub } from '@/features/home/hooks/useTodayHub';
 import { useWizardEngineHook } from '@/hooks/useWizardEngine';
 import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
 import { RecoveryStabilityPanel } from '@/components/RecoveryStabilityPanel';
+import { useRelapse } from '@/core/domains/useRelapse';
 import { getStrictRedirectTarget, resolveCanonicalRoute } from '@/utils/legacyRoutes';
 import {
   getCheckInWindowHint,
@@ -81,6 +82,8 @@ export default function TodayHubScreen() {
   const centralProfile = useAppStore((s) => s.userProfile);
   const centralDailyCheckIns = useAppStore((s) => s.dailyCheckIns);
   const { todayCheckIn: sliceTodayCheckIn, todayCheckIns: sliceTodayCheckIns } = useCheckin();
+  const { logRelapse } = useRelapse();
+  const logRelapseToCentralStore = useAppStore.use.logRelapse();
 
   const mergedTodayCheckIns = useMemo(() => {
     const todayStr = new Date().toISOString().split('T')[0];
@@ -103,6 +106,15 @@ export default function TodayHubScreen() {
     const id = setInterval(() => setCheckInWindowTick((n) => n + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  const dateTimeLabel = useMemo(() => {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const yyyy = String(now.getFullYear());
+    const time = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    return `${mm}/${dd}/${yyyy} · ${time}`;
+  }, [setCheckInWindowTick]);
 
   const displayProfile = centralProfile ?? profile;
 
@@ -170,6 +182,7 @@ export default function TodayHubScreen() {
         {/* Greeting */}
         <View style={styles.header}>
           <Text style={styles.greetingLabel}>{greetingLabel}</Text>
+          <Text style={styles.greetingDateTime}>{dateTimeLabel}</Text>
           <Text style={styles.greetingSubtitle}>
             {dailyGuidance.isReentryMode
               ? 'Welcome back. Let\u2019s ease into today.'
@@ -275,14 +288,42 @@ export default function TodayHubScreen() {
           </View>
         </View>
 
-        {/* Today's Stability — directly under mood & urge */}
+        {/* Comprehensive Stability — directly under mood & urge */}
         <RecoveryStabilityPanel
           score={stability.score}
           stabilityTrend={stability.trend}
           relapseRiskCategory={relapseRisk.category}
           relapseRiskLabel={relapseRisk.label}
           relapseRiskTrendLabel={relapseRisk.trendLabel}
+          relapseRiskWhySentence={relapseRisk.whySentence}
+          relapseRiskFactors={relapseRisk.factors}
         />
+
+        {showRelapsePlanCta && (
+          <Pressable
+            style={({ pressed }) => [
+              styles.relapsePlanCard,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push('/relapse-plan' as any);
+            }}
+            testID="todayhub-relapse-plan-cta"
+          >
+            <View style={styles.relapsePlanIconWrap}>
+              <AlertTriangle size={20} color={Colors.danger} />
+            </View>
+            <View style={styles.relapsePlanTextWrap}>
+              <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
+              <Text style={styles.relapsePlanSubtitle}>
+                Review warning signs, triggers, and coping strategies while risk is
+                high.
+              </Text>
+            </View>
+            <ArrowRight size={20} color={Colors.danger} />
+          </Pressable>
+        )}
 
         {/* Time-of-day check-ins */}
         <Text style={styles.sectionLabel}>Check-ins today</Text>
@@ -350,6 +391,40 @@ export default function TodayHubScreen() {
           })}
         </View>
 
+        <View style={[styles.planCard, { marginTop: 8, marginBottom: 14 }]}>
+          <Pressable
+            style={({ pressed }) => [styles.planRow, pressed && styles.pressed]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              Alert.alert(
+                'Log a setback',
+                "Recording a setback doesn't erase your progress. You'll see supportive next steps and can strengthen your system.",
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Log setback',
+                    style: 'default',
+                    onPress: () => {
+                      logRelapse();
+                      logRelapseToCentralStore();
+                    },
+                  },
+                ],
+              );
+            }}
+            testID="todayhub-log-relapse"
+          >
+            <View style={[styles.planStepBadge, { backgroundColor: Colors.danger + '18' }]}>
+              <AlertTriangle size={14} color={Colors.danger} />
+            </View>
+            <View style={styles.planTextWrap}>
+              <Text style={styles.planRowTitle}>Today was hard - log a setback</Text>
+              <Text style={styles.planRowSubtitle}>One event doesn't erase your progress</Text>
+            </View>
+            <ChevronRight size={16} color={Colors.textMuted} />
+          </Pressable>
+        </View>
+
         {/* Completion card */}
         {dailyGuidance.isComplete && dailyGuidance.completionMessage && (
           <View style={styles.completionCard}>
@@ -377,32 +452,6 @@ export default function TodayHubScreen() {
               </Pressable>
             </View>
           </View>
-        )}
-
-        {showRelapsePlanCta && (
-          <Pressable
-            style={({ pressed }) => [
-              styles.relapsePlanCard,
-              pressed && styles.pressed,
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              router.push('/relapse-plan' as any);
-            }}
-            testID="todayhub-relapse-plan-cta"
-          >
-            <View style={styles.relapsePlanIconWrap}>
-              <AlertTriangle size={20} color={Colors.danger} />
-            </View>
-            <View style={styles.relapsePlanTextWrap}>
-              <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
-              <Text style={styles.relapsePlanSubtitle}>
-                Review warning signs, triggers, and coping strategies while risk is
-                high.
-              </Text>
-            </View>
-            <ArrowRight size={20} color={Colors.danger} />
-          </Pressable>
         )}
 
         {/* Post-action feedback toast */}
@@ -526,6 +575,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
     color: Colors.text,
+  },
+  greetingDateTime: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textMuted,
+    marginTop: 2,
   },
   greetingSubtitle: {
     fontSize: 13,

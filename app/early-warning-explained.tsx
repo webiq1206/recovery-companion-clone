@@ -92,7 +92,7 @@ export default function EarlyWarningExplainedScreen() {
         />
         <SignalRow
           label="Stability (15%)"
-          description="How much your overall stability score and consistency contribute."
+          description="How much your overall Comprehensive Stability and consistency contribute."
         />
         <View style={styles.spacer} />
         <Text style={styles.bodyText}>
@@ -243,8 +243,8 @@ export default function EarlyWarningExplainedScreen() {
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What it tracks</Text>
         <SignalRow
-          label="Stability Score Average"
-          description="Your average stability score over the last 7 check-ins. This is the core metric - lower stability directly increases risk."
+          label="Comprehensive Stability (7-day view)"
+          description="Your Comprehensive Stability is the literal average of your per-day stability over the last 7 calendar days with data (days with 0 check-ins are skipped)."
         />
         <SignalRow
           label="Stability Trend"
@@ -257,7 +257,7 @@ export default function EarlyWarningExplainedScreen() {
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What affects it</Text>
         <Text style={styles.bodyText}>
-          Your stability score from each check-in is the primary input. It's essentially the inverse - a stability score of 80 means only 20 points of stability risk. What makes this characteristic important is the trend detection: if stability is dropping even from a high baseline, the system picks up on it early. Missing check-ins amplifies the signal because disengagement is itself a risk factor.
+          Your per-day stability values feed Comprehensive Stability. It's essentially the inverse — Comprehensive Stability of 80 means only 20 points of stability risk. What makes this characteristic important is the trend detection: if stability is dropping even from a high baseline, the system picks up on it early. Missing check-ins can amplify the signal because disengagement reduces your available day data.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>

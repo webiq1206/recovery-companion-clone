@@ -403,7 +403,7 @@ export default function DailyCheckInScreen() {
             <Text style={[styles.scoreLabel, { color: resultScoreColor }]}>{resultScoreLabel}</Text>
           </Animated.View>
 
-          <Text style={styles.stabilityTitle}>Stability Score</Text>
+          <Text style={styles.stabilityTitle}>Check-in stability</Text>
 
           <View style={styles.reflectionCard}>
             <Text style={styles.reflectionText}>{reflection}</Text>

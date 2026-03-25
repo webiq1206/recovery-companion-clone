@@ -72,7 +72,7 @@ export default function RecoveryStagesExplainedScreen() {
           description="How many days since your sober date. Longer sobriety contributes to advancing through stages."
         />
         <SignalRow
-          label="Stability Score (25%)"
+          label="Comprehensive Stability (25%)"
           description="Your average stability over the last 7 check-ins. Higher stability pushes you toward later stages."
         />
         <SignalRow
@@ -207,7 +207,7 @@ export default function RecoveryStagesExplainedScreen() {
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What it means</Text>
         <Text style={styles.bodyText}>
-          Your stability score is solid, cravings are low, and you've accumulated meaningful sober time. You're ready to focus on what you're building, not just what you're surviving.
+          Your Comprehensive Stability is solid, cravings are low, and you've accumulated meaningful sober time. You're ready to focus on what you're building, not just what you're surviving.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>How the app adapts</Text>

@@ -200,7 +200,7 @@ function evaluateStageSignals(
   });
 
   signals.push({
-    factor: 'Stability Score',
+    factor: 'Comprehensive Stability',
     value: Math.round(avgStability7),
     weight: 0.25,
     direction: avgStability7 >= 65 ? 'positive' : avgStability7 >= 40 ? 'neutral' : 'negative',

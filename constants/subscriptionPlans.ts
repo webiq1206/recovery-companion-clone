@@ -16,7 +16,7 @@ import type { PremiumFeature } from '@/types';
  */
 export const FREEMIUM_HIGHLIGHTS: string[] = [
   'Crisis tools & emergency support',
-  'Daily check-ins & stability score',
+  'Daily check-ins & Comprehensive Stability',
   'Sobriety tracking, streaks & milestones',
   'Journal entries & reflection prompts',
   'Pledges, triggers & progress views',
@@ -115,7 +115,7 @@ export type TierComparisonRow = {
 export const TIER_COMPARISON_ROWS: TierComparisonRow[] = [
   {
     id: 'core',
-    label: 'Daily check-ins, stability score & streaks',
+    label: 'Daily check-ins, Comprehensive Stability & streaks',
     freemium: true,
     premium: true,
   },

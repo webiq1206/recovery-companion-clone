@@ -847,11 +847,10 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {/* Danger Zone */}
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>
           DANGER ZONE
         </Text>
-        <Pressable style={styles.dangerRow} onPress={handleClearData}>
+        <Pressable style={styles.dangerRow} onPress={handleClearData} testID="settings-clear-all-data">
           <View style={styles.settingLeft}>
             <View
               style={[
@@ -861,12 +860,12 @@ export default function SettingsScreen() {
             >
               <RotateCcw size={17} color={Colors.danger} />
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[styles.settingLabel, { color: Colors.danger }]}>
                 Clear All Data
               </Text>
               <Text style={styles.settingValue}>
-                You're still building - clearing only removes stored data
+                Permanently remove recovery data stored on this device. This cannot be undone.
               </Text>
             </View>
           </View>
