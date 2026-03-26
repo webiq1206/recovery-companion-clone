@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Animated, TextInput, Modal } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
-import { User, Shield, Eye, EyeOff, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Stethoscope, Lightbulb, Layers, Radio, RefreshCw, Scale, Gauge, PauseCircle, PlayCircle, Activity, Building2 } from 'lucide-react-native';
+import { User, Shield, Eye, EyeOff, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Lightbulb, Layers, Radio, RefreshCw, Scale, Gauge, PauseCircle, PlayCircle, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useRelapse } from '@/core/domains/useRelapse';
@@ -14,7 +14,6 @@ import { useAppMeta } from '@/core/domains/useAppMeta';
 import { useEngagement } from '@/providers/EngagementProvider';
 import { useSubscription } from '@/providers/SubscriptionProvider';
 import { useNotifications } from '@/providers/NotificationProvider';
-import { useProviderMode } from '@/providers/ProviderModeProvider';
 import { RecoveryStage, PrivacyControls, NotificationIntensityLevel } from '@/types';
 import { ADDICTION_TYPES } from '@/constants/milestones';
 import { NOTIFICATION_INTENSITY_CONFIG, NotificationIntensity } from '@/constants/notifications';
@@ -29,7 +28,7 @@ const STAGE_CONFIG: Record<RecoveryStage, { label: string; color: string; icon: 
 const STAGE_ORDER: RecoveryStage[] = ['crisis', 'stabilize', 'rebuild', 'maintain'];
 
 export default function ProfileScreen() {
-  const { stabilityScore, resetAllData } = useAppMeta();
+  const { resetAllData } = useAppMeta();
   const { profile, updateProfile, daysSober } = useUser();
   const { checkIns } = useCheckin();
   const { pledges, currentStreak } = usePledges();
@@ -50,7 +49,6 @@ export default function ProfileScreen() {
     resumeNotifications,
     isPermissionGranted,
   } = useNotifications();
-  const { providerModeEnabled, setProviderModeEnabled } = useProviderMode();
   const router = require('expo-router').useRouter();
 
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -110,19 +108,13 @@ export default function ProfileScreen() {
     }
 
     items.push({
-      label: 'Comprehensive Stability',
-      value: `${stabilityScore}/100`,
-      color: stabilityScore >= 60 ? Colors.success : stabilityScore >= 40 ? Colors.accentWarm : Colors.danger,
-    });
-
-    items.push({
       label: 'Growth Score',
       value: `${overallGrowthScore}/100`,
       color: overallGrowthScore >= 50 ? Colors.primary : Colors.accentWarm,
     });
 
     return items;
-  }, [checkIns, stabilityScore, overallGrowthScore]);
+  }, [checkIns, overallGrowthScore]);
 
   const goals = useMemo(() => {
     return profile.recoveryProfile?.goals ?? [];
@@ -719,53 +711,6 @@ export default function ProfileScreen() {
         </View>
         <ChevronRight size={16} color={Colors.textMuted} />
       </Pressable>
-
-      {providerModeEnabled && (
-        <>
-      {/* Provider Tools */}
-      <Text style={[styles.sectionLabel, { marginTop: 28 }]}>PROVIDER TOOLS</Text>
-
-      <Pressable
-        style={({ pressed }) => [styles.settingRow, { borderColor: 'rgba(46,196,182,0.25)' }, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push('/provider-portal' as any);
-        }}
-        testID="provider-portal-link"
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.settingIcon, { backgroundColor: 'rgba(46,196,182,0.12)' }]}>
-            <Stethoscope size={17} color={Colors.primary} />
-          </View>
-          <View>
-            <Text style={styles.settingLabel}>Provider Companion Portal</Text>
-            <Text style={styles.settingValue}>Dashboard for therapists & providers</Text>
-          </View>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
-
-      <Pressable
-        style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push('/enterprise-dashboard' as any);
-        }}
-        testID="enterprise-dashboard-link"
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.settingIcon, { backgroundColor: 'rgba(66,165,245,0.12)' }]}>
-            <Building2 size={17} color="#42A5F5" />
-          </View>
-          <View>
-            <Text style={styles.settingLabel}>Enterprise Dashboard</Text>
-            <Text style={styles.settingValue}>Analytics, reports, billing & white label</Text>
-          </View>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
-        </>
-      )}
 
       <View style={styles.bottomSpacer} />
 

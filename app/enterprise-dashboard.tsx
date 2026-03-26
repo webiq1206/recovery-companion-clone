@@ -40,7 +40,7 @@ import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
 import { useRequireProviderMode } from '@/hooks/useRequireProviderMode';
 import { useEnterprise } from '@/providers/EnterpriseProvider';
-import { ROLE_LABELS, TIER_LABELS } from '@/constants/enterprise';
+import { DEFAULT_ORGANIZATION, ROLE_LABELS, TIER_LABELS } from '@/constants/enterprise';
 import { EnterpriseRole, OrgMember } from '@/types';
 
 const METRIC_COLORS = {
@@ -92,6 +92,7 @@ export default function EnterpriseDashboard() {
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState<EnterpriseRole>('therapist');
+  const org = organization ?? DEFAULT_ORGANIZATION;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -162,10 +163,10 @@ export default function EnterpriseDashboard() {
             <View style={styles.headerTop}>
               <View style={styles.orgBadge}>
                 <Building2 size={18} color={Colors.primary} />
-                <Text style={styles.orgName}>{organization.name}</Text>
+                <Text style={styles.orgName}>{org.name}</Text>
               </View>
               <View style={styles.tierBadge}>
-                <Text style={styles.tierText}>{TIER_LABELS[organization.tier]}</Text>
+                <Text style={styles.tierText}>{TIER_LABELS[org.tier]}</Text>
               </View>
             </View>
             <Text style={styles.welcomeText}>Welcome, {currentMember?.name?.split(' ')[0] ?? 'Admin'}</Text>
@@ -273,9 +274,9 @@ export default function EnterpriseDashboard() {
                 </Pressable>
               </View>
               <View style={styles.seatInfo}>
-                <Text style={styles.seatText}>{organization.usedSeats} / {organization.maxSeats} seats used</Text>
+                <Text style={styles.seatText}>{org.usedSeats} / {org.maxSeats} seats used</Text>
                 <View style={styles.seatBar}>
-                  <View style={[styles.seatBarFill, { width: `${(organization.usedSeats / organization.maxSeats) * 100}%` }]} />
+                  <View style={[styles.seatBarFill, { width: `${(org.usedSeats / Math.max(1, org.maxSeats)) * 100}%` }]} />
                 </View>
               </View>
               {members.map(member => (

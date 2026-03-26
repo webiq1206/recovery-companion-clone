@@ -50,6 +50,35 @@ const DEFAULT_DATA: EnterpriseData = {
   whiteLabel: DEFAULT_WHITE_LABEL,
 };
 
+function normalizeEnterpriseData(raw: unknown): { data: EnterpriseData; wasNormalized: boolean } {
+  if (!raw || typeof raw !== 'object') {
+    return { data: DEFAULT_DATA, wasNormalized: true };
+  }
+  const candidate = raw as Partial<EnterpriseData>;
+  const safeData: EnterpriseData = {
+    organization: candidate.organization
+      ? { ...DEFAULT_DATA.organization, ...candidate.organization }
+      : DEFAULT_DATA.organization,
+    members: Array.isArray(candidate.members) ? candidate.members : DEFAULT_DATA.members,
+    permissions: Array.isArray(candidate.permissions) ? candidate.permissions : DEFAULT_DATA.permissions,
+    alertThresholds: Array.isArray(candidate.alertThresholds) ? candidate.alertThresholds : DEFAULT_DATA.alertThresholds,
+    alerts: Array.isArray(candidate.alerts) ? candidate.alerts : DEFAULT_DATA.alerts,
+    heatmapData: Array.isArray(candidate.heatmapData) ? candidate.heatmapData : DEFAULT_DATA.heatmapData,
+    complianceSummaries: Array.isArray(candidate.complianceSummaries)
+      ? candidate.complianceSummaries
+      : DEFAULT_DATA.complianceSummaries,
+    reports: Array.isArray(candidate.reports) ? candidate.reports : DEFAULT_DATA.reports,
+    billing: candidate.billing
+      ? { ...DEFAULT_DATA.billing, ...candidate.billing }
+      : DEFAULT_DATA.billing,
+    whiteLabel: candidate.whiteLabel
+      ? { ...DEFAULT_DATA.whiteLabel, ...candidate.whiteLabel }
+      : DEFAULT_DATA.whiteLabel,
+  };
+  const wasNormalized = JSON.stringify(safeData) !== JSON.stringify(raw);
+  return { data: safeData, wasNormalized };
+}
+
 export const [EnterpriseProvider, useEnterprise] = createContextHook(() => {
   const queryClient = useQueryClient();
   const [data, setData] = useState<EnterpriseData>(DEFAULT_DATA);
@@ -59,11 +88,20 @@ export const [EnterpriseProvider, useEnterprise] = createContextHook(() => {
     queryKey: ['enterprise_data'],
     queryFn: async () => {
       console.log('[EnterpriseProvider] Loading enterprise data');
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as EnterpriseData;
-        console.log('[EnterpriseProvider] Loaded enterprise data, members:', parsed.members.length);
-        return parsed;
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as unknown;
+          const { data: normalized, wasNormalized } = normalizeEnterpriseData(parsed);
+          if (wasNormalized) {
+            console.log('[EnterpriseProvider] Normalized enterprise data from storage');
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+          }
+          console.log('[EnterpriseProvider] Loaded enterprise data, members:', normalized.members.length);
+          return normalized;
+        }
+      } catch (e) {
+        console.log('[EnterpriseProvider] Failed to load enterprise data, using defaults:', e);
       }
       console.log('[EnterpriseProvider] Using default enterprise data');
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_DATA));

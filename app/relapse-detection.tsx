@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   Platform,
+  Modal,
 } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { useRouter } from 'expo-router';
@@ -246,6 +247,7 @@ function SleepCard({ score, trend }: { score: number; trend: 'improving' | 'decl
 }
 
 function RiskHistoryChart({ predictions }: { predictions: Array<{ overallRisk: number; generatedAt: string }> }) {
+  const [showExplained, setShowExplained] = useState(false);
   const data = useMemo(() => {
     return predictions.slice(0, 7).reverse();
   }, [predictions]);
@@ -256,10 +258,42 @@ function RiskHistoryChart({ predictions }: { predictions: Array<{ overallRisk: n
         <View style={cardStyles.cardHeader}>
           <Activity size={16} color={Colors.primary} />
           <Text style={cardStyles.cardTitle}>Risk History</Text>
+          <View style={cardStyles.headerSpacer} />
+          <Pressable
+            style={historyStyles.explainedBtn}
+            onPress={() => setShowExplained(true)}
+            testID="risk-history-explained-button"
+          >
+            <Text style={historyStyles.explainedBtnText}>Explained</Text>
+          </Pressable>
         </View>
         <View style={historyStyles.empty}>
           <Text style={historyStyles.emptyText}>Complete more check-ins to see risk trends over time</Text>
         </View>
+        <Modal
+          visible={showExplained}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowExplained(false)}
+        >
+          <Pressable style={historyStyles.modalBackdrop} onPress={() => setShowExplained(false)}>
+            <Pressable style={historyStyles.modalCard} onPress={() => {}}>
+              <Text style={historyStyles.modalTitle}>Risk History Explained</Text>
+              <Text style={historyStyles.modalBody}>
+                {'~ Risk History under Trend is NOT strictly once per day.\n'}
+                {'~ A new history point is added:\n'}
+                {'            ~ manually via Refresh Analysis button\n'}
+                {'      or automatically when:\n'}
+                {'            ~ last analysis is older than ~1 hour, or\n'}
+                {'            ~ there is a newer check-in than the last analysis timestamp\n'}
+                {'~ So in practice, it can update multiple times in a day if there are new check-ins or manual refreshes.'}
+              </Text>
+              <Pressable style={historyStyles.modalCloseBtn} onPress={() => setShowExplained(false)}>
+                <Text style={historyStyles.modalCloseText}>Close</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </View>
     );
   }
@@ -271,8 +305,16 @@ function RiskHistoryChart({ predictions }: { predictions: Array<{ overallRisk: n
       <View style={cardStyles.cardHeader}>
         <Activity size={16} color={Colors.primary} />
         <Text style={cardStyles.cardTitle}>Risk History</Text>
+        <View style={cardStyles.headerSpacer} />
+        <Pressable
+          style={historyStyles.explainedBtn}
+          onPress={() => setShowExplained(true)}
+          testID="risk-history-explained-button"
+        >
+          <Text style={historyStyles.explainedBtnText}>Explained</Text>
+        </Pressable>
       </View>
-      <Text style={cardStyles.cardSubtitle}>Daily risk score over recent check-ins</Text>
+      <Text style={cardStyles.cardSubtitle}>Risk scores over recent check-ins</Text>
       <View style={historyStyles.chartWrap}>
         <View style={historyStyles.yAxis}>
           <Text style={historyStyles.yLabel}>{maxRisk}</Text>
@@ -295,6 +337,30 @@ function RiskHistoryChart({ predictions }: { predictions: Array<{ overallRisk: n
           })}
         </View>
       </View>
+      <Modal
+        visible={showExplained}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowExplained(false)}
+      >
+        <Pressable style={historyStyles.modalBackdrop} onPress={() => setShowExplained(false)}>
+          <Pressable style={historyStyles.modalCard} onPress={() => {}}>
+            <Text style={historyStyles.modalTitle}>Risk History Explained</Text>
+            <Text style={historyStyles.modalBody}>
+              {'~ Risk History under Trend is NOT strictly once per day.\n'}
+              {'~ A new history point is added:\n'}
+              {'            ~ manually via Refresh Analysis button\n'}
+              {'      or automatically when:\n'}
+              {'            ~ last analysis is older than ~1 hour, or\n'}
+              {'            ~ there is a newer check-in than the last analysis timestamp\n'}
+              {'~ So in practice, it can update multiple times in a day if there are new check-ins or manual refreshes.'}
+            </Text>
+            <Pressable style={historyStyles.modalCloseBtn} onPress={() => setShowExplained(false)}>
+              <Text style={historyStyles.modalCloseText}>Close</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -501,7 +567,7 @@ export default function RelapseDetectionScreen() {
                 <View style={styles.crisisIconWrap}>
                   <Shield size={18} color="#fff" />
                 </View>
-                <View>
+                <View style={styles.crisisTextWrap}>
                   <Text style={styles.crisisTitle}>Your safety tools are ready</Text>
                   <Text style={styles.crisisSubtitle}>Breathing, grounding, and connection - whenever you need them</Text>
                 </View>
@@ -836,6 +902,19 @@ const sleepStyles = StyleSheet.create({
 });
 
 const historyStyles = StyleSheet.create({
+  explainedBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: Colors.primary + '14',
+    borderWidth: 0.5,
+    borderColor: Colors.primary + '30',
+  },
+  explainedBtnText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: Colors.primary,
+  },
   empty: {
     height: 80,
     alignItems: 'center',
@@ -885,6 +964,43 @@ const historyStyles = StyleSheet.create({
     fontSize: 9,
     color: Colors.textMuted,
     marginTop: 4,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  modalTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  modalBody: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+  },
+  modalCloseBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.primary + '16',
+  },
+  modalCloseText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
 });
 
@@ -1022,6 +1138,9 @@ const cardStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  headerSpacer: {
+    flex: 1,
+  },
   cardTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
@@ -1158,6 +1277,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  crisisTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
   crisisTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
@@ -1167,6 +1290,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textMuted,
     marginTop: 2,
+    flexShrink: 1,
   },
   relapsePlanCard: {
     flexDirection: 'row',

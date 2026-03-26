@@ -810,7 +810,7 @@ export default function SettingsScreen() {
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/enterprise-layout' as any);
+                router.push('/enterprise-dashboard' as any);
               }}
             >
               <View style={styles.settingLeft}>
@@ -823,9 +823,9 @@ export default function SettingsScreen() {
                   <Building2 size={17} color={Colors.textSecondary} />
                 </View>
                 <View>
-                  <Text style={styles.settingLabel}>Enterprise Reports</Text>
+                  <Text style={styles.settingLabel}>Enterprise Dashboard</Text>
                   <Text style={styles.settingValue}>
-                    Organization-level analytics
+                    Analytics, reports, billing & white label
                   </Text>
                 </View>
               </View>

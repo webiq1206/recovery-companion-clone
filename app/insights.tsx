@@ -72,6 +72,22 @@ export default function InsightsHubScreen() {
 
       <Pressable
         style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => router.push('/comprehensive-stability-explained' as any)}
+        testID="insights-comprehensive-stability-explained-link"
+      >
+        <View style={[styles.iconCircle, { backgroundColor: Colors.primary + '18' }]}>
+          <Activity size={18} color={Colors.primary} />
+        </View>
+        <View style={styles.cardBody}>
+          <Text style={styles.cardTitle}>Comprehensive Stability Explained</Text>
+          <Text style={styles.cardSubtitle}>
+            How your daily check-ins roll up into the score you see on Home.
+          </Text>
+        </View>
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
         onPress={() => router.push('/insights-explained' as any)}
         testID="insights-explained-link"
       >

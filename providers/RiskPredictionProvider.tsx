@@ -279,9 +279,16 @@ function calculateStabilityRisk(checkIns: DailyCheckIn[]): number {
 
 function calculateMissedCheckInDays(checkIns: DailyCheckIn[]): number {
   if (checkIns.length === 0) return 0;
+  const latestCheckInAt = checkIns.reduce<Date | null>((latest, checkIn) => {
+    const candidate = new Date(checkIn.completedAt || checkIn.date);
+    if (Number.isNaN(candidate.getTime())) return latest;
+    if (!latest || candidate.getTime() > latest.getTime()) return candidate;
+    return latest;
+  }, null);
+  if (!latestCheckInAt) return 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const lastCheckIn = new Date(checkIns[0].date);
+  const lastCheckIn = new Date(latestCheckInAt);
   lastCheckIn.setHours(0, 0, 0, 0);
   const diffDays = Math.floor((today.getTime() - lastCheckIn.getTime()) / 86400000);
   return Math.max(0, diffDays);
@@ -728,9 +735,15 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
     const lastAnalyzed = currentData.lastAnalyzedAt ? new Date(currentData.lastAnalyzedAt) : null;
     const now = new Date();
 
+    const latestCheckInAt = checkIns.reduce<Date | null>((latest, checkIn) => {
+      const candidate = new Date(checkIn.completedAt || checkIn.date);
+      if (Number.isNaN(candidate.getTime())) return latest;
+      if (!latest || candidate.getTime() > latest.getTime()) return candidate;
+      return latest;
+    }, null);
     const shouldAnalyze = !lastAnalyzed ||
       (now.getTime() - lastAnalyzed.getTime()) > 3600000 ||
-      (checkIns[0] && new Date(checkIns[0].completedAt) > (lastAnalyzed ?? new Date(0)));
+      (!!latestCheckInAt && latestCheckInAt > (lastAnalyzed ?? new Date(0)));
 
     if (shouldAnalyze) {
       console.log('[RiskPrediction] Auto-triggering prediction analysis');
@@ -764,13 +777,17 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
 
   const activeAlerts = useMemo(() => {
     const undismissed = data.alerts.filter(a => !a.isDismissed);
-    const missedAlerts = undismissed.filter(a => a.id.startsWith('missed_'));
-    if (missedAlerts.length <= 1) return undismissed;
+    const missedDays = calculateMissedCheckInDays(checkIns);
+    const unresolvedAlerts = missedDays < 2
+      ? undismissed.filter(a => !a.id.startsWith('missed_'))
+      : undismissed;
+    const missedAlerts = unresolvedAlerts.filter(a => a.id.startsWith('missed_'));
+    if (missedAlerts.length <= 1) return unresolvedAlerts;
     const latestMissed = missedAlerts.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )[0];
-    return undismissed.filter(a => !a.id.startsWith('missed_') || a.id === latestMissed.id);
-  }, [data.alerts]);
+    return unresolvedAlerts.filter(a => !a.id.startsWith('missed_') || a.id === latestMissed.id);
+  }, [data.alerts, checkIns]);
 
   const criticalAlerts = useMemo(() => {
     return activeAlerts.filter(a => a.severity === 'critical' || a.severity === 'warning');

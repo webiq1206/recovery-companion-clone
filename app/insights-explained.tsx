@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { Stack } from 'expo-router';
-import { Activity, Brain, Shield, Heart, Users, TrendingUp, BarChart3, Info, Zap, Moon, Compass } from 'lucide-react-native';
+import { Brain, Shield, Heart, Users, TrendingUp, BarChart3, Info, Zap, Moon, Compass } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 
 interface ExplainerCardProps {
@@ -54,65 +54,6 @@ export default function InsightsExplainedScreen() {
           Your scores reflect your recovery journey based on real data from your daily check-ins, journal entries, pledges, and app activity. They update as you engage with the app each day.
         </Text>
       </View>
-
-      <Text style={styles.sectionTitle}>COMPREHENSIVE STABILITY</Text>
-
-      <ExplainerCard
-        icon={<Activity size={18} color="#2EC4B6" />}
-        title="What is Comprehensive Stability?"
-        accentColor="#2EC4B6"
-      >
-        <Text style={styles.bodyText}>
-          Your Comprehensive Stability is a number from 0 to 100 that reflects how steady and grounded you've been recently. It's your emotional and behavioral baseline - a snapshot of where you stand right now.
-        </Text>
-        <View style={styles.spacer} />
-        <Text style={styles.subHeading}>How it's calculated</Text>
-        <Text style={styles.bodyText}>
-          Each daily check-in generates a stability score based on your reported mood, craving level, stress, sleep quality, and environment safety. For each calendar day, we average any check-ins you completed, then your Comprehensive Stability is the literal average of the last 7 days that have data.
-        </Text>
-        <View style={styles.spacer} />
-        <Text style={styles.subHeading}>What affects it</Text>
-        <FactorRow
-          label="Mood"
-          description="Higher mood ratings raise your stability. Consistently low mood pulls it down."
-        />
-        <FactorRow
-          label="Craving Level"
-          description="Lower cravings indicate greater stability. High cravings reduce your score."
-        />
-        <FactorRow
-          label="Stress"
-          description="Lower stress contributes to higher Comprehensive Stability."
-        />
-        <FactorRow
-          label="Sleep Quality"
-          description="Better sleep quality improves your stability reading."
-        />
-        <FactorRow
-          label="Environment Safety"
-          description="Feeling safe in your environment raises stability."
-        />
-        <View style={styles.spacer} />
-        <View style={styles.rangeCard}>
-          <Text style={styles.rangeTitle}>Score ranges</Text>
-          <View style={styles.rangeRow}>
-            <View style={[styles.rangeDot, { backgroundColor: Colors.success }]} />
-            <Text style={styles.rangeText}><Text style={styles.rangeBold}>60–100</Text> - Stable and grounded</Text>
-          </View>
-          <View style={styles.rangeRow}>
-            <View style={[styles.rangeDot, { backgroundColor: Colors.accentWarm }]} />
-            <Text style={styles.rangeText}><Text style={styles.rangeBold}>40–59</Text> - Some fluctuation, keep going</Text>
-          </View>
-          <View style={styles.rangeRow}>
-            <View style={[styles.rangeDot, { backgroundColor: Colors.danger }]} />
-            <Text style={styles.rangeText}><Text style={styles.rangeBold}>0–39</Text> - Needs attention, use your tools</Text>
-          </View>
-        </View>
-        <View style={styles.spacer} />
-        <Text style={styles.tipText}>
-          If you haven't completed any check-ins yet, your Comprehensive Stability defaults to 50. The more consistently you check in, the more accurate it becomes.
-        </Text>
-      </ExplainerCard>
 
       <Text style={styles.sectionTitle}>GROWTH SCORE</Text>
 

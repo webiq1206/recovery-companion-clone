@@ -7,6 +7,7 @@ import {
   Dimensions,
   Pressable,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
 import {
@@ -300,6 +301,7 @@ function StabilityTimelineScreen() {
 
   const [stabilityWindowDays, setStabilityWindowDays] = useState<StabilityWindowDays>(14);
   const [milestonesExpanded, setMilestonesExpanded] = useState<boolean>(false);
+  const [selectedMomentumMetric, setSelectedMomentumMetric] = useState<null | 'change' | 'plans' | 'crisis' | 'setbacks'>(null);
 
   const stabilitySeries = useMemo(
     () =>
@@ -487,6 +489,7 @@ function StabilityTimelineScreen() {
                 ? 'hope'
                 : 'feeling numb'
       : null;
+    const riskEmotionLabel = topEmotionTag && topEmotionTag !== 'hopeful' ? emotionLabel : null;
 
     const period = timeOfDayRisk?.highRiskPeriod;
     const periodLabel =
@@ -508,10 +511,10 @@ function StabilityTimelineScreen() {
           : 'Your stability held fairly steady this week.';
 
     let triggerSentence = '';
-    if (emotionLabel && periodLabel) {
-      triggerSentence = `${emotionLabel.charAt(0).toUpperCase() + emotionLabel.slice(1)} and ${periodLabel} were your most common triggers.`;
-    } else if (emotionLabel) {
-      triggerSentence = `${emotionLabel.charAt(0).toUpperCase() + emotionLabel.slice(1)} was your most common trigger.`;
+    if (riskEmotionLabel && periodLabel) {
+      triggerSentence = `${riskEmotionLabel.charAt(0).toUpperCase() + riskEmotionLabel.slice(1)} and ${periodLabel} were your most common triggers.`;
+    } else if (riskEmotionLabel) {
+      triggerSentence = `${riskEmotionLabel.charAt(0).toUpperCase() + riskEmotionLabel.slice(1)} was your most common trigger.`;
     } else if (periodLabel) {
       triggerSentence = `${periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1)} were your most vulnerable times.`;
     } else {
@@ -550,6 +553,35 @@ function StabilityTimelineScreen() {
   const uniqueCheckInDays = useMemo(() => {
     return new Set(sourceCheckIns.map((c) => c.date)).size;
   }, [sourceCheckIns]);
+
+  const momentumDetails = useMemo(() => {
+    const sortedRecent = [...sourceCheckIns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const recentScores = sortedRecent.slice(0, 7).map(c => c.stabilityScore);
+    const recentBucket = recentScores.slice(0, 3);
+    const olderBucket = recentScores.slice(3, 7);
+    const recentAvg = recentBucket.length > 0 ? recentBucket.reduce((a, b) => a + b, 0) / recentBucket.length : null;
+    const olderAvg = olderBucket.length > 0 ? olderBucket.reduce((a, b) => a + b, 0) / olderBucket.length : null;
+    const weeklyCheckInDays = new Set<string>();
+    const weeklyPledgeDays = new Set<string>();
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - (6 - i));
+      const dateStr = d.toISOString().split('T')[0];
+      if (sourceCheckIns.some(c => c.date === dateStr)) weeklyCheckInDays.add(dateStr);
+      if (pledges.some(p => p.date === dateStr)) weeklyPledgeDays.add(dateStr);
+    }
+    const crisisEvents = timelineEvents.filter((e) => e.type === 'crisis_activation');
+    return {
+      changeText:
+        recentAvg != null && olderAvg != null
+          ? `Based on ${recentBucket.length} recent check-ins (avg ${Math.round(recentAvg)}) compared with ${olderBucket.length} older check-ins (avg ${Math.round(olderAvg)}).`
+          : 'Not enough check-ins yet to compare recent and older periods.',
+      plansText: `${weeklyCheckInDays.size} days with check-ins + ${weeklyPledgeDays.size} days with pledges over the last 7 days (unique days total: ${weeklyPlansCompleted}).`,
+      crisisText: `${crisisEvents.length} total crisis activation events recorded in your timeline.`,
+      setbacksText: `${relapseCount} total setbacks recorded in your profile progress.`,
+    };
+  }, [sourceCheckIns, pledges, timelineEvents, weeklyPlansCompleted, relapseCount]);
 
   const isEarlyDays = uniqueCheckInDays < 7;
 
@@ -827,28 +859,60 @@ function StabilityTimelineScreen() {
       <View style={styles.momentumCard}>
         <Text style={styles.momentumTitle}>Momentum summary</Text>
         <View style={styles.momentumRow}>
-          <View style={styles.momentumItem}>
+          <Pressable style={({ pressed }) => [styles.momentumItem, pressed && styles.momentumItemPressed]} onPress={() => setSelectedMomentumMetric('change')}>
             <Text style={styles.momentumValue}>{sevenDayChange >= 0 ? '+' : ''}{sevenDayChange}</Text>
             <Text style={styles.momentumLabel}>7-day change</Text>
-          </View>
+          </Pressable>
           <View style={styles.momentumDivider} />
-          <View style={styles.momentumItem}>
+          <Pressable style={({ pressed }) => [styles.momentumItem, pressed && styles.momentumItemPressed]} onPress={() => setSelectedMomentumMetric('plans')}>
             <Text style={styles.momentumValue}>{weeklyPlansCompleted}</Text>
             <Text style={styles.momentumLabel}>Weekly plans completed</Text>
-          </View>
+          </Pressable>
         </View>
         <View style={styles.momentumRow}>
-          <View style={styles.momentumItem}>
+          <Pressable style={({ pressed }) => [styles.momentumItem, pressed && styles.momentumItemPressed]} onPress={() => setSelectedMomentumMetric('crisis')}>
             <Text style={styles.momentumValue}>{crisisActivationsCount}</Text>
             <Text style={styles.momentumLabel}>Crisis activations</Text>
-          </View>
+          </Pressable>
           <View style={styles.momentumDivider} />
-          <View style={styles.momentumItem}>
+          <Pressable style={({ pressed }) => [styles.momentumItem, pressed && styles.momentumItemPressed]} onPress={() => setSelectedMomentumMetric('setbacks')}>
             <Text style={styles.momentumValue}>{relapseCount}</Text>
             <Text style={styles.momentumLabel}>Setbacks (total)</Text>
-          </View>
+          </Pressable>
         </View>
       </View>
+      <Modal
+        visible={selectedMomentumMetric !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedMomentumMetric(null)}
+      >
+        <Pressable style={styles.momentumModalBackdrop} onPress={() => setSelectedMomentumMetric(null)}>
+          <Pressable style={styles.momentumModalCard} onPress={() => {}}>
+            <Text style={styles.momentumModalTitle}>
+              {selectedMomentumMetric === 'change'
+                ? '7-day change'
+                : selectedMomentumMetric === 'plans'
+                  ? 'Weekly plans completed'
+                  : selectedMomentumMetric === 'crisis'
+                    ? 'Crisis activations'
+                    : 'Setbacks (total)'}
+            </Text>
+            <Text style={styles.momentumModalBody}>
+              {selectedMomentumMetric === 'change'
+                ? momentumDetails.changeText
+                : selectedMomentumMetric === 'plans'
+                  ? momentumDetails.plansText
+                  : selectedMomentumMetric === 'crisis'
+                    ? momentumDetails.crisisText
+                    : momentumDetails.setbacksText}
+            </Text>
+            <Pressable style={styles.momentumModalClose} onPress={() => setSelectedMomentumMetric(null)}>
+              <Text style={styles.momentumModalCloseText}>Close</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <View style={styles.badgesCard}>
         <Text style={styles.badgesTitle}>Milestones</Text>
@@ -1286,6 +1350,11 @@ const styles = StyleSheet.create({
   momentumItem: {
     flex: 1,
     alignItems: 'center',
+    borderRadius: 10,
+    paddingVertical: 4,
+  },
+  momentumItemPressed: {
+    backgroundColor: Colors.primary + '10',
   },
   momentumValue: {
     fontSize: 18,
@@ -1301,6 +1370,45 @@ const styles = StyleSheet.create({
     width: 1,
     height: 28,
     backgroundColor: Colors.border,
+  },
+  momentumModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  momentumModalCard: {
+    width: '100%',
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 14,
+    padding: 18,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  momentumModalTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 10,
+  },
+  momentumModalBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.textSecondary,
+  },
+  momentumModalClose: {
+    alignSelf: 'flex-end',
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: Colors.primary + '16',
+  },
+  momentumModalCloseText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
   badgesCard: {
     backgroundColor: Colors.cardBackground,

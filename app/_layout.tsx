@@ -17,6 +17,7 @@ import { StageDetectionProvider } from "@/providers/StageDetectionProvider";
 import { ProviderModeProvider } from "@/providers/ProviderModeProvider";
 import { RetentionProvider } from "@/providers/RetentionProvider";
 import { NotificationProvider } from "@/providers/NotificationProvider";
+import { EnterpriseProvider } from "@/providers/EnterpriseProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LockScreen from "@/components/LockScreen";
 import RelapseFlowGate from "@/components/RelapseFlowGate";
@@ -134,7 +135,9 @@ function SecuredApp() {
                       <ComplianceProvider>
                         <RetentionProvider>
                           <NotificationProvider>
-                            <RootLayoutNav />
+                            <EnterpriseProvider>
+                              <RootLayoutNav />
+                            </EnterpriseProvider>
                           </NotificationProvider>
                         </RetentionProvider>
                       </ComplianceProvider>
