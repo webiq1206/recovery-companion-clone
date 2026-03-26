@@ -88,7 +88,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen name="how-to-use" options={{ title: 'How to Use', animation: modalAnimation }} />
-        <Stack.Screen name="relapse-detection" options={{ title: 'Relapse Detection', animation: defaultAnimation }} />
+        <Stack.Screen name="relapse-detection" options={{ title: 'Relapse Warning', animation: defaultAnimation }} />
         <Stack.Screen name="provider-portal" options={{ title: 'Provider Portal', animation: defaultAnimation }} />
         <Stack.Screen name="client-detail" options={{ title: 'Client Detail', animation: defaultAnimation }} />
         <Stack.Screen name="compliance-mode" options={{ title: 'Compliance Mode', animation: defaultAnimation }} />
@@ -98,7 +98,7 @@ function RootLayoutNav() {
         <Stack.Screen name="enterprise-layout" options={{ headerShown: false, animation: defaultAnimation }} />
         <Stack.Screen name="insights-explained" options={{ title: 'Insights Explained', animation: defaultAnimation }} />
         <Stack.Screen name="recovery-stages-explained" options={{ title: 'Recovery Stages', animation: defaultAnimation }} />
-        <Stack.Screen name="early-warning-explained" options={{ title: 'Early Warning', animation: defaultAnimation }} />
+        <Stack.Screen name="early-warning-explained" options={{ title: 'Relapse Warning Explained', animation: defaultAnimation }} />
         <Stack.Screen name="recovery-insights-explained" options={{ title: 'Recovery Insights', animation: defaultAnimation }} />
         <Stack.Screen name="protection-profile" options={{ title: 'Protection Profile', animation: defaultAnimation }} />
         <Stack.Screen name="first-day" options={{ title: 'Your First Day', headerShown: false, animation: defaultAnimation }} />

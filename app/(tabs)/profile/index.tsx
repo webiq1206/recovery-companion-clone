@@ -367,11 +367,23 @@ export default function ProfileScreen() {
       {/* Insights */}
       {insights.length > 0 && (
         <>
-          <Text style={styles.sectionLabel}>INSIGHTS</Text>
+          <Text style={styles.sectionLabel}>GROWTH INSIGHTS</Text>
           <View style={styles.insightsGrid}>
             {insights.map((item, idx) => (
-              <View key={idx} style={styles.insightCard}>
+              <View key={idx} style={[styles.insightCard, item.label === 'Growth Score' && styles.insightCardWithButton]}>
                 <View style={[styles.insightDot, { backgroundColor: item.color }]} />
+                {item.label === 'Growth Score' && (
+                  <Pressable
+                    style={({ pressed }) => [styles.growthScoreExplainedBtn, pressed && { opacity: 0.85 }]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      router.push('/insights-explained' as any);
+                    }}
+                    testID="growth-score-explained-link"
+                  >
+                    <Text style={styles.growthScoreExplainedBtnText}>Explained</Text>
+                  </Pressable>
+                )}
                 <Text style={styles.insightLabel}>{item.label}</Text>
                 <Text style={[styles.insightValue, { color: item.color }]}>{item.value}</Text>
               </View>
@@ -547,28 +559,6 @@ export default function ProfileScreen() {
           <ChevronRight size={16} color={Colors.textMuted} />
         </Pressable>
       )}
-
-      {/* Settings link */}
-      <Text style={[styles.sectionLabel, { marginTop: 28 }]}>SETTINGS</Text>
-      <Pressable
-        style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push('/settings' as any);
-        }}
-        testID="settings-link"
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.settingIcon, { backgroundColor: 'rgba(90,106,122,0.12)' }]}>
-            <Shield size={17} color={Colors.textSecondary} />
-          </View>
-          <View>
-            <Text style={styles.settingLabel}>Settings</Text>
-            <Text style={styles.settingValue}>Privacy, notifications, security, and more</Text>
-          </View>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
 
       <Text style={[styles.sectionLabel, { marginTop: 28 }]}>HELP</Text>
 
@@ -1068,6 +1058,9 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: Colors.border,
   },
+  insightCardWithButton: {
+    position: 'relative',
+  },
   insightDot: {
     width: 6,
     height: 6,
@@ -1092,6 +1085,22 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: Colors.border,
     gap: 14,
+  },
+  growthScoreExplainedBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: Colors.primary + '14',
+    borderWidth: 0.5,
+    borderColor: Colors.primary + '30',
+  },
+  growthScoreExplainedBtnText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: Colors.primary,
   },
   growthRow: {
     flexDirection: 'row',

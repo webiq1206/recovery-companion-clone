@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Info,
   Sparkles,
+  Settings,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
@@ -171,6 +172,16 @@ export default function TodayHubScreen() {
 
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top }]}>
+      <Pressable
+        style={[styles.topRightSettingsBtn, { top: insets.top + 8 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push('/settings' as any);
+        }}
+        testID="today-settings-link"
+      >
+        <Settings size={18} color={Colors.text} />
+      </Pressable>
       <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={[
@@ -570,6 +581,19 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 18,
+  },
+  topRightSettingsBtn: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.cardBackground,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
   },
   greetingLabel: {
     fontSize: 24,

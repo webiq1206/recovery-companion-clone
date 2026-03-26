@@ -57,7 +57,7 @@ export default function EarlyWarningExplainedScreen() {
       showsVerticalScrollIndicator={false}
       testID="early-warning-explained-screen"
     >
-      <Stack.Screen options={{ title: 'Early Warning' }} />
+      <Stack.Screen options={{ title: 'Relapse Warning Explained' }} />
 
       <View style={styles.introCard}>
         <Info size={20} color={Colors.primary} />

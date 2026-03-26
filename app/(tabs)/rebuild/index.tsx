@@ -48,6 +48,7 @@ import {
   PenLine,
   Eye,
   Play,
+  Settings,
 } from 'lucide-react-native';
 import { useUser } from '@/core/domains/useUser';
 import { useCheckin } from '@/core/domains/useCheckin';
@@ -745,7 +746,17 @@ export default function RebuildScreen() {
   if (!hasFeature('rebuild_programs')) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Rebuild', headerShown: true }} />
+        <Stack.Screen
+          options={{
+            title: 'Rebuild',
+            headerShown: true,
+            headerRight: () => (
+              <Pressable onPress={() => rebuildRouter.push('/settings' as never)} hitSlop={10}>
+                <Settings size={18} color={Colors.text} />
+              </Pressable>
+            ),
+          }}
+        />
         <View style={styles.premiumOverlay}>
           <View style={styles.premiumIconCircle}>
             <Hammer size={32} color="#D4A574" />
@@ -770,7 +781,17 @@ export default function RebuildScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Rebuild', headerShown: true }} />
+      <Stack.Screen
+        options={{
+          title: 'Rebuild',
+          headerShown: true,
+          headerRight: () => (
+            <Pressable onPress={() => rebuildRouter.push('/settings' as never)} hitSlop={10}>
+              <Settings size={18} color={Colors.text} />
+            </Pressable>
+          ),
+        }}
+      />
 
       <ScreenScrollView
         style={styles.scrollView}

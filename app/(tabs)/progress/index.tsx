@@ -796,7 +796,7 @@ function StabilityTimelineScreen() {
       </View>
 
       <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Weekly RecoveryInsights</Text>
+        <Text style={styles.summaryTitle}>Weekly Recovery Insights</Text>
         <Text style={styles.summaryLabel}>{weeklyInsights.narrative}</Text>
       </View>
 
@@ -966,7 +966,7 @@ function StabilityTimelineScreen() {
             <TrendingUp size={16} color={Colors.primary} />
           </View>
           <View>
-            <Text style={styles.detectionLinkTitle}>View retention insights</Text>
+            <Text style={styles.detectionLinkTitle}>View Recovery Insights</Text>
             <Text style={styles.detectionLinkSub}>Engagement and long-term recovery signals</Text>
           </View>
         </View>

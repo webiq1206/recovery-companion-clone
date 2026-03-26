@@ -67,7 +67,7 @@ export default function RecoveryInsightsExplainedScreen() {
       showsVerticalScrollIndicator={false}
       testID="recovery-insights-explained-screen"
     >
-      <Stack.Screen options={{ title: 'Recovery Insights' }} />
+      <Stack.Screen options={{ title: 'Recovery Insights Explained' }} />
 
       <View style={styles.introCard}>
         <Info size={20} color={Colors.primary} />
