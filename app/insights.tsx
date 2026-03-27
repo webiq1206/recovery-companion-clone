@@ -135,7 +135,7 @@ export default function InsightsHubScreen() {
             <Activity size={18} color={Colors.accent} />
           </View>
           <View style={styles.cardBody}>
-            <Text style={styles.cardTitle}>Relapse Warning</Text>
+            <Text style={styles.cardTitle}>Risk Warning</Text>
             <Text style={styles.cardSubtitle}>
               Real-time risk scoring, trends, and early warning signals.
             </Text>
@@ -321,7 +321,7 @@ export default function InsightsHubScreen() {
           <Radio size={18} color={Colors.danger} />
         </View>
         <View style={styles.cardBody}>
-          <Text style={styles.cardTitle}>Relapse Warning Explained</Text>
+          <Text style={styles.cardTitle}>Risk Warning Explained</Text>
           <Text style={styles.cardSubtitle}>
             The four risk characteristics and how your overall risk level is computed.
           </Text>

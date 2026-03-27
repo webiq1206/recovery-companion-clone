@@ -512,7 +512,7 @@ export default function RelapseDetectionScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Relapse Warning',
+          title: 'Risk Warning',
           headerStyle: { backgroundColor: Colors.background },
           headerTintColor: Colors.text,
         }}

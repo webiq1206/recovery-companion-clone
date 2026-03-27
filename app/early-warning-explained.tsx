@@ -57,12 +57,12 @@ export default function EarlyWarningExplainedScreen() {
       showsVerticalScrollIndicator={false}
       testID="early-warning-explained-screen"
     >
-      <Stack.Screen options={{ title: 'Relapse Warning Explained' }} />
+      <Stack.Screen options={{ title: 'Risk Warning Explained' }} />
 
       <View style={styles.introCard}>
         <Info size={20} color={Colors.primary} />
         <Text style={styles.introText}>
-          The Early Warning system continuously monitors patterns in your check-ins to detect signs of increased risk before a crisis develops. It watches four key characteristics - Emotional, Behavioral, Triggers, and Stability - and combines them into an overall risk level so the app can respond with the right support at the right time.
+          The Risk Warning system continuously monitors patterns in your check-ins to detect signs of increased risk before a crisis develops. It watches four key characteristics - Emotional, Behavioral, Triggers, and Stability - and combines them into an overall risk level so the app can respond with the right support at the right time.
         </Text>
       </View>
 

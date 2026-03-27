@@ -308,9 +308,19 @@ export default function ProfileScreen() {
       {/* Recovery Stage */}
       <View style={styles.stageCard}>
         <View style={styles.stageHeaderBlock}>
-          <View style={styles.stageLabelRow}>
-            <View style={[styles.stageDot, { backgroundColor: stageConfig.color }]} />
-            <Text style={styles.stageTitle}>Recovery Stage</Text>
+          <View style={styles.stageTopRow}>
+            <View style={styles.stageLabelRow}>
+              <View style={[styles.stageDot, { backgroundColor: stageConfig.color }]} />
+              <Text style={styles.stageTitle}>Recovery Stage</Text>
+            </View>
+            <View
+              style={[
+                styles.stageBadge,
+                { backgroundColor: stageConfig.color + '20', borderColor: stageConfig.color + '40' },
+              ]}
+            >
+              <Text style={[styles.stageBadgeText, { color: stageConfig.color }]}>{stageConfig.label}</Text>
+            </View>
           </View>
           <Pressable
             style={({ pressed }) => [styles.stageExplainedBtn, pressed && { opacity: 0.88 }]}
@@ -327,14 +337,6 @@ export default function ProfileScreen() {
           >
             <Text style={styles.stageExplainedBtnText}>Explained</Text>
           </Pressable>
-          <View
-            style={[
-              styles.stageBadge,
-              { backgroundColor: stageConfig.color + '20', borderColor: stageConfig.color + '40' },
-            ]}
-          >
-            <Text style={[styles.stageBadgeText, { color: stageConfig.color }]}>{stageConfig.label}</Text>
-          </View>
         </View>
         <Text style={styles.stageDescription}>{stageConfig.description}</Text>
         <View style={styles.stageProgressTrack}>
@@ -903,6 +905,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     gap: 10,
   },
+  stageTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
   stageExplainedBtn: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
@@ -918,9 +926,11 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   stageLabelRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    minWidth: 0,
   },
   stageDot: {
     width: 8,
@@ -933,6 +943,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   stageBadge: {
+    flexShrink: 0,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
