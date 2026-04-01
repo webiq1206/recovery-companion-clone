@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import { Check, ChevronRight, Cookie, Ear, Eye, Flower2, Hand } from 'lucide-react-native';
 
 import { crisisStyles, CRISIS_COLORS } from './styles';
@@ -35,58 +35,75 @@ export function CrisisGroundingStep(props: {
   const items = Array.from({ length: current.count }, (_, i) => i);
 
   return (
-    <Animated.View style={[crisisStyles.stepContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <Text style={crisisStyles.stepLabel}>Ground Yourself</Text>
-      <Text style={crisisStyles.stepHint}>Focus on your senses</Text>
-
-      <View style={[crisisStyles.groundingIconWrapper, { backgroundColor: current.color + '15' }]}>
-        <GroundingIcon type={current.icon} size={40} color={current.color} />
+    <Animated.View style={[crisisStyles.crisisStepFitOuter, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      <View style={crisisStyles.crisisStepFitHeader}>
+        <Text style={crisisStyles.stepLabel}>Ground Yourself</Text>
+        <Text style={[crisisStyles.stepHint, crisisStyles.crisisStepFitHint]}>Focus on your senses</Text>
       </View>
 
-      <Text style={[crisisStyles.groundingSense, { color: current.color }]}>{current.sense}</Text>
-      <Text style={crisisStyles.groundingPrompt}>{current.prompt}</Text>
+      <View style={crisisStyles.crisisStepFitMain}>
+        <ScrollView
+          style={{ flex: 1, width: '100%' }}
+          contentContainerStyle={crisisStyles.crisisStepFitMainScrollContent}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[crisisStyles.crisisGroundingIconWrap, { backgroundColor: current.color + '15' }]}>
+            <GroundingIcon type={current.icon} size={32} color={current.color} />
+          </View>
 
-      <View style={crisisStyles.groundingChecks}>
-        {items.map((i) => {
-          const checked = groundingChecked.includes(i);
-          return (
-            <Pressable
-              key={i}
-              style={[
-                crisisStyles.groundingCheckItem,
-                checked && { backgroundColor: current.color + '25', borderColor: current.color },
-              ]}
-              onPress={() => onCheck(i)}
-              testID={`grounding-check-${i}`}
-            >
-              {checked ? <Check size={28} color={current.color} /> : <Text style={crisisStyles.groundingCheckNum}>{i + 1}</Text>}
-            </Pressable>
-          );
-        })}
+          <Text style={[crisisStyles.crisisGroundingSense, { color: current.color }]}>{current.sense}</Text>
+          <Text style={crisisStyles.crisisGroundingPrompt}>{current.prompt}</Text>
+
+          <View style={crisisStyles.crisisGroundingChecks}>
+            {items.map((i) => {
+              const checked = groundingChecked.includes(i);
+              return (
+                <Pressable
+                  key={i}
+                  style={[
+                    crisisStyles.crisisGroundingCheckItem,
+                    checked && { backgroundColor: current.color + '25', borderColor: current.color },
+                  ]}
+                  onPress={() => onCheck(i)}
+                  testID={`grounding-check-${i}`}
+                >
+                  {checked ? (
+                    <Check size={24} color={current.color} />
+                  ) : (
+                    <Text style={crisisStyles.crisisGroundingCheckNum}>{i + 1}</Text>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={crisisStyles.crisisGroundingProgress}>
+            {GROUNDING_STEPS.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  crisisStyles.groundingDot,
+                  i === groundingIndex && { backgroundColor: current.color, width: 22 },
+                  i < groundingIndex && { backgroundColor: CRISIS_COLORS.ACCENT },
+                ]}
+              />
+            ))}
+          </View>
+        </ScrollView>
       </View>
 
-      <View style={crisisStyles.groundingProgress}>
-        {GROUNDING_STEPS.map((_, i) => (
-          <View
-            key={i}
-            style={[
-              crisisStyles.groundingDot,
-              i === groundingIndex && { backgroundColor: current.color, width: 24 },
-              i < groundingIndex && { backgroundColor: CRISIS_COLORS.ACCENT },
-            ]}
-          />
-        ))}
+      <View style={crisisStyles.crisisStepFitFooter}>
+        <Pressable
+          style={({ pressed }) => [crisisStyles.continueBtn, { marginTop: 0 }, pressed && { opacity: 0.7 }]}
+          onPress={onSkip}
+          testID="crisis-skip-grounding"
+        >
+          <Text style={crisisStyles.continueBtnText}>Skip</Text>
+          <ChevronRight size={20} color={CRISIS_COLORS.MUTED} />
+        </Pressable>
       </View>
-
-      <Pressable
-        style={({ pressed }) => [crisisStyles.continueBtn, pressed && { opacity: 0.7 }]}
-        onPress={onSkip}
-        testID="crisis-skip-grounding"
-      >
-        <Text style={crisisStyles.continueBtnText}>Skip</Text>
-        <ChevronRight size={20} color={CRISIS_COLORS.MUTED} />
-      </Pressable>
     </Animated.View>
   );
 }
-

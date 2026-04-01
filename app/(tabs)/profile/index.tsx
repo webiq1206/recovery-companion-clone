@@ -16,7 +16,7 @@ import { useNotifications } from '@/providers/NotificationProvider';
 import { RecoveryStage, PrivacyControls, NotificationIntensityLevel } from '@/types';
 import { ADDICTION_TYPES } from '@/constants/milestones';
 import { NOTIFICATION_INTENSITY_CONFIG, NotificationIntensity } from '@/constants/notifications';
-import { INSIGHTS_FOCUS_RECOVERY_STAGES } from '../../insights';
+
 
 const STAGE_CONFIG: Record<RecoveryStage, { label: string; color: string; icon: string; description: string }> = {
   crisis: { label: 'Crisis', color: '#EF5350', icon: 'alert', description: 'Navigating the hardest moments' },
@@ -326,10 +326,7 @@ export default function ProfileScreen() {
             style={({ pressed }) => [styles.stageExplainedBtn, pressed && { opacity: 0.88 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push({
-                pathname: '/insights' as any,
-                params: { focus: INSIGHTS_FOCUS_RECOVERY_STAGES },
-              });
+              router.push('/recovery-stages-explained' as any);
             }}
             accessibilityRole="button"
             accessibilityLabel="Recovery Stages Explained"

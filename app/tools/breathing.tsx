@@ -8,6 +8,8 @@ import { useToolUsageStore } from '@/features/tools/state/useToolUsageStore';
 
 type BreathPhase = 'in' | 'hold' | 'out';
 
+const MAX_CYCLES = 8;
+
 export default function BreathingToolScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -16,15 +18,21 @@ export default function BreathingToolScreen() {
   const [breathPhase, setBreathPhase] = useState<BreathPhase>('in');
   const [breathTimer, setBreathTimer] = useState(4);
   const [breathCount, setBreathCount] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const circleAnim = useRef(new Animated.Value(0.4)).current;
   const phaseRef = useRef<BreathPhase>('in');
+  const cycleRef = useRef<number>(0);
 
   useEffect(() => {
     phaseRef.current = breathPhase;
   }, [breathPhase]);
+
+  useEffect(() => {
+    cycleRef.current = breathCount;
+  }, [breathCount]);
 
   useEffect(() => {
     logToolUsage({ toolId: 'breathing', context: 'any', action: 'opened' });
@@ -35,6 +43,7 @@ export default function BreathingToolScreen() {
   }, [fadeAnim, slideAnim, logToolUsage]);
 
   useEffect(() => {
+    if (isComplete) return;
     const phaseDurations: Record<BreathPhase, number> = { in: 4, hold: 4, out: 6 };
     const duration = phaseDurations[breathPhase];
     setBreathTimer(duration);
@@ -66,8 +75,13 @@ export default function BreathingToolScreen() {
           } else if (current === 'hold') {
             setBreathPhase('out');
           } else {
-            setBreathCount(c => c + 1);
-            setBreathPhase('in');
+            const nextCycle = cycleRef.current + 1;
+            if (nextCycle >= MAX_CYCLES) {
+              setIsComplete(true);
+            } else {
+              setBreathCount(nextCycle);
+              setBreathPhase('in');
+            }
           }
           return 0;
         }
@@ -79,7 +93,7 @@ export default function BreathingToolScreen() {
       cleared = true;
       clearInterval(countdown);
     };
-  }, [breathPhase]);
+  }, [breathPhase, isComplete]);
 
   const breathLabel =
     breathPhase === 'in' ? 'Breathe in' : breathPhase === 'hold' ? 'Hold' : 'Breathe out';
@@ -92,16 +106,19 @@ export default function BreathingToolScreen() {
       toolId: 'breathing',
       context: 'any',
       action: 'completed',
-      meta: { cycles: breathCount + 1 },
+      meta: { cycles: Math.min(breathCount + 1, MAX_CYCLES) },
     });
     router.back();
   }
+
+  const cycleNumber = Math.min(breathCount + 1, MAX_CYCLES);
 
   return (
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 20 },
+        // Keep content below the top step indicator and above bottom overlay content.
+        { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 40 },
       ]}
     >
       <Stack.Screen
@@ -139,14 +156,20 @@ export default function BreathingToolScreen() {
           </Animated.View>
         </View>
 
-        <Text style={styles.cycleText}>Cycle {breathCount + 1}</Text>
+        <Text style={styles.cycleText}>
+          Cycle {cycleNumber} of {MAX_CYCLES}
+        </Text>
 
         <Pressable
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          style={({ pressed }) => [
+            styles.button,
+            isComplete && styles.buttonComplete,
+            pressed && styles.buttonPressed,
+          ]}
           onPress={handleDone}
           testID="breathing-tool-done"
         >
-          <Text style={styles.buttonText}>I feel a bit calmer</Text>
+          <Text style={styles.buttonText}>{isComplete ? 'Continue' : 'I feel a bit calmer'}</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -221,6 +244,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: Colors.primary,
     alignItems: 'center',
+  },
+  buttonComplete: {
+    backgroundColor: Colors.accentWarm,
+    borderWidth: 1,
+    borderColor: Colors.accentWarm + '55',
   },
   buttonPressed: {
     opacity: 0.9,

@@ -21,7 +21,7 @@ export const TOOL_REGISTRY: ToolDefinition[] = [
   },
   {
     id: 'urge-timer',
-    title: 'Urge timer',
+    title: 'Urge eliminator',
     subtitle: 'Ride the wave for a few minutes.',
     category: 'urge',
     experienceCategory: 'handle_urges',

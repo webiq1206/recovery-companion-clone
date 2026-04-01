@@ -97,7 +97,7 @@ function RootLayoutNav() {
         <Stack.Screen name="insights" options={{ title: 'Insights Hub', animation: defaultAnimation }} />
         <Stack.Screen name="enterprise-layout" options={{ headerShown: false, animation: defaultAnimation }} />
         <Stack.Screen name="insights-explained" options={{ title: 'Growth Insights Explained', animation: defaultAnimation }} />
-        <Stack.Screen name="recovery-stages-explained" options={{ title: 'Recovery Stages', animation: defaultAnimation }} />
+        <Stack.Screen name="recovery-stages-explained" options={{ title: 'Recovery Stages Explained', animation: defaultAnimation }} />
         <Stack.Screen name="early-warning-explained" options={{ title: 'Risk Warning Explained', animation: defaultAnimation }} />
         <Stack.Screen name="recovery-insights-explained" options={{ title: 'Recovery Insights', animation: defaultAnimation }} />
         <Stack.Screen name="protection-profile" options={{ title: 'Protection Profile', animation: defaultAnimation }} />

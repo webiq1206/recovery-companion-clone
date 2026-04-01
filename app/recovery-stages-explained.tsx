@@ -46,7 +46,7 @@ export default function RecoveryStagesExplainedScreen() {
       showsVerticalScrollIndicator={false}
       testID="recovery-stages-explained-screen"
     >
-      <Stack.Screen options={{ title: 'Recovery Stages' }} />
+      <Stack.Screen options={{ title: 'Recovery Stages Explained' }} />
 
       <View style={styles.introCard}>
         <Info size={20} color={Colors.primary} />

@@ -1,3 +1,6 @@
+/** Full breathing cycles in crisis Breathe step before auto-stop and Continue highlight. */
+export const CRISIS_BREATH_MAX_CYCLES = 8;
+
 export const GROUNDING_STEPS = [
   { count: 5, sense: 'SEE', icon: 'eye', prompt: 'Name 5 things you can see', color: '#4FC3F7' },
   { count: 4, sense: 'TOUCH', icon: 'hand', prompt: 'Name 4 things you can touch', color: '#81C784' },

@@ -34,7 +34,7 @@ import { CrisisCompanionBar } from '@/features/crisis/ui/CrisisCompanionBar';
 import { CrisisRelapsePlanCta } from '@/features/crisis/ui/CrisisRelapsePlanCta';
 import { crisisStyles, CRISIS_COLORS } from '@/features/crisis/ui/styles';
 import { CrisisStateActions, type CrisisStateId } from '@/features/crisis/ui/CrisisStateActions';
-import { GROUNDING_STEPS, RESET_PROMPTS } from '@/features/crisis/ui/constants';
+import { CRISIS_BREATH_MAX_CYCLES, GROUNDING_STEPS, RESET_PROMPTS } from '@/features/crisis/ui/constants';
 
 type CrisisStep = 'landing' | ToolId;
 
@@ -61,6 +61,7 @@ export default function CrisisModeScreen() {
   const [currentStep, setCurrentStep] = useState<CrisisStep>('landing');
   const [breathPhase, setBreathPhase] = useState<'in' | 'hold' | 'out'>('in');
   const [breathCount, setBreathCount] = useState(0);
+  const [breathingComplete, setBreathingComplete] = useState(false);
   const companionMessage = generateCrisisSupportMessage(currentStep, breathCount);
   const companionFade = useRef(new Animated.Value(0)).current;
   const [breathTimer, setBreathTimer] = useState(4);
@@ -111,8 +112,29 @@ export default function CrisisModeScreen() {
     breathPhaseRef.current = breathPhase;
   }, [breathPhase]);
 
+  const breathCountRef = useRef(breathCount);
+  useEffect(() => {
+    breathCountRef.current = breathCount;
+  }, [breathCount]);
+
   useEffect(() => {
     if (currentStep !== 'breathing') return;
+    setBreathCount(0);
+    setBreathPhase('in');
+    setBreathingComplete(false);
+    breathCircleAnim.setValue(0.4);
+  }, [currentStep, breathCircleAnim]);
+
+  const wasBreathingCompleteRef = useRef(false);
+  useEffect(() => {
+    if (breathingComplete && !wasBreathingCompleteRef.current) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    wasBreathingCompleteRef.current = breathingComplete;
+  }, [breathingComplete]);
+
+  useEffect(() => {
+    if (currentStep !== 'breathing' || breathingComplete) return;
 
     const phaseDurations = { in: 4, hold: 4, out: 6 };
     const duration = phaseDurations[breathPhase];
@@ -145,8 +167,13 @@ export default function CrisisModeScreen() {
           } else if (currentPhase === 'hold') {
             setBreathPhase('out');
           } else {
-            setBreathCount(c => c + 1);
-            setBreathPhase('in');
+            const c = breathCountRef.current;
+            if (c >= CRISIS_BREATH_MAX_CYCLES - 1) {
+              setBreathingComplete(true);
+            } else {
+              setBreathCount(c + 1);
+              setBreathPhase('in');
+            }
           }
           return 0;
         }
@@ -158,7 +185,7 @@ export default function CrisisModeScreen() {
       cleared = true;
       clearInterval(countdown);
     };
-  }, [currentStep, breathPhase, breathCount]);
+  }, [currentStep, breathPhase, breathingComplete]);
 
   useEffect(() => {
     if (currentStep !== 'urge-timer' || !urgeRunning) return;
@@ -300,6 +327,7 @@ export default function CrisisModeScreen() {
             breathCount={breathCount}
             breathCircleAnim={breathCircleAnim}
             breathColor={breathColor}
+            breathingComplete={breathingComplete}
             onContinue={goNext}
           />
         );

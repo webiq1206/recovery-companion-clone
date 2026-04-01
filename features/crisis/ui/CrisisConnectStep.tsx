@@ -14,7 +14,7 @@ export function CrisisConnectStep(props: {
   const { emergencyContacts, onCallContact, onTextContact, onClose } = props;
 
   return (
-    <View style={crisisStyles.stepContainer}>
+    <View style={crisisStyles.connectStepOuter}>
       <Text style={crisisStyles.stepLabel}>Reach Out</Text>
       <Text style={crisisStyles.stepHint}>You don't have to do this alone</Text>
 
@@ -22,6 +22,7 @@ export function CrisisConnectStep(props: {
         style={crisisStyles.connectScroll}
         contentContainerStyle={crisisStyles.connectScrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {emergencyContacts.length > 0 ? (
           <>
@@ -63,7 +64,7 @@ export function CrisisConnectStep(props: {
           </View>
         )}
 
-        <Text style={[crisisStyles.connectSectionLabel, { marginTop: 24 }]}>CRISIS LINES</Text>
+        <Text style={[crisisStyles.connectSectionLabel, { marginTop: 16 }]}>CRISIS LINES</Text>
         <Pressable
           style={({ pressed }) => [crisisStyles.crisisLineCard, pressed && { opacity: 0.8 }]}
           onPress={() => onCallContact('988')}
@@ -96,7 +97,7 @@ export function CrisisConnectStep(props: {
       </ScrollView>
 
       <Pressable
-        style={({ pressed }) => [crisisStyles.doneButton, pressed && { opacity: 0.9 }]}
+        style={({ pressed }) => [crisisStyles.doneButtonConnect, pressed && { opacity: 0.9 }]}
         onPress={onClose}
         testID="crisis-done"
       >
@@ -105,4 +106,3 @@ export function CrisisConnectStep(props: {
     </View>
   );
 }
-

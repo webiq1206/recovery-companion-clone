@@ -88,7 +88,7 @@ export default function UrgeTimerToolScreen() {
     >
       <Stack.Screen
         options={{
-          title: 'Urge timer',
+          title: 'Urge Eliminator',
           headerStyle: { backgroundColor: Colors.background },
           headerTintColor: Colors.text,
         }}
@@ -101,7 +101,7 @@ export default function UrgeTimerToolScreen() {
         ]}
       >
         <Text style={styles.label}>RIDE THE WAVE</Text>
-        <Text style={styles.title}>Stay with the urge</Text>
+        <Text style={styles.title}>Eliminate the urge</Text>
         <Text style={styles.subtitle}>
           Hit start and focus on riding out the craving, one minute at a time.
         </Text>
