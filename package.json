@@ -7,6 +7,7 @@
     "start-web": "bunx rork start -p 161tt8zh34s3n4vgfty6c --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p 161tt8zh34s3n4vgfty6c --web --tunnel",
     "lint": "expo lint",
+    "test": "bun test utils/mergeProfile.test.ts",
     "qa:ia-strict": "node scripts/qa-ia-strict.mjs"
   },
   "dependencies": {

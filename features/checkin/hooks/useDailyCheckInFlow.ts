@@ -27,6 +27,7 @@ import {
   mergeRecoveryProfiles,
   mergeTodayCheckInsFromSources,
 } from '@/utils/mergeProfile';
+import { getLocalDateKey } from '@/utils/checkInDate';
 
 export interface PeriodConfig {
   label: string;
@@ -64,7 +65,7 @@ export function useDailyCheckInFlow(options?: { period?: CheckInTimeOfDay }) {
   } = useCheckin();
 
   const mergedTodayCheckIns = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateKey();
     return mergeTodayCheckInsFromSources(todayCheckIns, centralDailyCheckIns, todayStr);
   }, [todayCheckIns, centralDailyCheckIns]);
 
@@ -193,7 +194,7 @@ export function useDailyCheckInFlow(options?: { period?: CheckInTimeOfDay }) {
 
     const checkIn: DailyCheckIn = {
       id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateKey(),
       timeOfDay: currentCheckInPeriod,
       mood: values.mood,
       cravingLevel: values.cravingLevel,
@@ -240,6 +241,7 @@ export function useDailyCheckInFlow(options?: { period?: CheckInTimeOfDay }) {
     currentCheckInPeriod,
     selectedTags,
     addCheckIn,
+    addCheckInToCentralStore,
     triggerReliefLoop,
     hadNearMiss,
     nearMissNote,

@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 import type { DailyCheckIn, TimelineEvent, UserProfile } from '@/types';
 import { createSelectors } from '@/stores/zustand/createSelectors';
+import { getLocalDateKey } from '@/utils/checkInDate';
 
 type OnboardingData = {
   currentStep: number;
@@ -108,7 +109,10 @@ const baseUseAppStore = create<AppStoreState>()(
             ...checkInInput,
           };
 
-          const dailyCheckIns = [next, ...state.dailyCheckIns];
+          const rest = state.dailyCheckIns.filter(
+            (c) => !(c.date === next.date && c.timeOfDay === next.timeOfDay),
+          );
+          const dailyCheckIns = [next, ...rest];
 
           const progress: ProgressStats = {
             ...state.progress,
@@ -122,7 +126,7 @@ const baseUseAppStore = create<AppStoreState>()(
       logRelapse: (eventInput) => {
         set((state) => {
           const now = new Date();
-          const today = now.toISOString().split('T')[0];
+          const today = getLocalDateKey(now);
 
           const next: TimelineEvent = {
             id: `relapse-${now.getTime()}`,

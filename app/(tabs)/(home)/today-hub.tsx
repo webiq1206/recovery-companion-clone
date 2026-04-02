@@ -40,6 +40,7 @@ import {
 import type { CheckInTimeOfDay } from '@/types';
 import type { WizardAction } from '@/utils/wizardEngine';
 import { mergeTodayCheckInsFromSources } from '@/utils/mergeProfile';
+import { getLocalDateKey } from '@/utils/checkInDate';
 // (kept import list clean)
 
 const CHECK_IN_PERIODS: { period: CheckInTimeOfDay; title: string }[] = [
@@ -88,7 +89,7 @@ export default function TodayHubScreen() {
   const logRelapseToCentralStore = useAppStore.use.logRelapse();
 
   const mergedTodayCheckIns = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateKey();
     return mergeTodayCheckInsFromSources(sliceTodayCheckIns, centralDailyCheckIns, todayStr);
   }, [sliceTodayCheckIns, centralDailyCheckIns]);
 

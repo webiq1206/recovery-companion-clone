@@ -18,6 +18,7 @@ import {
   InterventionType,
   NearMissEvent,
 } from '@/types';
+import { getLocalDateKey } from '@/utils/checkInDate';
 
 const STORAGE_KEY = 'risk_prediction_data';
 
@@ -118,8 +119,8 @@ function getMissedEngagementScore(checkIns: DailyCheckIn[]): number {
   for (let i = 0; i < windowSize; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const found = checkIns.find(c => c.date.startsWith(dateStr));
+    const dateStr = getLocalDateKey(d);
+    const found = checkIns.find(c => c.date === dateStr || c.date.startsWith(dateStr));
     if (!found) missed++;
   }
   return Math.round((missed / windowSize) * 100);
@@ -152,8 +153,8 @@ function calculateIsolationRisk(checkIns: DailyCheckIn[]): number {
   for (let i = 0; i < 14; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const found = checkIns.find(c => c.date.startsWith(dateStr));
+    const dateStr = getLocalDateKey(d);
+    const found = checkIns.find(c => c.date === dateStr || c.date.startsWith(dateStr));
     if (!found) gapCount++;
   }
   const engagementDropoff = gapCount / 14;

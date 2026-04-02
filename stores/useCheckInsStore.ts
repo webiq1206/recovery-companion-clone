@@ -9,6 +9,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 
 import type { CheckInTimeOfDay, DailyCheckIn, NearMissEvent } from '@/types';
 import { STORAGE_KEYS, loadStorageItem, saveStorageItem } from '@/core/persistence';
+import { getLocalDateKey } from '@/utils/checkInDate';
 import { createSelectors } from '@/stores/zustand/createSelectors';
 
 type CheckInsState = {
@@ -47,7 +48,11 @@ const baseUseCheckInsStore = create<CheckInsState>()(
     },
 
     addCheckIn: (checkIn) => {
-      const updated = [checkIn, ...get().checkIns];
+      const prev = get().checkIns;
+      const rest = prev.filter(
+        (c) => !(c.date === checkIn.date && c.timeOfDay === checkIn.timeOfDay),
+      );
+      const updated = [checkIn, ...rest];
       set({ checkIns: updated });
       void saveStorageItem(STORAGE_KEYS.CHECK_INS, updated);
     },
@@ -66,7 +71,7 @@ export const useCheckInsStore = createSelectors(baseUseCheckInsStore);
 export function useTodayCheckIns(): DailyCheckIn[] {
   const checkIns = useCheckInsStore.use.checkIns();
   return useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateKey();
     return checkIns.filter((c) => c.date === today);
   }, [checkIns]);
 }

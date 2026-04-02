@@ -10,6 +10,7 @@ import { useUser } from '@/core/domains/useUser';
 import { useCheckin } from '@/core/domains/useCheckin';
 import { useAppStore } from '@/stores/useAppStore';
 import { mergeRecoveryProfiles } from '@/utils/mergeProfile';
+import { getLocalDateKey } from '@/utils/checkInDate';
 import { calculateStability } from '@/utils/stabilityEngine';
 import type { StabilityZoneId } from '@/components/RecoveryStabilityPanel';
 import type { StabilityTrend } from '@/utils/stabilityEngine';
@@ -84,7 +85,7 @@ export function useTodayHub(): TodayHubViewModel {
         const sum = scores.reduce((s, v) => s + v, 0);
         return sum / scores.length;
       });
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateKey();
     const dailyActionsCompleted = sourceCheckIns.filter((c) => c.date === today).length;
 
     const sleepQuality: 'poor' | 'okay' | 'good' =

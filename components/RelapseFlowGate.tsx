@@ -21,7 +21,7 @@ export default function RelapseFlowGate() {
   }, [dismissRelapseModal, router]);
 
   const handleCompleteEveningCheckIn = useCallback(() => {
-    router.push('/daily-checkin' as any);
+    router.push('/daily-checkin?period=evening' as any);
   }, [router]);
 
   const handleActivateSupport = useCallback(() => {
