@@ -63,7 +63,7 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
   const profileStore = useRecoveryProfileStore();
   const checkInsStore = useCheckInsStore();
   const daysSober = useDaysSober();
-  const { profile, timelineEvents, relapsePlan, showRelapseModal, updateProfile, logRelapse, logCrisisActivation, dismissRelapseModal, saveRelapsePlan, isLoading: profileIsLoading } = profileStore;
+  const { profile, timelineEvents, relapsePlan, updateProfile, logRelapse, logCrisisActivation, saveRelapsePlan, isLoading: profileIsLoading } = profileStore;
   const { checkIns, nearMissEvents, addCheckIn, logNearMiss, isLoading: checkInsIsLoading } = checkInsStore;
   const todayCheckIns = useTodayCheckIns();
   const todayCheckIn = useTodayCheckIn();
@@ -215,15 +215,12 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     deleteContract,
     checkInContract,
     addPartner,
-    updatePartner,
     deletePartner,
     dismissAlert,
     useStreakProtection,
     timelineEvents,
     logRelapse,
     logCrisisActivation,
-    showRelapseModal,
-    dismissRelapseModal,
     relapsePlan,
     saveRelapsePlan,
     nearMissEvents,
@@ -244,9 +241,9 @@ export const [RecoveryProvider, useRecovery] = createContextHook(() => {
     startIdentityProgram, saveExerciseResponse, completeModule, advanceIdentityWeek,
     addIdentityValue, removeIdentityValue,
     accountabilityData, addContract, updateContract, deleteContract,
-    checkInContract, addPartner, updatePartner, deletePartner,
+    checkInContract, addPartner, deletePartner,
     dismissAlert, useStreakProtection,
-    timelineEvents, logRelapse, showRelapseModal, dismissRelapseModal,
+    timelineEvents, logRelapse,
     logCrisisActivation,
     relapsePlan, saveRelapsePlan,
     nearMissEvents, logNearMiss,

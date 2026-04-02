@@ -20,7 +20,6 @@ import { NotificationProvider } from "@/providers/NotificationProvider";
 import { EnterpriseProvider } from "@/providers/EnterpriseProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LockScreen from "@/components/LockScreen";
-import RelapseFlowGate from "@/components/RelapseFlowGate";
 import Colors from "@/constants/colors";
 import { useShakeToCrisis } from "@/hooks/useShakeToCrisis";
 import { trpc, trpcClient } from "@/lib/trpc";
@@ -88,6 +87,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen name="how-to-use" options={{ title: 'How to Use', animation: modalAnimation }} />
+        <Stack.Screen name="relapse-recovery" options={{ title: 'Log a Setback', animation: defaultAnimation }} />
         <Stack.Screen name="relapse-detection" options={{ title: 'Risk Warning', animation: defaultAnimation }} />
         <Stack.Screen name="provider-portal" options={{ title: 'Provider Portal', animation: defaultAnimation }} />
         <Stack.Screen name="client-detail" options={{ title: 'Client Detail', animation: defaultAnimation }} />
@@ -106,7 +106,6 @@ function RootLayoutNav() {
         <Stack.Screen name="wizard" options={{ title: 'Guided Wizard', animation: defaultAnimation }} />
         <Stack.Screen name="settings" options={{ title: 'Settings', animation: defaultAnimation }} />
       </Stack>
-      <RelapseFlowGate />
     </>
   );
 }

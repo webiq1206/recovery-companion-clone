@@ -4,7 +4,6 @@ import { ScreenScrollView } from '@/components/ScreenScrollView';
 import { User, Shield, Eye, EyeOff, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Lightbulb, Layers, Radio, RefreshCw, Scale, Gauge, PauseCircle, PlayCircle, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '@/constants/colors';
-import { useRelapse } from '@/core/domains/useRelapse';
 import { useAppStore } from '@/stores/useAppStore';
 import { useUser } from '@/core/domains/useUser';
 import { usePledges } from '@/core/domains/usePledges';
@@ -32,9 +31,7 @@ export default function ProfileScreen() {
   const { profile, updateProfile, daysSober } = useUser();
   const { pledges, currentStreak } = usePledges();
   const { journal } = useJournal();
-  const { logRelapse } = useRelapse();
   const centralProgress = useAppStore((s) => s.progress);
-  const logRelapseToCentralStore = useAppStore.use.logRelapse();
   const { notificationPreferences, updateNotificationPrefs, streak } = useEngagement();
   const { isPremium } = useSubscription();
   const {

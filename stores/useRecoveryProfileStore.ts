@@ -1,5 +1,5 @@
 /**
- * Recovery profile slice: profile, timeline, relapse plan, relapse modal.
+ * Recovery profile slice: profile, timeline, relapse plan.
  * Consumed by RecoveryProvider (facade). Can be used directly by screens for a lighter dependency.
  */
 
@@ -20,7 +20,6 @@ type RecoveryProfileState = {
   profile: UserProfile;
   timelineEvents: TimelineEvent[];
   relapsePlan: RelapsePlan | null;
-  showRelapseModal: boolean;
   isLoading: boolean;
   hasHydrated: boolean;
 
@@ -28,7 +27,6 @@ type RecoveryProfileState = {
   updateProfile: (updates: Partial<UserProfile>) => void;
   logRelapse: () => void;
   logCrisisActivation: () => void;
-  dismissRelapseModal: () => void;
   saveRelapsePlan: (plan: RelapsePlan) => void;
 };
 
@@ -42,7 +40,6 @@ const baseUseRecoveryProfileStore = create<RecoveryProfileState>()(
     profile: DEFAULT_PROFILE,
     timelineEvents: [],
     relapsePlan: null,
-    showRelapseModal: false,
     isLoading: true,
     hasHydrated: false,
 
@@ -83,7 +80,7 @@ const baseUseRecoveryProfileStore = create<RecoveryProfileState>()(
       };
       const updatedEvents = [event, ...get().timelineEvents];
 
-      set({ profile: updatedProfile, timelineEvents: updatedEvents, showRelapseModal: true });
+      set({ profile: updatedProfile, timelineEvents: updatedEvents });
       void saveStorageItem(STORAGE_KEYS.PROFILE, updatedProfile);
       void saveStorageItem(STORAGE_KEYS.TIMELINE_EVENTS, updatedEvents);
     },
@@ -98,10 +95,6 @@ const baseUseRecoveryProfileStore = create<RecoveryProfileState>()(
       const updatedEvents = [event, ...get().timelineEvents];
       set({ timelineEvents: updatedEvents });
       void saveStorageItem(STORAGE_KEYS.TIMELINE_EVENTS, updatedEvents);
-    },
-
-    dismissRelapseModal: () => {
-      set({ showRelapseModal: false });
     },
 
     saveRelapsePlan: (plan) => {

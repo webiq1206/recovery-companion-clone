@@ -4,6 +4,9 @@
   "version": "1.0.2",
   "scripts": {
     "start": "bunx rork start -p 161tt8zh34s3n4vgfty6c --tunnel",
+    "start:expo": "expo start",
+    "start:phone": "expo start --tunnel",
+    "start:lan": "expo start --lan",
     "start-web": "bunx rork start -p 161tt8zh34s3n4vgfty6c --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p 161tt8zh34s3n4vgfty6c --web --tunnel",
     "lint": "expo lint",

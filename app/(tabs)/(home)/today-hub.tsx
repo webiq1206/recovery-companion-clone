@@ -31,7 +31,6 @@ import { useTodayHub } from '@/features/home/hooks/useTodayHub';
 import { useWizardEngineHook } from '@/hooks/useWizardEngine';
 import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
 import { RecoveryStabilityPanel } from '@/components/RecoveryStabilityPanel';
-import { useRelapse } from '@/core/domains/useRelapse';
 import { getStrictRedirectTarget, resolveCanonicalRoute } from '@/utils/legacyRoutes';
 import {
   getCheckInWindowHint,
@@ -85,8 +84,6 @@ export default function TodayHubScreen() {
   const centralProfile = useAppStore((s) => s.userProfile);
   const centralDailyCheckIns = useAppStore((s) => s.dailyCheckIns);
   const { todayCheckIn: sliceTodayCheckIn, todayCheckIns: sliceTodayCheckIns } = useCheckin();
-  const { logRelapse } = useRelapse();
-  const logRelapseToCentralStore = useAppStore.use.logRelapse();
 
   const mergedTodayCheckIns = useMemo(() => {
     const todayStr = getLocalDateKey();
@@ -412,21 +409,7 @@ export default function TodayHubScreen() {
             style={({ pressed }) => [styles.planRow, pressed && styles.pressed]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              Alert.alert(
-                'Log a setback',
-                "Recording a setback doesn't erase your progress. You'll see supportive next steps and can strengthen your system.",
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Log setback',
-                    style: 'default',
-                    onPress: () => {
-                      logRelapse();
-                      logRelapseToCentralStore();
-                    },
-                  },
-                ],
-              );
+              router.push('/relapse-recovery' as any);
             }}
             testID="todayhub-log-relapse"
           >

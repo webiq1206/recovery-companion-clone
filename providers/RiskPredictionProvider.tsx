@@ -613,6 +613,9 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
   const { checkIns, nearMissEvents } = useCheckin();
   const [data, setData] = useState<RiskPredictionData>(DEFAULT_DATA);
   const dataRef = useRef<RiskPredictionData>(data);
+  const runPredictionRef = useRef<(() => RiskPrediction | undefined) | null>(null);
+  const prevCheckInsLengthRef = useRef(0);
+  const lastAutoAnalysisAtRef = useRef(0);
 
   useEffect(() => {
     dataRef.current = data;
@@ -656,8 +659,10 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
   });
 
   const runPrediction = useCallback(() => {
-    console.log('[RiskPrediction] Running prediction engine...');
-    console.log('[RiskPrediction] Check-ins available:', checkIns.length);
+    if (__DEV__) {
+      console.log('[RiskPrediction] Running prediction engine...');
+      console.log('[RiskPrediction] Check-ins available:', checkIns.length);
+    }
 
     const currentData = dataRef.current;
     const weights = currentData.adaptiveWeights ?? DEFAULT_WEIGHTS;
@@ -721,13 +726,17 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
       interventionHistory: updatedInterventions,
     };
 
-    console.log('[RiskPrediction] Overall risk:', overallRisk, 'Category:', riskCategory, 'Trend:', trend, 'Intensity:', currentIntensity.level);
-    console.log('[RiskPrediction] Isolation risk:', isolationRisk);
-    console.log('[RiskPrediction] Weights:', { e: weights.emotional, b: weights.behavioral, t: weights.trigger, s: weights.stability, i: weights.isolation });
+    if (__DEV__) {
+      console.log('[RiskPrediction] Overall risk:', overallRisk, 'Category:', riskCategory, 'Trend:', trend, 'Intensity:', currentIntensity.level);
+      console.log('[RiskPrediction] Isolation risk:', isolationRisk);
+      console.log('[RiskPrediction] Weights:', { e: weights.emotional, b: weights.behavioral, t: weights.trigger, s: weights.stability, i: weights.isolation });
+    }
 
     saveMutation.mutate(updated);
     return prediction;
   }, [checkIns, daysSober]);
+
+  runPredictionRef.current = runPrediction;
 
   useEffect(() => {
     if (checkIns.length === 0) return;
@@ -742,15 +751,42 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
       if (!latest || candidate.getTime() > latest.getTime()) return candidate;
       return latest;
     }, null);
-    const shouldAnalyze = !lastAnalyzed ||
-      (now.getTime() - lastAnalyzed.getTime()) > 3600000 ||
-      (!!latestCheckInAt && latestCheckInAt > (lastAnalyzed ?? new Date(0)));
+    const msSinceAnalysis = lastAnalyzed && !Number.isNaN(lastAnalyzed.getTime())
+      ? now.getTime() - lastAnalyzed.getTime()
+      : Infinity;
+    const hasNewCheckInSinceAnalysis =
+      !!latestCheckInAt &&
+      latestCheckInAt.getTime() > (lastAnalyzed && !Number.isNaN(lastAnalyzed.getTime()) ? lastAnalyzed.getTime() : 0);
 
-    if (shouldAnalyze) {
-      console.log('[RiskPrediction] Auto-triggering prediction analysis');
-      runPrediction();
+    const shouldAnalyze =
+      !lastAnalyzed ||
+      Number.isNaN(lastAnalyzed.getTime()) ||
+      msSinceAnalysis > 3600000 ||
+      hasNewCheckInSinceAnalysis;
+
+    if (!shouldAnalyze) return;
+
+    const lengthIncreased = checkIns.length > prevCheckInsLengthRef.current;
+    prevCheckInsLengthRef.current = checkIns.length;
+
+    const cooldownMs = 45_000;
+    const sinceLastAuto = Date.now() - lastAutoAnalysisAtRef.current;
+    const bypassCooldown =
+      !lastAnalyzed ||
+      Number.isNaN(lastAnalyzed.getTime()) ||
+      msSinceAnalysis > 3600000 ||
+      lengthIncreased ||
+      hasNewCheckInSinceAnalysis;
+    if (!bypassCooldown && sinceLastAuto < cooldownMs) {
+      return;
     }
-  }, [checkIns.length, data.lastAnalyzedAt, runPrediction]);
+
+    lastAutoAnalysisAtRef.current = Date.now();
+    if (__DEV__) {
+      console.log('[RiskPrediction] Auto-triggering prediction analysis');
+    }
+    runPredictionRef.current?.();
+  }, [checkIns, checkIns.length, data.lastAnalyzedAt]); // checkIns: re-run when slice updates; length + lastAnalyzedAt avoid runPrediction dep churn
 
   const dismissAlert = useCallback((alertId: string) => {
     const currentData = dataRef.current;

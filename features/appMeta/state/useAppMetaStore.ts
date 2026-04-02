@@ -31,7 +31,6 @@ const baseUseAppMetaStore = create<AppMetaState>()(
         profile: useRecoveryProfileStore.getState().profile,
         timelineEvents: [],
         relapsePlan: null,
-        showRelapseModal: false,
         isLoading: false,
         hasHydrated: true,
       } as any, true);
