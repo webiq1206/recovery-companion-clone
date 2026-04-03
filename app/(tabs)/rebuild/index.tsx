@@ -8,9 +8,10 @@ import {
   Animated,
   Platform,
   Dimensions,
+  InteractionManager,
 } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
-import { Stack, useRouter as useRebuildRouter } from 'expo-router';
+import { Stack, useRouter as useRebuildRouter, useLocalSearchParams } from 'expo-router';
 import { Pressable } from 'react-native';
 import {
   Hammer,
@@ -160,6 +161,47 @@ export default function RebuildScreen() {
     addIdentityValue,
     removeIdentityValue,
   } = useRebuild();
+  const rebuildRouter = useRebuildRouter();
+  const rawFromSetback = useLocalSearchParams<{ fromSetback?: string | string[] }>().fromSetback;
+  const fromSetbackParam = Array.isArray(rawFromSetback) ? rawFromSetback[0] : rawFromSetback;
+  const showSetbackClose = fromSetbackParam === '1' || fromSetbackParam === 'true';
+
+  /**
+   * From Log a Setback: haptics + back (X), then a second back after navigation settles (matches Accountability).
+   * Otherwise: haptics + replace to Today home.
+   */
+  const handleRebuildHeaderClose = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (showSetbackClose) {
+      rebuildRouter.back();
+      InteractionManager.runAfterInteractions(() => {
+        rebuildRouter.back();
+      });
+      return;
+    }
+    rebuildRouter.replace('/(tabs)/(home)/today-hub' as never);
+  }, [rebuildRouter, showSetbackClose]);
+
+  /** Same control as daily check-in close: 36 circle, card bg, muted X. Centered title. */
+  const rebuildHeaderScreenOptions = useMemo(
+    () => ({
+      headerTitleAlign: 'center' as const,
+      headerBackVisible: false,
+      headerLeftContainerStyle: { paddingLeft: 8 },
+      headerLeft: () => (
+        <Pressable
+          onPress={handleRebuildHeaderClose}
+          hitSlop={12}
+          testID={showSetbackClose ? 'rebuild-close-from-setback' : 'rebuild-close-home'}
+          style={({ pressed }) => [styles.headerCloseBtn, pressed && { opacity: 0.85 }]}
+        >
+          <X size={22} color={Colors.textSecondary} />
+        </Pressable>
+      ),
+    }),
+    [handleRebuildHeaderClose, showSetbackClose],
+  );
+
   const { daysSober } = useUser();
   const { checkIns } = useCheckin();
 
@@ -741,7 +783,6 @@ export default function RebuildScreen() {
     : undefined;
 
   const { hasFeature } = useSubscription();
-  const rebuildRouter = useRebuildRouter();
 
   if (!hasFeature('rebuild_programs')) {
     return (
@@ -750,6 +791,7 @@ export default function RebuildScreen() {
           options={{
             title: 'Rebuild',
             headerShown: true,
+            ...rebuildHeaderScreenOptions,
             headerRight: () => (
               <Pressable onPress={() => rebuildRouter.push('/settings' as never)} hitSlop={10}>
                 <Settings size={18} color={Colors.text} />
@@ -785,6 +827,7 @@ export default function RebuildScreen() {
         options={{
           title: 'Rebuild',
           headerShown: true,
+          ...rebuildHeaderScreenOptions,
           headerRight: () => (
             <Pressable onPress={() => rebuildRouter.push('/settings' as never)} hitSlop={10}>
               <Settings size={18} color={Colors.text} />
@@ -976,6 +1019,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  headerCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.cardBackground,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,

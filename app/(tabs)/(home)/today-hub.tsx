@@ -33,6 +33,7 @@ import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
 import { RecoveryStabilityPanel } from '@/components/RecoveryStabilityPanel';
 import { getStrictRedirectTarget, resolveCanonicalRoute } from '@/utils/legacyRoutes';
 import {
+  getCheckInAvailabilityWindow,
   getCheckInWindowHint,
   isCheckInPeriodInWindow,
 } from '@/utils/checkInWindows';
@@ -395,6 +396,9 @@ export default function TodayHubScreen() {
                   numberOfLines={2}
                 >
                   {title}
+                </Text>
+                <Text style={styles.checkInChipWindow} numberOfLines={1}>
+                  {getCheckInAvailabilityWindow(period)}
                 </Text>
                 <Text style={[styles.checkInChipSub, locked && styles.checkInChipSubLocked]}>
                   {done ? 'Done' : locked ? 'Locked' : 'Tap'}
@@ -795,7 +799,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    minHeight: 88,
+    minHeight: 102,
   },
   checkInChipDone: {
     borderColor: Colors.primary + '55',
@@ -827,6 +831,13 @@ const styles = StyleSheet.create({
   },
   checkInChipLabelLocked: {
     color: Colors.textMuted,
+  },
+  checkInChipWindow: {
+    fontSize: 9,
+    fontWeight: '500',
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 12,
   },
   checkInChipSub: {
     fontSize: 10,

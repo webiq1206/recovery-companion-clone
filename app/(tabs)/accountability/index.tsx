@@ -9,8 +9,10 @@ import {
   Modal,
   Alert,
   Platform,
+  InteractionManager,
 } from 'react-native';
 import { ScreenScrollView } from '@/components/ScreenScrollView';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Shield,
   Plus,
@@ -137,6 +139,11 @@ function getDriftAlerts(
 }
 
 export default function AccountabilityScreen() {
+  const router = useRouter();
+  const rawFromSetback = useLocalSearchParams<{ fromSetback?: string | string[] }>().fromSetback;
+  const fromSetbackParam = Array.isArray(rawFromSetback) ? rawFromSetback[0] : rawFromSetback;
+  const fromLogSetbackFlow = fromSetbackParam === '1' || fromSetbackParam === 'true';
+
   const { hasFeature } = useSubscription();
   const {
     accountabilityData,
@@ -190,6 +197,16 @@ export default function AccountabilityScreen() {
     const idx = Math.floor(Date.now() / 86400000) % ENCOURAGEMENTS.length;
     return ENCOURAGEMENTS[idx];
   }, []);
+
+  const handleClose = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.back();
+    if (fromLogSetbackFlow) {
+      InteractionManager.runAfterInteractions(() => {
+        router.back();
+      });
+    }
+  }, [router, fromLogSetbackFlow]);
 
   const driftAlerts = useMemo(() => {
     return getDriftAlerts(accountabilityData.contracts, checkIns, daysSober);
@@ -605,7 +622,21 @@ export default function AccountabilityScreen() {
   );
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <>
+      <Stack.Screen
+        options={{
+          title: 'Accountability',
+          headerTitleAlign: 'center',
+          headerBackVisible: false,
+          headerLeftContainerStyle: { paddingLeft: 8 },
+          headerLeft: () => (
+            <Pressable onPress={handleClose} style={styles.closeBtn} testID="accountability-close">
+              <X size={22} color={Colors.textSecondary} />
+            </Pressable>
+          ),
+        }}
+      />
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <ScreenScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -832,6 +863,7 @@ export default function AccountabilityScreen() {
         </View>
       </Modal>
     </Animated.View>
+    </>
   );
 }
 
@@ -839,6 +871,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.cardBackground,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scroll: {
     flex: 1,

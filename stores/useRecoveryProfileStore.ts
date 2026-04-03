@@ -25,7 +25,22 @@ type RecoveryProfileState = {
 
   hydrate: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => void;
-  logRelapse: () => void;
+  logRelapse: (
+    details?: Partial<
+      Pick<
+        TimelineEvent,
+        | 'whatHappenedLabel'
+        | 'whenLabel'
+        | 'whereLabel'
+        | 'wereYouLabel'
+        | 'triggerLabel'
+        | 'thinkingLabel'
+        | 'happenedDuringLabel'
+        | 'afterHaveYouLabel'
+        | 'emotionalStateLabel'
+      >
+    >,
+  ) => void;
   logCrisisActivation: () => void;
   saveRelapsePlan: (plan: RelapsePlan) => void;
 };
@@ -64,7 +79,7 @@ const baseUseRecoveryProfileStore = create<RecoveryProfileState>()(
       void saveStorageItem(STORAGE_KEYS.PROFILE, updated);
     },
 
-    logRelapse: () => {
+    logRelapse: (details) => {
       const profile = get().profile;
       const rp = profile.recoveryProfile ?? DEFAULT_PROFILE.recoveryProfile;
       const updatedProfile: UserProfile = {
@@ -77,6 +92,7 @@ const baseUseRecoveryProfileStore = create<RecoveryProfileState>()(
         id: `relapse-${Date.now()}`,
         type: 'relapse',
         date: today,
+        ...details,
       };
       const updatedEvents = [event, ...get().timelineEvents];
 

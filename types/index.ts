@@ -37,7 +37,14 @@ export interface TimelineEvent {
   type: TimelineEventType;
   date: string; // YYYY-MM-DD
   // Optional context for richer recovery insights; kept minimal for offline use.
+  whatHappenedLabel?: string;
+  whenLabel?: string;
+  whereLabel?: string;
+  wereYouLabel?: string;
   triggerLabel?: string;
+  thinkingLabel?: string;
+  happenedDuringLabel?: string;
+  afterHaveYouLabel?: string;
   emotionalStateLabel?: string;
 }
 

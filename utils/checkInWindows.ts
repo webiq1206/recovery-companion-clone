@@ -31,16 +31,22 @@ export function isCheckInPeriodInWindow(period: CheckInTimeOfDay, now: Date = ne
   }
 }
 
-/** Short label for UI when a period is locked (when it next opens). */
-export function getCheckInWindowHint(period: CheckInTimeOfDay): string {
+/** One-line local-time window when that period’s check-in is available (matches `isCheckInPeriodInWindow`). */
+export function getCheckInAvailabilityWindow(period: CheckInTimeOfDay): string {
   switch (period) {
     case 'morning':
-      return 'Opens 5:00 AM – 11:59 AM';
+      return '5:00 AM – 11:59 AM';
     case 'afternoon':
-      return 'Opens 12:00 PM – 5:59 PM';
+      return '12:00 PM – 5:59 PM';
     case 'evening':
-      return 'Opens 6:00 PM – 4:59 AM';
+      return '6:00 PM – 4:59 AM';
     default:
       return '';
   }
+}
+
+/** Short label for UI when a period is locked (when it next opens). */
+export function getCheckInWindowHint(period: CheckInTimeOfDay): string {
+  const window = getCheckInAvailabilityWindow(period);
+  return window ? `Opens ${window}` : '';
 }
