@@ -4,6 +4,7 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "node": "20.20.0",
     "development": {
       "developmentClient": true,
       "distribution": "internal"
@@ -13,7 +14,6 @@
     },
     "production": {
       "autoIncrement": true,
-      "node": "18.18.0",
       "env": {
         "EXPO_USE_FAST_RESOLVER": "1"
       },
