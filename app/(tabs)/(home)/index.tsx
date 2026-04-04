@@ -1,9 +1,9 @@
 import React from 'react';
 import { Redirect } from 'expo-router';
-import { useUser } from '@/core/domains/useUser';
-import { useAppStore } from '@/stores/useAppStore';
-import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
-import { getStrictRedirectTarget } from '@/utils/legacyRoutes';
+import { useUser } from '../../../core/domains/useUser';
+import { useAppStore } from '../../../stores/useAppStore';
+import { HomeLoadingSkeleton } from '../../../components/LoadingSkeleton';
+import { getStrictRedirectTarget } from '../../../utils/legacyRoutes';
 
 export default function HomeScreenRedirect() {
   const { profile, isLoading } = useUser();
