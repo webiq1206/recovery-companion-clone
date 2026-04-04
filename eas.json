@@ -1,28 +1,31 @@
 {
-  "cli": {
-    "version": ">= 18.5.0",
-    "appVersionSource": "remote"
-  },
-  "build": {
-    "node": "20.20.0",
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
+  
+    "cli": {
+      "version": ">= 18.5.0",
+      "appVersionSource": "remote"
     },
-    "preview": {
-      "distribution": "internal"
-    },
-    "production": {
-      "autoIncrement": true,
-      "env": {
-        "EXPO_USE_FAST_RESOLVER": "1"
+    "build": {
+      "development": {
+        "node": "20.20.0",
+        "developmentClient": true,
+        "distribution": "internal"
       },
-      "ios": {
-        "resourceClass": "medium"
+      "preview": {
+        "node": "20.20.0",
+        "distribution": "internal"
+      },
+      "production": {
+        "node": "20.20.0",
+        "autoIncrement": true,
+        "env": {
+          "EXPO_USE_FAST_RESOLVER": "1"
+        },
+        "ios": {
+          "resourceClass": "medium"
+        }
       }
+    },
+    "submit": {
+      "production": {}
     }
-  },
-  "submit": {
-    "production": {}
   }
-}
