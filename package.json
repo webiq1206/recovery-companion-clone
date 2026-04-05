@@ -20,6 +20,8 @@
     "qa:ia-strict": "node scripts/qa-ia-strict.mjs",
     "android": "expo run:android",
     "android:open-dev-url": "node ./scripts/adb-open-dev-client-url.mjs",
+    "prebuild:android": "expo prebuild --platform android",
+    "doctor": "npx expo-doctor",
     "ios": "expo run:ios"
   },
   "dependencies": {
@@ -32,6 +34,7 @@
     "@trpc/server": "^11.11.0",
     "expo": "^54.0.33",
     "expo-blur": "~15.0.8",
+    "expo-build-properties": "~1.0.10",
     "expo-constants": "~18.0.13",
     "expo-crypto": "~15.0.8",
     "expo-dev-client": "~6.0.20",

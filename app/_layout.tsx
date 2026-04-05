@@ -4,7 +4,6 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useCallback } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ConnectionProvider } from "../providers/ConnectionProvider";
 import { RecoveryRoomsProvider } from "../providers/RecoveryRoomsProvider";
 import { SubscriptionProvider } from "../providers/SubscriptionProvider";
@@ -170,13 +169,11 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider>
-            <ErrorBoundary fallbackMessage="Something unexpected happened. Your recovery data is safe.">
-              <SecurityProvider>
-                <SecuredApp />
-              </SecurityProvider>
-            </ErrorBoundary>
-          </SafeAreaProvider>
+          <ErrorBoundary fallbackMessage="Something unexpected happened. Your recovery data is safe.">
+            <SecurityProvider>
+              <SecuredApp />
+            </SecurityProvider>
+          </ErrorBoundary>
         </GestureHandlerRootView>
       </QueryClientProvider>
     </trpc.Provider>
