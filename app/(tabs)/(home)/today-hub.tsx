@@ -7,7 +7,7 @@ import {
   Animated as RNAnimated,
   Alert,
 } from 'react-native';
-import { ScreenScrollView } from '@/components/ScreenScrollView';
+import { ScreenScrollView } from '../../../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Redirect, usePathname } from 'expo-router';
 import {
@@ -21,33 +21,35 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Colors from '@/constants/colors';
-import { MOOD_EMOJIS, MOOD_LABELS } from '@/constants/milestones';
-import { useUser } from '@/core/domains/useUser';
-import { useCheckin } from '@/core/domains/useCheckin';
-import { useAppStore } from '@/stores/useAppStore';
-import { useTodayHub } from '@/features/home/hooks/useTodayHub';
-import { useWizardEngineHook } from '@/hooks/useWizardEngine';
-import { HomeLoadingSkeleton } from '@/components/LoadingSkeleton';
-import { RecoveryStabilityPanel } from '@/components/RecoveryStabilityPanel';
-import { getStrictRedirectTarget, resolveCanonicalRoute } from '@/utils/legacyRoutes';
+import Colors from '../../../constants/colors';
+import { MOOD_EMOJIS, MOOD_LABELS } from '../../../constants/milestones';
+import { useUser } from '../../../core/domains/useUser';
+import { useCheckin } from '../../../core/domains/useCheckin';
+import { useAppStore } from '../../../stores/useAppStore';
+import { useTodayHub } from '../../../features/home/hooks/useTodayHub';
+import { useWizardEngineHook } from '../../../hooks/useWizardEngine';
+import { HomeLoadingSkeleton } from '../../../components/LoadingSkeleton';
+import { RecoveryStabilityPanel } from '../../../components/RecoveryStabilityPanel';
+import { getStrictRedirectTarget, resolveCanonicalRoute } from '../../../utils/legacyRoutes';
 import {
   getCheckInAvailabilityWindow,
   getCheckInWindowHint,
   isCheckInPeriodInWindow,
-} from '@/utils/checkInWindows';
-import type { CheckInTimeOfDay } from '@/types';
-import type { WizardAction } from '@/utils/wizardEngine';
-import { mergeTodayCheckInsFromSources } from '@/utils/mergeProfile';
-import { getLocalDateKey } from '@/utils/checkInDate';
-import { TabHeaderActions } from '@/components/TabHeaderActions';
+} from '../../../utils/checkInWindows';
+import type { CheckInTimeOfDay } from '../../../types';
+import type { WizardAction } from '../../../utils/wizardEngine';
+import { mergeTodayCheckInsFromSources } from '../../../utils/mergeProfile';
+import { getLocalDateKey } from '../../../utils/checkInDate';
+import { TabHeaderActions } from '../../../components/TabHeaderActions';
 // (kept import list clean)
+
 
 const CHECK_IN_PERIODS: { period: CheckInTimeOfDay; title: string }[] = [
   { period: 'morning', title: 'Morning\nCheck-In' },
   { period: 'afternoon', title: 'Afternoon\nCheck-In' },
   { period: 'evening', title: 'Evening\nCheck-In' },
 ];
+
 
 function ActionToast({ title, onDone }: { title: string; onDone: () => void }) {
   const opacity = useRef(new RNAnimated.Value(0)).current;
@@ -68,6 +70,7 @@ function ActionToast({ title, onDone }: { title: string; onDone: () => void }) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, []);
 
+
   return (
     <RNAnimated.View style={[styles.toastCard, { opacity }]}>
       <CheckCircle2 size={18} color={Colors.primary} />
@@ -75,6 +78,7 @@ function ActionToast({ title, onDone }: { title: string; onDone: () => void }) {
     </RNAnimated.View>
   );
 }
+
 
 export default function TodayHubScreen() {
   const insets = useSafeAreaInsets();
@@ -86,10 +90,12 @@ export default function TodayHubScreen() {
   const centralDailyCheckIns = useAppStore((s) => s.dailyCheckIns);
   const { todayCheckIn: sliceTodayCheckIn, todayCheckIns: sliceTodayCheckIns } = useCheckin();
 
+
   const mergedTodayCheckIns = useMemo(() => {
     const todayStr = getLocalDateKey();
     return mergeTodayCheckInsFromSources(sliceTodayCheckIns, centralDailyCheckIns, todayStr);
   }, [sliceTodayCheckIns, centralDailyCheckIns]);
+
 
   const todayCheckIns = mergedTodayCheckIns;
   const todayCheckIn = useMemo(() => {
@@ -101,12 +107,14 @@ export default function TodayHubScreen() {
   const { plan: wizardPlan, recentCompletion, clearRecentCompletion } =
     useWizardEngineHook();
 
+
   /** Re-render every minute so check-in windows update at period boundaries. */
   const [, setCheckInWindowTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setCheckInWindowTick((n) => n + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+
 
   const dateTimeLabel = useMemo(() => {
     const now = new Date();
@@ -117,7 +125,9 @@ export default function TodayHubScreen() {
     return `${mm}/${dd}/${yyyy} · ${time}`;
   }, [setCheckInWindowTick]);
 
+
   const displayProfile = centralProfile ?? profile;
+
 
   const greetingLabel = (() => {
     const hour = new Date().getHours();
@@ -127,15 +137,18 @@ export default function TodayHubScreen() {
     return `${base}, ${firstName}`;
   })();
 
+
   const moodEmoji =
     typeof todayCheckIn?.mood === 'number'
       ? MOOD_EMOJIS[Math.min(4, Math.max(0, Math.round((todayCheckIn.mood / 100) * 4)))]
       : '–';
 
+
   const moodLabel =
     typeof todayCheckIn?.mood === 'number'
       ? MOOD_LABELS[Math.min(4, Math.max(0, Math.round((todayCheckIn.mood / 100) * 4)))]
       : 'No check-in yet';
+
 
   const urgeLabel =
     typeof todayCheckIn?.cravingLevel === 'number'
@@ -146,30 +159,37 @@ export default function TodayHubScreen() {
           : 'Low urge'
       : 'Unknown';
 
+
   const strictTarget = getStrictRedirectTarget('/(tabs)/(home)/today-hub');
   if (strictTarget && pathname !== strictTarget) {
     return <Redirect href={strictTarget as any} />;
   }
 
+
   if (vm.isLoading) {
     return <HomeLoadingSkeleton />;
   }
+
 
   if (vm.shouldRedirectToOnboarding) {
     return <Redirect href={'/onboarding' as any} />;
   }
 
+
   const { stability, relapseRisk, showRelapsePlanCta } = vm;
   const { setupProgress, dailyGuidance } = wizardPlan;
 
+
   const isPeriodComplete = (period: CheckInTimeOfDay) =>
     todayCheckIns.some((c) => c.timeOfDay === period);
+
 
   const handleActionPress = (action: WizardAction) => {
     if (action.completed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(resolveCanonicalRoute(action.route) as any);
   };
+
 
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top }]}>
@@ -194,6 +214,7 @@ export default function TodayHubScreen() {
               : 'A quick snapshot of how you\u2019re doing and what to do next.'}
           </Text>
         </View>
+
 
         {/* Setup progress banner for new/incomplete users */}
         {setupProgress &&
@@ -237,6 +258,7 @@ export default function TodayHubScreen() {
           </Pressable>
         )}
 
+
         {/* Context hint (replaces PersonalizationCard) */}
         {dailyGuidance.contextHint && (
           <View style={styles.contextHintCard}>
@@ -246,6 +268,7 @@ export default function TodayHubScreen() {
             </Text>
           </View>
         )}
+
 
         {/* Primary crisis entry — above encouragement so support is one tap away */}
         <Pressable
@@ -266,6 +289,7 @@ export default function TodayHubScreen() {
           <ArrowRight size={18} color={Colors.white} />
         </Pressable>
 
+
         {/* Encouragement message */}
         {dailyGuidance.encouragement && (
           <View style={styles.encouragementCard}>
@@ -274,6 +298,7 @@ export default function TodayHubScreen() {
             </Text>
           </View>
         )}
+
 
         {/* Current state: mood + urge */}
         <View style={styles.stateCard}>
@@ -293,6 +318,7 @@ export default function TodayHubScreen() {
           </View>
         </View>
 
+
         {/* Comprehensive Stability — directly under mood & urge */}
         <RecoveryStabilityPanel
           score={stability.score}
@@ -306,6 +332,7 @@ export default function TodayHubScreen() {
             router.push('/comprehensive-stability-explained' as any);
           }}
         />
+
 
         {showRelapsePlanCta && (
           <Pressable
@@ -332,6 +359,7 @@ export default function TodayHubScreen() {
             <ArrowRight size={20} color={Colors.danger} />
           </Pressable>
         )}
+
 
         {/* Time-of-day check-ins */}
         <Text style={styles.sectionLabel}>Check-ins today</Text>
@@ -402,6 +430,7 @@ export default function TodayHubScreen() {
           })}
         </View>
 
+
         <View style={[styles.planCard, { marginTop: 8, marginBottom: 14 }]}>
           <Pressable
             style={({ pressed }) => [styles.planRow, pressed && styles.pressed]}
@@ -421,6 +450,7 @@ export default function TodayHubScreen() {
             <ChevronRight size={16} color={Colors.textMuted} />
           </Pressable>
         </View>
+
 
         {/* Completion card */}
         {dailyGuidance.isComplete && dailyGuidance.completionMessage && (
@@ -451,6 +481,7 @@ export default function TodayHubScreen() {
           </View>
         )}
 
+
         {/* Post-action feedback toast */}
         {recentCompletion &&
           Date.now() - recentCompletion.timestamp < 4000 && (
@@ -459,6 +490,7 @@ export default function TodayHubScreen() {
               onDone={clearRecentCompletion}
             />
           )}
+
 
         {/* Daily actions list (from wizard engine) */}
         {dailyGuidance.actions.length > 0 && (
@@ -519,6 +551,7 @@ export default function TodayHubScreen() {
           </>
         )}
 
+
         {/* Risk warnings (from wizard engine) */}
         {dailyGuidance.riskWarnings.length > 0 && (
           <View style={styles.warningCard}>
@@ -530,6 +563,7 @@ export default function TodayHubScreen() {
             ))}
           </View>
         )}
+
 
         {/* Dev-only: full onboarding walkthrough from the hero screen */}
         {__DEV__ ? (
@@ -559,6 +593,7 @@ export default function TodayHubScreen() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -1037,3 +1072,5 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
 });
+
+
