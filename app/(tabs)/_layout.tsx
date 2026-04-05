@@ -9,8 +9,8 @@ import {
   Handshake,
 } from "lucide-react-native";
 import React, { useCallback } from "react";
-import Colors from "@/constants/colors";
-import { useAppMeta } from "@/core/domains/useAppMeta";
+import Colors from "../../constants/colors";
+import { useAppMeta } from "../../core/domains/useAppMeta";
 
 type IconType = typeof Home;
 
