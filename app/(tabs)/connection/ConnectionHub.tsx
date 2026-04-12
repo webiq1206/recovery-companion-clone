@@ -899,80 +899,11 @@ export default function ConnectionScreen() {
       {renderRoomModal()}
 
       {/*
+      Sponsor chat modal (disabled — needs sponsor state wired back in)
       <Modal visible={showSponsorChat} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={[styles.chatModal, { paddingBottom: insets.bottom + 10 }]}>
-            <View style={styles.chatModalHeader}>
-              <Pressable onPress={() => { setShowSponsorChat(false); setSponsorMessageText(''); }} hitSlop={12}>
-                <X size={22} color={Colors.textSecondary} />
-              </Pressable>
-              <View style={styles.chatModalTitleRow}>
-                <View style={styles.sponsorChatAvatar}>
-                  <Text style={styles.sponsorChatAvatarText}>
-                    {sponsorPairing?.sponsorName?.charAt(0) ?? 'S'}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.chatModalTitle}>{sponsorPairing?.sponsorName ?? 'Sponsor'}</Text>
-                  <Text style={styles.sponsorChatSubtitle}>Your Sponsor</Text>
-                </View>
-              </View>
-              <View style={{ width: 22 }} />
-            </View>
-
-            {(!sponsorPairing?.messages || sponsorPairing.messages.length === 0) ? (
-              <View style={styles.sponsorChatEmpty}>
-                <View style={styles.sponsorChatEmptyIcon}>
-                  <MessageCircle size={32} color={Colors.textMuted} />
-                </View>
-                <Text style={styles.sponsorChatEmptyTitle}>Start a Conversation</Text>
-                <Text style={styles.sponsorChatEmptyText}>
-                  Reach out to {sponsorPairing?.sponsorName ?? 'your sponsor'}. They are here to support you.
-                </Text>
-              </View>
-            ) : (
-              <ScreenFlatList
-                data={sponsorPairing?.messages ?? []}
-                keyExtractor={item => item.id}
-                style={styles.messageList}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }: { item: SponsorMessage }) => (
-                  <View style={[styles.messageBubble, item.isOwn ? styles.ownBubble : styles.otherBubble]}>
-                    <Text style={[styles.messageText, item.isOwn ? styles.ownMessageText : styles.otherMessageText]}>
-                      {item.content}
-                    </Text>
-                    <Text style={[styles.messageTime, item.isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
-                      {formatTime(item.timestamp)}
-                    </Text>
-                  </View>
-                )}
-              />
-            )}
-
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.chatInput}
-                placeholder="Message your sponsor..."
-                placeholderTextColor={Colors.textMuted}
-                value={sponsorMessageText}
-                onChangeText={setSponsorMessageText}
-                maxLength={500}
-                testID="sponsor-chat-input"
-              />
-              <Pressable
-                style={[styles.sendBtn, !sponsorMessageText.trim() && styles.sendBtnDisabled]}
-                onPress={handleSendSponsorMessage}
-                disabled={!sponsorMessageText.trim()}
-              >
-                <Send size={18} color={sponsorMessageText.trim() ? Colors.white : Colors.textMuted} />
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
+        ...
       </Modal>
+      */}
 
       <Modal visible={showAddContact} animationType="slide" transparent>
         <KeyboardAvoidingView
@@ -1070,7 +1001,6 @@ export default function ConnectionScreen() {
           </View>
         </View>
       </Modal>
-      */}
     </Animated.View>
   );
 }
