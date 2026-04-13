@@ -10,6 +10,11 @@
  */
 
 import type { RecoveryStage, RiskCategory, DailyCheckIn, Pledge, CheckInTimeOfDay } from '../types';
+import {
+  getActiveCheckInPeriodForNow,
+  getCheckInAvailabilityWindow,
+  isCheckInPeriodInWindow,
+} from './checkInWindows';
 import type { WizardBehaviorState, ActionHistoryEntry } from '../stores/useWizardBehaviorStore';
 import { getCompletedOnboardingSteps, ONBOARDING_STEP_IDS } from './wizardSteps';
 import type { UserProfile, EmergencyContact, AccountabilityData } from '../types';
@@ -27,6 +32,8 @@ export interface WizardAction {
   kind: WizardActionKind;
   completed: boolean;
   priority: number;
+  /** Route params (e.g. daily check-in period). */
+  params?: { period?: CheckInTimeOfDay };
 }
 
 export interface SetupStep {
@@ -76,6 +83,8 @@ export interface WizardEngineInput {
 
   todayCheckIns: DailyCheckIn[];
   currentPeriod: CheckInTimeOfDay;
+  /** Wall clock for check-in window logic; should tick periodically in the hook. */
+  checkInWindowNow: Date;
 
   stabilityScore: number;
   stabilityTrend: 'rising' | 'declining' | 'stable';
@@ -103,6 +112,11 @@ export interface WizardEngineInput {
 
   behaviorHistory: WizardBehaviorState;
   daysSinceLastSession: number;
+
+  /** Paid premium (not freemium). Used to gate growth actions like One Rebuild Step. */
+  hasPremiumSubscription: boolean;
+  /** Count of Connection tab trusted-circle contacts (not legacy emergency-only). */
+  trustedCircleContactCount: number;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -375,13 +389,34 @@ interface CandidateAction {
   kind: WizardActionKind;
   completed: boolean;
   basePriority: number;
+  params?: { period: CheckInTimeOfDay };
 }
+
+const CHECK_IN_GUIDANCE_TITLE: Record<CheckInTimeOfDay, string> = {
+  morning: 'Morning Check-In',
+  afternoon: 'Afternoon Check-In',
+  evening: 'Evening Check-In',
+};
 
 function buildCandidateActions(input: WizardEngineInput): CandidateAction[] {
   const candidates: CandidateAction[] = [];
   const band = getStabilityBand(input.stabilityScore);
 
-  // Time-of-day check-ins live only under "Check-ins today" on the home screen, not in Today's guidance.
+  const now = input.checkInWindowNow;
+  const activePeriod = getActiveCheckInPeriodForNow(now);
+  const activeIncomplete = !input.todayCheckIns.some((c) => c.timeOfDay === activePeriod);
+  if (activeIncomplete && isCheckInPeriodInWindow(activePeriod, now)) {
+    candidates.push({
+      id: `check-in-${activePeriod}`,
+      title: CHECK_IN_GUIDANCE_TITLE[activePeriod],
+      subtitle: `Available ${getCheckInAvailabilityWindow(activePeriod)} · Tap to log`,
+      route: '/daily-checkin',
+      kind: 'awareness',
+      completed: false,
+      basePriority: 10_000,
+      params: { period: activePeriod },
+    });
+  }
 
   candidates.push({
     id: 'daily-pledge',
@@ -417,17 +452,24 @@ function buildCandidateActions(input: WizardEngineInput): CandidateAction[] {
     });
   }
 
-  candidates.push({
-    id: 'rebuild-action',
-    title: 'One Rebuild Step',
-    subtitle: input.rebuildGoalsCount > 0
-      ? 'Take one step toward a goal you set.'
-      : 'Build a habit, routine, or goal that supports your new life.',
-    route: '/rebuild',
-    kind: 'growth',
-    completed: input.rebuildHabitsCompletedToday > 0 || input.rebuildRoutinesCompletedToday > 0,
-    basePriority: 60,
-  });
+  const showOneRebuildStep =
+    input.daysSober >= 30 &&
+    input.hasPremiumSubscription &&
+    input.trustedCircleContactCount === 0;
+
+  if (showOneRebuildStep) {
+    candidates.push({
+      id: 'rebuild-action',
+      title: 'One Rebuild Step',
+      subtitle: input.rebuildGoalsCount > 0
+        ? 'Take one step toward a goal you set.'
+        : 'Build a habit, routine, or goal that supports your new life.',
+      route: '/rebuild',
+      kind: 'growth',
+      completed: input.rebuildHabitsCompletedToday > 0 || input.rebuildRoutinesCompletedToday > 0,
+      basePriority: 60,
+    });
+  }
 
   if (input.triggerRiskScore >= 50 || band === 'low') {
     candidates.push({
@@ -463,15 +505,17 @@ function buildCandidateActions(input: WizardEngineInput): CandidateAction[] {
     });
   }
 
-  candidates.push({
-    id: 'add-emergency-contact',
-    title: 'Add a Trusted Circle Contact',
-    subtitle: 'Someone to reach when things get hard. Stored only on your device.',
-    route: '/connection',
-    kind: 'connection',
-    completed: input.hasEmergencyContacts,
-    basePriority: 80,
-  });
+  if (!input.hasEmergencyContacts) {
+    candidates.push({
+      id: 'add-emergency-contact',
+      title: 'Add a Trusted Circle Contact',
+      subtitle: 'Someone to reach when things get hard. Stored only on your device.',
+      route: '/connection',
+      kind: 'connection',
+      completed: false,
+      basePriority: 80,
+    });
+  }
 
   const hasActiveContract =
     input.accountabilityData?.contracts?.some(
@@ -517,15 +561,19 @@ function buildScoredWizardActions(input: WizardEngineInput): WizardAction[] {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
     return b.priority - a.priority;
   });
-  return scored.map((s) => ({
-    id: s.id,
-    title: s.title,
-    subtitle: s.subtitle,
-    route: s.route,
-    kind: s.kind,
-    completed: s.completed,
-    priority: s.priority,
-  }));
+  return scored.map((s) => {
+    const action: WizardAction = {
+      id: s.id,
+      title: s.title,
+      subtitle: s.subtitle,
+      route: s.route,
+      kind: s.kind,
+      completed: s.completed,
+      priority: s.priority,
+    };
+    if (s.params) action.params = s.params;
+    return action;
+  });
 }
 
 // ── Risk warnings ────────────────────────────────────────────────────────

@@ -2,9 +2,10 @@ import type { CheckInTimeOfDay } from '../types';
 
 /**
  * When true, all check-in periods are tappable from the home screen regardless of
- * time-of-day windows. Set to `false` before release (restore normal morning/afternoon/evening windows).
+ * time-of-day windows. `getActiveCheckInPeriodForNow` still uses clock cuts so Today’s guidance
+ * pins one period. Set to `false` for production window enforcement on chips and navigation.
  */
-export const BYPASS_CHECK_IN_TIME_WINDOWS = true;
+export const BYPASS_CHECK_IN_TIME_WINDOWS = false;
 
 /**
  * Local-time windows for which period's check-in can be opened from the home screen.
@@ -29,6 +30,28 @@ export function isCheckInPeriodInWindow(period: CheckInTimeOfDay, now: Date = ne
     default:
       return false;
   }
+}
+
+/** Same morning / afternoon / evening boundaries as `isCheckInPeriodInWindow` (for bypass UI ordering). */
+function primaryPeriodByClock(now: Date): CheckInTimeOfDay {
+  const m = minutesSinceMidnightLocal(now);
+  if (m >= 5 * 60 && m <= 11 * 60 + 59) return 'morning';
+  if (m >= 12 * 60 && m <= 17 * 60 + 59) return 'afternoon';
+  return 'evening';
+}
+
+/**
+ * The single “current” check-in slot for prioritization (Today’s guidance).
+ * With bypass on, chips stay open but this still follows local clock windows for pinning.
+ */
+export function getActiveCheckInPeriodForNow(now: Date = new Date()): CheckInTimeOfDay {
+  if (BYPASS_CHECK_IN_TIME_WINDOWS) {
+    return primaryPeriodByClock(now);
+  }
+  if (isCheckInPeriodInWindow('morning', now)) return 'morning';
+  if (isCheckInPeriodInWindow('afternoon', now)) return 'afternoon';
+  if (isCheckInPeriodInWindow('evening', now)) return 'evening';
+  return primaryPeriodByClock(now);
 }
 
 /** One-line local-time window when that period’s check-in is available (matches `isCheckInPeriodInWindow`). */

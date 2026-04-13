@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Pressable,
   Animated as RNAnimated,
-  Alert,
 } from 'react-native';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -121,11 +120,13 @@ export default function TodayHubScreen() {
 
 
   /** Re-render every minute so check-in windows update at period boundaries. */
-  const [, setCheckInWindowTick] = useState(0);
+  const [checkInWindowTick, setCheckInWindowTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setCheckInWindowTick((n) => n + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  const checkInNow = useMemo(() => new Date(), [checkInWindowTick]);
 
   const [guidanceExpanded, setGuidanceExpanded] = useState(false);
 
@@ -145,7 +146,7 @@ export default function TodayHubScreen() {
     const yyyy = String(now.getFullYear());
     const time = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
     return `${mm}/${dd}/${yyyy} · ${time}`;
-  }, [setCheckInWindowTick]);
+  }, [checkInWindowTick]);
 
 
   const displayProfile = centralProfile ?? profile;
@@ -193,6 +194,11 @@ export default function TodayHubScreen() {
   const handleActionPress = (action: WizardAction) => {
     if (action.completed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const period = action.params?.period;
+    if (period === 'morning' || period === 'afternoon' || period === 'evening') {
+      router.push({ pathname: '/daily-checkin', params: { period } } as any);
+      return;
+    }
     router.push(resolveCanonicalRoute(action.route) as any);
   };
 
@@ -303,27 +309,22 @@ export default function TodayHubScreen() {
         <View style={styles.checkInRow}>
           {CHECK_IN_PERIODS.map(({ period, title }) => {
             const done = isPeriodComplete(period);
-            const inWindow = isCheckInPeriodInWindow(period);
+            const inWindow = isCheckInPeriodInWindow(period, checkInNow);
             const locked = !done && !inWindow;
             const a11yPeriod = title.replace('\n', ' ');
             return (
               <Pressable
                 key={period}
+                disabled={locked}
+                accessibilityState={{ disabled: locked }}
                 style={({ pressed }) => [
                   styles.checkInChip,
                   done && styles.checkInChipDone,
                   locked && styles.checkInChipLocked,
-                  pressed && styles.pressed,
+                  pressed && !locked && styles.pressed,
                 ]}
                 onPress={() => {
-                  if (locked) {
-                    Haptics.selectionAsync();
-                    Alert.alert(
-                      title.replace('\n', ' '),
-                      `${getCheckInWindowHint(period)}. You can complete this check-in during that window.`,
-                    );
-                    return;
-                  }
+                  if (locked) return;
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push({
                     pathname: '/daily-checkin',
@@ -335,7 +336,7 @@ export default function TodayHubScreen() {
                   done
                     ? `${a11yPeriod} completed`
                     : locked
-                      ? `${a11yPeriod}, not available until ${getCheckInWindowHint(period)}`
+                      ? `${a11yPeriod}, please wait, ${getCheckInWindowHint(period)}`
                       : a11yPeriod
                 }
               >
@@ -360,7 +361,7 @@ export default function TodayHubScreen() {
                   {getCheckInAvailabilityWindow(period)}
                 </Text>
                 <Text style={[styles.checkInChipSub, locked && styles.checkInChipSubLocked]}>
-                  {done ? 'Done' : locked ? 'Locked' : 'Tap'}
+                  {done ? 'Done' : locked ? 'PLEASE WAIT' : 'Tap'}
                 </Text>
               </Pressable>
             );

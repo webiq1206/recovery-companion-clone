@@ -19,6 +19,7 @@ import { useAppStore } from '../stores/useAppStore';
 import { useRiskPrediction } from '../providers/RiskPredictionProvider';
 import { useStageDetection } from '../providers/StageDetectionProvider';
 import { useConnection } from '../providers/ConnectionProvider';
+import { useSubscription } from '../providers/SubscriptionProvider';
 import { useEngagement } from '../providers/EngagementProvider';
 import { usePersonalization } from '../features/home/hooks/usePersonalization';
 import {
@@ -101,6 +102,7 @@ export function useWizardEngineHook(): WizardEngineResult {
   const emergencyContacts = contactsHook?.emergencyContacts ?? [];
 
   const { peerChats, safeRooms, sponsorPairing, trustedContacts } = useConnection();
+  const { isPremium } = useSubscription();
 
   const emergencyContactsCombined = useMemo(
     () => mergeTrustedAndEmergencyContacts(trustedContacts ?? [], emergencyContacts ?? []),
@@ -162,6 +164,12 @@ export function useWizardEngineHook(): WizardEngineResult {
 
   const [recentCompletion, setRecentCompletion] =
     useState<RecentCompletion | null>(null);
+
+  const [checkInWindowNow, setCheckInWindowNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setCheckInWindowNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const clearRecentCompletion = useCallback(
     () => setRecentCompletion(null),
@@ -329,6 +337,7 @@ export function useWizardEngineHook(): WizardEngineResult {
       accountabilityData: accountabilityData ?? null,
       todayCheckIns: mergedTodayCheckIns,
       currentPeriod,
+      checkInWindowNow,
       stabilityScore: stabilityScore ?? 50,
       stabilityTrend,
       relapseRisk: riskCategory ?? 'low',
@@ -354,15 +363,20 @@ export function useWizardEngineHook(): WizardEngineResult {
       streakLength: streak?.currentStreak ?? 0,
       behaviorHistory: behaviorState,
       daysSinceLastSession,
+      hasPremiumSubscription: isPremium,
+      trustedCircleContactCount: trustedContacts?.length ?? 0,
     }),
     [
       safeProfile,
       daysSober,
       emergencyContactsCombined,
+      trustedContacts?.length,
+      isPremium,
       rebuildData,
       accountabilityData,
       mergedTodayCheckIns,
       currentPeriod,
+      checkInWindowNow,
       stabilityScore,
       stabilityTrend,
       riskCategory,
