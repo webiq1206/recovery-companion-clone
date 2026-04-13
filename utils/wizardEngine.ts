@@ -15,6 +15,7 @@ import {
   getCheckInAvailabilityWindow,
   isCheckInPeriodInWindow,
 } from './checkInWindows';
+import { getLocalDateKey } from './checkInDate';
 import type { WizardBehaviorState, ActionHistoryEntry } from '../stores/useWizardBehaviorStore';
 import { getCompletedOnboardingSteps, ONBOARDING_STEP_IDS } from './wizardSteps';
 import type { UserProfile, EmergencyContact, AccountabilityData } from '../types';
@@ -576,6 +577,71 @@ function buildScoredWizardActions(input: WizardEngineInput): WizardAction[] {
   });
 }
 
+/** Max non-check-in rows under Today’s guidance per calendar day (check-ins are separate). */
+const MAX_NON_CHECKIN_GUIDANCE_ACTIONS_PER_DAY = 3;
+
+function isGuidanceCheckInAction(a: WizardAction): boolean {
+  return a.id.startsWith('check-in-');
+}
+
+function hashStringToUint32(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  }
+  return h >>> 0;
+}
+
+function createSeededRandom(seed: number): () => number {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Deterministic subset for the given date key; order follows `pool` (priority order). */
+function pickSeededActionIds(pool: WizardAction[], seedKey: string, count: number): Set<string> {
+  if (count <= 0) return new Set();
+  if (pool.length <= count) return new Set(pool.map((a) => a.id));
+
+  const rand = createSeededRandom(hashStringToUint32(seedKey));
+  const idx = pool.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const tmp = idx[i]!;
+    idx[i] = idx[j]!;
+    idx[j] = tmp;
+  }
+  return new Set(idx.slice(0, count).map((i) => pool[i]!.id));
+}
+
+/**
+ * Keeps all time-of-day check-in guidance rows, plus up to {@link MAX_NON_CHECKIN_GUIDANCE_ACTIONS_PER_DAY}
+ * other actions. Selection is stable for `localDateKey` and changes each day.
+ */
+function limitDailyGuidanceActions(actions: WizardAction[], localDateKey: string): WizardAction[] {
+  const checkIns = actions.filter(isGuidanceCheckInAction);
+  const rest = actions.filter((a) => !isGuidanceCheckInAction(a));
+
+  if (rest.length <= MAX_NON_CHECKIN_GUIDANCE_ACTIONS_PER_DAY) {
+    return [...checkIns, ...rest];
+  }
+
+  const mustShow = new Set<string>();
+  const crisisIncomplete = rest.find((a) => a.id === 'crisis-tools' && !a.completed);
+  if (crisisIncomplete) mustShow.add('crisis-tools');
+
+  const pool = rest.filter((a) => !mustShow.has(a.id));
+  const need = MAX_NON_CHECKIN_GUIDANCE_ACTIONS_PER_DAY - mustShow.size;
+  const extra = pickSeededActionIds(pool, `${localDateKey}|dailyGuidance`, need);
+  const picked = new Set<string>([...mustShow, ...extra]);
+
+  const orderedRest = rest.filter((a) => picked.has(a.id));
+  return [...checkIns, ...orderedRest];
+}
+
 // ── Risk warnings ────────────────────────────────────────────────────────
 
 function buildRiskWarnings(input: WizardEngineInput): string[] {
@@ -617,7 +683,9 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
       ? pickRandom(REENTRY_MESSAGES_LONG_GAP)
       : pickRandom(REENTRY_MESSAGES);
 
-    const actions = buildScoredWizardActions(input);
+    const rawActions = buildScoredWizardActions(input);
+    const dateKey = getLocalDateKey(input.checkInWindowNow);
+    const actions = limitDailyGuidanceActions(rawActions, dateKey);
     const incompleteActions = actions.filter((a) => !a.completed);
     const isComplete = incompleteActions.length === 0;
     const primaryAction = incompleteActions[0] ?? null;
@@ -641,7 +709,9 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
   }
 
   // Normal mode
-  const actions = buildScoredWizardActions(input);
+  const rawActions = buildScoredWizardActions(input);
+  const dateKey = getLocalDateKey(input.checkInWindowNow);
+  const actions = limitDailyGuidanceActions(rawActions, dateKey);
   const contextHint = buildContextHint(input);
   const encouragement = buildEncouragement(input);
   const riskWarnings = buildRiskWarnings(input);
