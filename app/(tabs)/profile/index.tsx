@@ -14,6 +14,8 @@ import { useNotifications } from '../../../providers/NotificationProvider';
 import { RecoveryStage, PrivacyControls, NotificationIntensityLevel } from '../../../types';
 import { ADDICTION_TYPES } from '../../../constants/milestones';
 import { NOTIFICATION_INTENSITY_CONFIG, NotificationIntensity } from '../../../constants/notifications';
+import { useWizardEngineHook } from '../../../hooks/useWizardEngine';
+import { resolveCanonicalRoute } from '../../../utils/legacyRoutes';
 
 
 const STAGE_CONFIG: Record<RecoveryStage, { label: string; color: string; icon: string; description: string }> = {
@@ -44,6 +46,8 @@ export default function ProfileScreen() {
     isPermissionGranted,
   } = useNotifications();
   const router = require('expo-router').useRouter();
+  const { plan: wizardPlan } = useWizardEngineHook();
+  const { setupProgress } = wizardPlan;
 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState<string>('');
@@ -310,6 +314,46 @@ export default function ProfileScreen() {
           </View>
         </View>
       ) : null}
+
+      {setupProgress &&
+        setupProgress.completedSteps < setupProgress.totalSteps &&
+        setupProgress.nextStep && (
+        <Pressable
+          style={({ pressed }) => [
+            styles.setupBanner,
+            pressed && { opacity: 0.92 },
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            const step =
+              setupProgress.nextStep ?? setupProgress.remainingSteps[0];
+            if (step) {
+              router.push(resolveCanonicalRoute(step.route) as any);
+            }
+          }}
+          testID="profile-setup-banner"
+        >
+          <View style={styles.setupProgressBar}>
+            <View
+              style={[
+                styles.setupProgressFill,
+                {
+                  width: `${(setupProgress.completedSteps / setupProgress.totalSteps) * 100}%`,
+                },
+              ]}
+            />
+          </View>
+          <View style={styles.setupTextWrap}>
+            <Text style={styles.setupTitle}>
+              {setupProgress.completedSteps} of {setupProgress.totalSteps} setup steps done
+            </Text>
+            <Text style={styles.setupNext}>
+              Next: {setupProgress.nextStep.title}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={Colors.primary} />
+        </Pressable>
+      )}
 
       {/* Recovery Stage */}
       <View style={styles.stageCard}>
@@ -867,6 +911,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600' as const,
     color: '#D4A574',
+  },
+  setupBanner: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: Colors.primary + '10',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+    marginBottom: 16,
+    gap: 12,
+  },
+  setupProgressBar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary + '20',
+    overflow: 'hidden' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  setupProgressFill: {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: Colors.primary,
+  },
+  setupTextWrap: {
+    flex: 1,
+  },
+  setupTitle: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  setupNext: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: '600' as const,
+    marginTop: 2,
   },
   stageCard: {
     backgroundColor: Colors.cardBackground,

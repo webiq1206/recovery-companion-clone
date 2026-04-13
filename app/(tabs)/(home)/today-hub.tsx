@@ -127,6 +127,16 @@ export default function TodayHubScreen() {
     return () => clearInterval(id);
   }, []);
 
+  const [guidanceExpanded, setGuidanceExpanded] = useState(false);
+
+  const guidanceActionIdsKey = useMemo(
+    () => wizardPlan.dailyGuidance.actions.map((a) => a.id).join('|'),
+    [wizardPlan.dailyGuidance.actions],
+  );
+
+  useEffect(() => {
+    setGuidanceExpanded(false);
+  }, [guidanceActionIdsKey]);
 
   const dateTimeLabel = useMemo(() => {
     const now = new Date();
@@ -167,8 +177,14 @@ export default function TodayHubScreen() {
 
 
   const { showRelapsePlanCta } = vm;
-  const { setupProgress, dailyGuidance } = wizardPlan;
+  const { dailyGuidance } = wizardPlan;
 
+  const guidanceActions = dailyGuidance.actions;
+  const guidanceMultiple = guidanceActions.length > 1;
+  const guidanceVisibleActions =
+    guidanceMultiple && !guidanceExpanded
+      ? guidanceActions.slice(0, 1)
+      : guidanceActions;
 
   const isPeriodComplete = (period: CheckInTimeOfDay) =>
     todayCheckIns.some((c) => c.timeOfDay === period);
@@ -207,55 +223,12 @@ export default function TodayHubScreen() {
 
         {showRecoveryJourneyCard && (
           <View style={styles.recoveryJourneyCard} testID="todayhub-recovery-journey-card">
-            <Text style={styles.recoveryJourneyTitle}>Your recovery journey has begun</Text>
+            <Text style={styles.recoveryJourneyTitle}>Recovery is one day at a time</Text>
             <Text style={styles.recoveryJourneyDays}>{daysSober}</Text>
             <Text style={styles.recoveryJourneyDaysCaption}>Days Completed</Text>
             <Text style={styles.recoveryJourneySub}>Since {recoveryJourneySinceLabel}</Text>
           </View>
         )}
-
-        {/* Setup progress banner for new/incomplete users */}
-        {setupProgress &&
-          setupProgress.completedSteps < setupProgress.totalSteps &&
-          setupProgress.nextStep && (
-          <Pressable
-            style={({ pressed }) => [
-              styles.setupBanner,
-              pressed && styles.pressed,
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              const step =
-                setupProgress.nextStep ?? setupProgress.remainingSteps[0];
-              if (step) {
-                router.push(resolveCanonicalRoute(step.route) as any);
-              }
-            }}
-            testID="todayhub-setup-banner"
-          >
-            <View style={styles.setupProgressBar}>
-              <View
-                style={[
-                  styles.setupProgressFill,
-                  {
-                    width: `${(setupProgress.completedSteps / setupProgress.totalSteps) * 100}%`,
-                  },
-                ]}
-              />
-            </View>
-            <View style={styles.setupTextWrap}>
-              <Text style={styles.setupTitle}>
-                {setupProgress.completedSteps} of {setupProgress.totalSteps} setup
-                steps done
-              </Text>
-              <Text style={styles.setupNext}>
-                Next: {setupProgress.nextStep.title}
-              </Text>
-            </View>
-            <ChevronRight size={18} color={Colors.primary} />
-          </Pressable>
-        )}
-
 
         {/* Context hint (replaces PersonalizationCard) */}
         {dailyGuidance.contextHint && (
@@ -288,8 +261,8 @@ export default function TodayHubScreen() {
         </Pressable>
 
 
-        {/* Encouragement message */}
-        {dailyGuidance.encouragement && (
+        {/* Encouragement message (hidden on day 0 — avoids "Today is Day 1" block on home) */}
+        {dailyGuidance.encouragement && daysSober > 0 && (
           <View style={styles.encouragementCard}>
             <Text style={styles.encouragementText}>
               {dailyGuidance.encouragement}
@@ -395,27 +368,6 @@ export default function TodayHubScreen() {
         </View>
 
 
-        <View style={[styles.planCard, { marginTop: 8, marginBottom: 14 }]}>
-          <Pressable
-            style={({ pressed }) => [styles.planRow, pressed && styles.pressed]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/relapse-recovery' as any);
-            }}
-            testID="todayhub-log-relapse"
-          >
-            <View style={[styles.planStepBadge, { backgroundColor: Colors.danger + '18' }]}>
-              <AlertTriangle size={14} color={Colors.danger} />
-            </View>
-            <View style={styles.planTextWrap}>
-              <Text style={styles.planRowTitle}>Today was hard - log a setback</Text>
-              <Text style={styles.planRowSubtitle}>One event doesn't erase your progress</Text>
-            </View>
-            <ChevronRight size={16} color={Colors.textMuted} />
-          </Pressable>
-        </View>
-
-
         {/* Completion card */}
         {dailyGuidance.isComplete && dailyGuidance.completionMessage && (
           <View style={styles.completionCard}>
@@ -457,13 +409,18 @@ export default function TodayHubScreen() {
 
 
         {/* Daily actions list (from wizard engine) */}
-        {dailyGuidance.actions.length > 0 && (
+        {guidanceActions.length > 0 && (
           <>
             <Text style={styles.planTitle}>
               {dailyGuidance.isReentryMode ? "Today's plan" : "Today's guidance"}
             </Text>
-            <View style={styles.planCard}>
-              {dailyGuidance.actions.map((action) => (
+            <View
+              style={[
+                styles.planCard,
+                guidanceMultiple ? { marginBottom: 8 } : null,
+              ]}
+            >
+              {guidanceVisibleActions.map((action) => (
                 <Pressable
                   key={action.id}
                   disabled={action.completed}
@@ -512,9 +469,51 @@ export default function TodayHubScreen() {
                 </Pressable>
               ))}
             </View>
+            {guidanceMultiple ? (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.guidanceExpandCollapse,
+                  pressed && { opacity: 0.85 },
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setGuidanceExpanded((e) => !e);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={guidanceExpanded ? 'Collapse guidance list' : 'Expand guidance list'}
+                testID={
+                  guidanceExpanded
+                    ? 'todayhub-guidance-collapse'
+                    : 'todayhub-guidance-expand'
+                }
+              >
+                <Text style={styles.guidanceExpandCollapseText}>
+                  {guidanceExpanded ? 'Collapse' : 'Expand'}
+                </Text>
+              </Pressable>
+            ) : null}
           </>
         )}
 
+        <View style={[styles.planCard, { marginTop: 8, marginBottom: 14 }]}>
+          <Pressable
+            style={({ pressed }) => [styles.planRow, pressed && styles.pressed]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/relapse-recovery' as any);
+            }}
+            testID="todayhub-log-relapse"
+          >
+            <View style={[styles.planStepBadge, { backgroundColor: Colors.danger + '18' }]}>
+              <AlertTriangle size={14} color={Colors.danger} />
+            </View>
+            <View style={styles.planTextWrap}>
+              <Text style={styles.planRowTitle}>Today was hard - log a setback</Text>
+              <Text style={styles.planRowSubtitle}>One event doesn’t erase your progress</Text>
+            </View>
+            <ChevronRight size={16} color={Colors.textMuted} />
+          </Pressable>
+        </View>
 
         {/* Risk warnings (from wizard engine) */}
         {dailyGuidance.riskWarnings.length > 0 && (
@@ -673,47 +672,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.text,
-  },
-  setupBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary + '10',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-    marginBottom: 14,
-    gap: 12,
-  },
-  setupProgressBar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.primary + '20',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  setupProgressFill: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.primary,
-  },
-  setupTextWrap: {
-    flex: 1,
-  },
-  setupTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  setupNext: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '600',
-    marginTop: 2,
   },
   contextHintCard: {
     flexDirection: 'row',
@@ -911,6 +869,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: 24,
+  },
+  guidanceExpandCollapse: {
+    alignSelf: 'center' as const,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  guidanceExpandCollapseText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.primary,
+    textAlign: 'center' as const,
   },
   planRow: {
     flexDirection: 'row',
