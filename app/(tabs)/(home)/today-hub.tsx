@@ -131,6 +131,13 @@ export default function TodayHubScreen() {
     return `${mm}/${dd}/${yyyy} · ${time}`;
   }, [checkInWindowTick]);
 
+  const dailyGuidance = wizardPlan.dailyGuidance;
+  const guidanceActions = dailyGuidance.actions;
+  const guidanceMultiple = guidanceActions.length > 1;
+  const guidanceFocusIndex = useMemo(
+    () => getGuidanceCollapsedFocusIndex(guidanceActions),
+    [guidanceActions],
+  );
 
   const displayProfile = centralProfile ?? profile;
 
@@ -161,14 +168,7 @@ export default function TodayHubScreen() {
 
 
   const { showRelapsePlanCta } = vm;
-  const { dailyGuidance } = wizardPlan;
 
-  const guidanceActions = dailyGuidance.actions;
-  const guidanceMultiple = guidanceActions.length > 1;
-  const guidanceFocusIndex = useMemo(
-    () => getGuidanceCollapsedFocusIndex(guidanceActions),
-    [guidanceActions],
-  );
   const guidanceVisibleActions =
     guidanceMultiple && !guidanceExpanded
       ? guidanceActions.slice(guidanceFocusIndex, guidanceFocusIndex + 1)
