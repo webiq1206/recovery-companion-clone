@@ -9,13 +9,14 @@ import { HeartCrack, Target, Brain, Shield, Users, ArrowRight } from 'lucide-rea
 import Colors from '../constants/colors';
 import { useRelapse } from '../core/domains/useRelapse';
 import { useAppStore } from '../stores/useAppStore';
+import { useSubscription } from '../providers/SubscriptionProvider';
 
 type WhatHappenedId = 'alcohol' | 'drugs' | 'gambling' | 'food' | 'pornography' | 'other';
 type WhenId = 'morning' | 'afternoon' | 'evening' | 'night';
 type WhereId = 'home' | 'work' | 'social';
 type WereYouId = 'alone' | 'with_friends';
 type TriggerId = 'access' | 'conflict' | 'stress' | 'lonely' | 'bored' | 'other';
-type ThinkingId = 'just_one' | 'can_control' | 'deserve' | 'dont_care' | 'other';
+type ThinkingId = 'just_one' | 'can_control' | 'deserve' | 'dont_care' | 'nobody_will_know' | 'other';
 type DuringId = 'tried_stop' | 'paused' | 'went_all_in';
 type AfterHaveYouId = 'sponsor' | 'messaged_friend' | 'meeting' | 'grounding' | 'journal' | 'did_nothing';
 type EmotionId =
@@ -60,6 +61,7 @@ const WHAT_THINKING: { id: ThinkingId; label: string }[] = [
   { id: 'can_control', label: 'I can control it' },
   { id: 'deserve', label: 'I deserve this' },
   { id: 'dont_care', label: "I don't care anymore" },
+  { id: 'nobody_will_know', label: 'Nobody will know' },
   { id: 'other', label: 'Other' },
 ];
 
@@ -103,6 +105,7 @@ export default function RelapseRecoveryScreen() {
   const router = useRouter();
   const { logRelapse } = useRelapse();
   const logRelapseToCentralStore = useAppStore.use.logRelapse();
+  const { isPremium } = useSubscription();
 
   const [selectedWhatHappened, setSelectedWhatHappened] = useState<WhatHappenedId | null>(null);
   const [selectedWhen, setSelectedWhen] = useState<WhenId | null>(null);
@@ -449,28 +452,30 @@ export default function RelapseRecoveryScreen() {
               </Pressable>
             </View>
 
-            <View style={styles.card}>
-              <View style={styles.cardIcon}>
-                <Brain size={20} color={Colors.primary} />
+            {isPremium ? (
+              <View style={styles.card}>
+                <View style={styles.cardIcon}>
+                  <Brain size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.cardTextWrap}>
+                  <Text style={styles.cardTitle}>Rebuild protection</Text>
+                  <Text style={styles.cardSubtitle}>
+                    Spend a few minutes in Rebuild to reinforce routines and coping skills.
+                  </Text>
+                </View>
+                <Pressable
+                  style={({ pressed }) => [styles.cardCta, pressed && styles.cardCtaPressed]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push({ pathname: '/rebuild', params: { fromSetback: '1' } } as any);
+                  }}
+                  testID="relapse-recovery-rebuild"
+                >
+                  <Text style={styles.cardCtaLabel}>Go to Rebuild</Text>
+                  <ArrowRight size={16} color={Colors.primary} />
+                </Pressable>
               </View>
-              <View style={styles.cardTextWrap}>
-                <Text style={styles.cardTitle}>Rebuild protection</Text>
-                <Text style={styles.cardSubtitle}>
-                  Spend a few minutes in Rebuild to reinforce routines and coping skills.
-                </Text>
-              </View>
-              <Pressable
-                style={({ pressed }) => [styles.cardCta, pressed && styles.cardCtaPressed]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push({ pathname: '/rebuild', params: { fromSetback: '1' } } as any);
-                }}
-                testID="relapse-recovery-rebuild"
-              >
-                <Text style={styles.cardCtaLabel}>Go to Rebuild</Text>
-                <ArrowRight size={16} color={Colors.primary} />
-              </Pressable>
-            </View>
+            ) : null}
 
             <View style={styles.card}>
               <View style={styles.cardIcon}>

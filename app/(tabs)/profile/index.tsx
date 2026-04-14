@@ -1,12 +1,10 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Animated, TextInput, Modal } from 'react-native';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
-import { User, Shield, Eye, EyeOff, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Scale, Gauge, PauseCircle, PlayCircle, Activity } from 'lucide-react-native';
+import { User, Shield, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Scale, Gauge, PauseCircle, PlayCircle, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
 import { useUser } from '../../../core/domains/useUser';
-import { usePledges } from '../../../core/domains/usePledges';
-import { useJournal } from '../../../core/domains/useJournal';
 import { useAppMeta } from '../../../core/domains/useAppMeta';
 import { useEngagement } from '../../../providers/EngagementProvider';
 import { useSubscription } from '../../../providers/SubscriptionProvider';
@@ -29,9 +27,7 @@ const STAGE_ORDER: RecoveryStage[] = ['crisis', 'stabilize', 'rebuild', 'maintai
 
 export default function ProfileScreen() {
   const { resetAllData } = useAppMeta();
-  const { profile, updateProfile, daysSober } = useUser();
-  const { pledges, currentStreak } = usePledges();
-  const { journal } = useJournal();
+  const { profile, updateProfile } = useUser();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
   const { isPremium } = useSubscription();
   const {
@@ -59,7 +55,6 @@ export default function ProfileScreen() {
   const [tempYear, setTempYear] = useState<number>(new Date().getFullYear());
 
   const stageProgress = useRef(new Animated.Value(0)).current;
-  const headerOpacity = useRef(new Animated.Value(0)).current;
 
   const currentStage = profile.recoveryProfile?.recoveryStage ?? 'crisis';
   const stageConfig = STAGE_CONFIG[currentStage];
@@ -67,27 +62,12 @@ export default function ProfileScreen() {
   const stageProgressValue = ((stageIndex + 1) / STAGE_ORDER.length);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(stageProgress, {
-        toValue: stageProgressValue,
-        duration: 1200,
-        useNativeDriver: false,
-      }),
-      Animated.timing(headerOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(stageProgress, {
+      toValue: stageProgressValue,
+      duration: 1200,
+      useNativeDriver: false,
+    }).start();
   }, [stageProgressValue]);
-
-  const anonymousName = useMemo(() => {
-    if (!profile.privacyControls?.isAnonymous) return profile.name || 'Friend';
-    const hash = (profile.soberDate || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-    const adjectives = ['Brave', 'Calm', 'Kind', 'Strong', 'Steady', 'Wise', 'Gentle', 'Bold'];
-    const nouns = ['Phoenix', 'River', 'Mountain', 'Star', 'Oak', 'Wave', 'Light', 'Path'];
-    return `${adjectives[hash % adjectives.length]} ${nouns[(hash * 7) % nouns.length]}`;
-  }, [profile.privacyControls?.isAnonymous, profile.name, profile.soberDate]);
 
   const handleTogglePrivacy = useCallback((key: keyof PrivacyControls) => {
     Haptics.selectionAsync();
@@ -229,55 +209,6 @@ export default function ProfileScreen() {
       keyboardShouldPersistTaps="handled"
       testID="profile-screen"
     >
-      <Animated.View style={[styles.headerCard, { opacity: headerOpacity }]}>
-        <View style={styles.avatarRow}>
-          <View style={[styles.avatarCircle, { borderColor: stageConfig.color }]}>
-            <User size={30} color={stageConfig.color} />
-          </View>
-          <View style={styles.headerInfo}>
-            <View style={styles.nameRow}>
-              <Text style={styles.displayName} numberOfLines={1}>{anonymousName}</Text>
-              {privacyControls.isAnonymous && (
-                <View style={styles.anonBadge}>
-                  <EyeOff size={10} color={Colors.textSecondary} />
-                  <Text style={styles.anonBadgeText}>Anonymous</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.soberSince}>Sober since {formattedSoberDate}</Text>
-            <View style={styles.quickStats}>
-              <View style={styles.quickStat}>
-                <Text style={styles.quickStatValue}>{daysSober}</Text>
-                <Text style={styles.quickStatLabel} numberOfLines={2}>
-                  {'Days\nsober'}
-                </Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.quickStat}>
-                <Text style={styles.quickStatValue}>{currentStreak}</Text>
-                <Text style={styles.quickStatLabel} numberOfLines={2}>
-                  {'Pledge\nstreak'}
-                </Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.quickStat}>
-                <Text style={styles.quickStatValue}>{journal.length}</Text>
-                <Text style={styles.quickStatLabel} numberOfLines={2}>
-                  {'Journal\nentries'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {isPremium && (
-          <View style={styles.premiumStrip}>
-            <Crown size={13} color="#D4A574" />
-            <Text style={styles.premiumStripText}>Premium Member</Text>
-          </View>
-        )}
-      </Animated.View>
-
       {!isPremium ? (
         <View style={styles.upgradeRow}>
           <View style={{ flex: 1, marginRight: 12 }}>
@@ -812,105 +743,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 120,
-  },
-  headerCard: {
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2.5,
-    marginRight: 14,
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 3,
-  },
-  displayName: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    flexShrink: 1,
-  },
-  anonBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  anonBadgeText: {
-    fontSize: 10,
-    color: Colors.textSecondary,
-    fontWeight: '600' as const,
-  },
-  soberSince: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginBottom: 10,
-  },
-  quickStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  quickStat: {
-    alignItems: 'center',
-  },
-  quickStatValue: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: Colors.primary,
-  },
-  quickStatLabel: {
-    fontSize: 10,
-    color: Colors.textMuted,
-    fontWeight: '500' as const,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-    textAlign: 'center' as const,
-    lineHeight: 13,
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: Colors.border,
-  },
-  premiumStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(212,165,116,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 12,
-  },
-  premiumStripText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: '#D4A574',
   },
   setupBanner: {
     flexDirection: 'row' as const,

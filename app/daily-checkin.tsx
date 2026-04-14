@@ -471,7 +471,11 @@ export default function DailyCheckInScreen() {
 
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/(home)/today-hub' as any);
+    }
   }, [router]);
 
   if (submitted) {

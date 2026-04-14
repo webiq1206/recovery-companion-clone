@@ -14,24 +14,56 @@ import {
   AlertTriangle,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Info,
   Sparkles,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
 import { useUser } from '../../../core/domains/useUser';
-import { useCheckin } from '../../../core/domains/useCheckin';
 import { useAppStore } from '../../../stores/useAppStore';
 import { useTodayHub } from '../../../features/home/hooks/useTodayHub';
 import { useWizardEngineHook } from '../../../hooks/useWizardEngine';
 import { HomeLoadingSkeleton } from '../../../components/LoadingSkeleton';
 import { getStrictRedirectTarget, resolveCanonicalRoute } from '../../../utils/legacyRoutes';
 import { isCheckInPeriodInWindow } from '../../../utils/checkInWindows';
-import { countLocalCalendarDaysSinceSober } from '../../../utils/checkInDate';
 import { getGuidanceCollapsedFocusIndex, type WizardAction } from '../../../utils/wizardEngine';
 import { TabHeaderActions } from '../../../components/TabHeaderActions';
+import { ProfileHeaderSummaryCard } from '../../../components/ProfileHeaderSummaryCard';
 
+
+const PLEASE_WAIT_TOKEN = 'PLEASE WAIT';
+
+function GuidanceRowSubtitle({
+  subtitle,
+  completed,
+  locked,
+}: {
+  subtitle: string;
+  completed: boolean;
+  locked: boolean;
+}) {
+  const baseStyle = [
+    styles.planRowSubtitle,
+    completed && styles.planRowSubtitleDone,
+    locked && styles.planRowSubtitleLocked,
+  ];
+  if (!locked || !subtitle.includes(PLEASE_WAIT_TOKEN)) {
+    return <Text style={baseStyle}>{subtitle}</Text>;
+  }
+  const i = subtitle.indexOf(PLEASE_WAIT_TOKEN);
+  const before = subtitle.slice(0, i);
+  const after = subtitle.slice(i + PLEASE_WAIT_TOKEN.length);
+  return (
+    <Text style={baseStyle}>
+      {before}
+      <Text style={styles.planRowSubtitlePleaseWait}>{PLEASE_WAIT_TOKEN}</Text>
+      {after}
+    </Text>
+  );
+}
 
 function ActionToast({ title, onDone }: { title: string; onDone: () => void }) {
   const opacity = useRef(new RNAnimated.Value(0)).current;
@@ -67,31 +99,8 @@ export default function TodayHubScreen() {
   const router = useRouter();
   const pathname = usePathname();
   const vm = useTodayHub();
-  const { profile, daysSober } = useUser();
+  const { profile } = useUser();
   const centralProfile = useAppStore((s) => s.userProfile);
-  const centralDailyCheckIns = useAppStore((s) => s.dailyCheckIns);
-  const { checkIns } = useCheckin();
-
-  const sourceCheckIns = useMemo(
-    () => (centralDailyCheckIns.length > 0 ? centralDailyCheckIns : checkIns),
-    [centralDailyCheckIns, checkIns],
-  );
-
-  const uniqueCheckInDays = useMemo(
-    () => new Set(sourceCheckIns.map((c) => c.date)).size,
-    [sourceCheckIns],
-  );
-
-  const showRecoveryJourneyCard = uniqueCheckInDays < 7;
-
-  const recoveryJourneySinceLabel = useMemo(() => {
-    const soberDate = new Date(profile.soberDate);
-    return soberDate.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }, [profile.soberDate]);
 
   const { plan: wizardPlan, recentCompletion, clearRecentCompletion } =
     useWizardEngineHook();
@@ -105,11 +114,6 @@ export default function TodayHubScreen() {
   }, []);
 
   const checkInNow = useMemo(() => new Date(), [checkInWindowTick]);
-
-  const recoveryJourneyDaysCompleted = useMemo(
-    () => countLocalCalendarDaysSinceSober(profile.soberDate, checkInNow),
-    [profile.soberDate, checkInNow],
-  );
 
   const [guidanceExpanded, setGuidanceExpanded] = useState(false);
 
@@ -135,8 +139,8 @@ export default function TodayHubScreen() {
   const guidanceActions = dailyGuidance.actions;
   const guidanceMultiple = guidanceActions.length > 1;
   const guidanceFocusIndex = useMemo(
-    () => getGuidanceCollapsedFocusIndex(guidanceActions),
-    [guidanceActions],
+    () => getGuidanceCollapsedFocusIndex(guidanceActions, checkInNow),
+    [guidanceActions, checkInNow],
   );
 
   const displayProfile = centralProfile ?? profile;
@@ -221,14 +225,11 @@ export default function TodayHubScreen() {
           </Text>
         </View>
 
-        {showRecoveryJourneyCard && (
-          <View style={styles.recoveryJourneyCard} testID="todayhub-recovery-journey-card">
-            <Text style={styles.recoveryJourneyTitle}>Recovery is one day at a time</Text>
-            <Text style={styles.recoveryJourneyDays}>{recoveryJourneyDaysCompleted}</Text>
-            <Text style={styles.recoveryJourneyDaysCaption}>Days Completed</Text>
-            <Text style={styles.recoveryJourneySub}>Since {recoveryJourneySinceLabel}</Text>
-          </View>
-        )}
+        <ProfileHeaderSummaryCard
+          profile={displayProfile}
+          centeredHeadline="Recovery is one day at a time"
+          testID="todayhub-recovery-journey-card"
+        />
 
         {/* Context hint (replaces PersonalizationCard) */}
         {dailyGuidance.contextHint && (
@@ -259,17 +260,6 @@ export default function TodayHubScreen() {
           <Text style={styles.struggleText}>I&apos;m struggling right now</Text>
           <ArrowRight size={18} color={Colors.white} />
         </Pressable>
-
-
-        {/* Encouragement message (hidden on day 0 — avoids "Today is Day 1" block on home) */}
-        {dailyGuidance.encouragement && daysSober > 0 && (
-          <View style={styles.encouragementCard}>
-            <Text style={styles.encouragementText}>
-              {dailyGuidance.encouragement}
-            </Text>
-          </View>
-        )}
-
 
         {showRelapsePlanCta && (
           <Pressable
@@ -341,15 +331,37 @@ export default function TodayHubScreen() {
         {/* Daily actions list (from wizard engine) */}
         {guidanceActions.length > 0 && (
           <>
-            <Text style={styles.planTitle}>
-              {dailyGuidance.isReentryMode ? "Today's plan" : "Today's guidance"}
-            </Text>
-            <View
-              style={[
-                styles.planCard,
-                guidanceMultiple ? { marginBottom: 8 } : null,
-              ]}
-            >
+            <View style={styles.guidanceTitleRow}>
+              <Text style={styles.planTitle}>
+                {dailyGuidance.isReentryMode ? "Today's plan" : "Today's guidance"}
+              </Text>
+              {guidanceMultiple ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.guidanceTitleChevronHit,
+                    pressed && { opacity: 0.75 },
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setGuidanceExpanded((e) => !e);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={guidanceExpanded ? 'Collapse guidance list' : 'Expand guidance list'}
+                  testID={
+                    guidanceExpanded
+                      ? 'todayhub-guidance-collapse'
+                      : 'todayhub-guidance-expand'
+                  }
+                >
+                  {guidanceExpanded ? (
+                    <ChevronUp size={22} color={Colors.primary} />
+                  ) : (
+                    <ChevronDown size={22} color={Colors.primary} />
+                  )}
+                </Pressable>
+              ) : null}
+            </View>
+            <View style={styles.planCard}>
               {guidanceVisibleActions.map((action) => {
                 const locked = checkInRowLocked(action);
                 const rowDisabled = action.completed || locked;
@@ -393,15 +405,11 @@ export default function TodayHubScreen() {
                       >
                         {action.title}
                       </Text>
-                      <Text
-                        style={[
-                          styles.planRowSubtitle,
-                          action.completed && styles.planRowSubtitleDone,
-                          locked && styles.planRowSubtitleLocked,
-                        ]}
-                      >
-                        {action.subtitle}
-                      </Text>
+                      <GuidanceRowSubtitle
+                        subtitle={action.subtitle}
+                        completed={action.completed}
+                        locked={locked}
+                      />
                     </View>
                     {!rowDisabled && (
                       <ChevronRight size={18} color={Colors.textSecondary} />
@@ -410,29 +418,6 @@ export default function TodayHubScreen() {
                 );
               })}
             </View>
-            {guidanceMultiple ? (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.guidanceExpandCollapse,
-                  pressed && { opacity: 0.85 },
-                ]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setGuidanceExpanded((e) => !e);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={guidanceExpanded ? 'Collapse guidance list' : 'Expand guidance list'}
-                testID={
-                  guidanceExpanded
-                    ? 'todayhub-guidance-collapse'
-                    : 'todayhub-guidance-expand'
-                }
-              >
-                <Text style={styles.guidanceExpandCollapseText}>
-                  {guidanceExpanded ? 'Collapse' : 'Expand'}
-                </Text>
-              </Pressable>
-            ) : null}
           </>
         )}
 
@@ -543,42 +528,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 4,
   },
-  recoveryJourneyCard: {
-    backgroundColor: Colors.primary + '0C',
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    alignItems: 'center' as const,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.primary + '22',
-  },
-  recoveryJourneyTitle: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: Colors.text,
-    textAlign: 'center' as const,
-    marginBottom: 4,
-  },
-  recoveryJourneyDays: {
-    fontSize: 28,
-    fontWeight: '800' as const,
-    color: Colors.primary,
-    marginTop: 2,
-  },
-  recoveryJourneyDaysCaption: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-    color: Colors.primary,
-    marginTop: 0,
-    letterSpacing: 0.2,
-  },
-  recoveryJourneySub: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 4,
-    textAlign: 'center' as const,
-  },
   devOnboardingBlock: {
     marginTop: 28,
     gap: 8,
@@ -623,21 +572,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     lineHeight: 20,
-  },
-  encouragementCard: {
-    backgroundColor: Colors.primary + '0A',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: Colors.primary + '20',
-    marginBottom: 14,
-  },
-  encouragementText: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '600',
-    lineHeight: 21,
   },
   struggleButton: {
     flexDirection: 'row',
@@ -723,11 +657,23 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
   },
+  guidanceTitleRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    marginBottom: 10,
+    gap: 12,
+  },
   planTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: Colors.text,
-    marginBottom: 10,
+    flex: 1,
+    flexShrink: 1,
+  },
+  guidanceTitleChevronHit: {
+    padding: 6,
+    marginRight: -6,
   },
   planCard: {
     backgroundColor: Colors.cardBackground,
@@ -736,18 +682,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: 24,
-  },
-  guidanceExpandCollapse: {
-    alignSelf: 'center' as const,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  guidanceExpandCollapseText: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: Colors.primary,
-    textAlign: 'center' as const,
   },
   planRow: {
     flexDirection: 'row',
@@ -803,6 +737,11 @@ const styles = StyleSheet.create({
   },
   planRowSubtitleLocked: {
     color: Colors.textMuted,
+  },
+  planRowSubtitlePleaseWait: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#FFE082',
   },
   warningCard: {
     backgroundColor: Colors.danger + '08',

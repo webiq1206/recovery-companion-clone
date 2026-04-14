@@ -1,7 +1,6 @@
-import React from "react";
-import { Redirect } from "expo-router";
+import React from 'react';
+import { AppEntryRedirect } from '../components/AppEntryRedirect';
 
 export default function HomeAliasScreen() {
-  return <Redirect href={"/(tabs)/(home)/today-hub" as any} />;
+  return <AppEntryRedirect />;
 }
-

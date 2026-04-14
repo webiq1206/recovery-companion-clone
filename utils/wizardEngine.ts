@@ -667,20 +667,46 @@ export function stabilizeGuidanceActionOrder(actions: WizardAction[]): WizardAct
 }
 
 /**
- * Collapsed guidance shows this index first: earliest incomplete check-in in M→A→E order,
- * or the first non-check-in row if all three are done.
+ * Collapsed guidance shows this index first: earliest incomplete check-in in M→A→E order
+ * that is inside its window (tappable), else the first non-check-in row.
+ * When `checkInWindowNow` is omitted, locked check-ins are still eligible (legacy).
  */
-export function getGuidanceCollapsedFocusIndex(actions: WizardAction[]): number {
+export function getGuidanceCollapsedFocusIndex(
+  actions: WizardAction[],
+  checkInWindowNow?: Date,
+): number {
   for (let i = 0; i < actions.length; i++) {
     const a = actions[i]!;
-    if (!a.id.startsWith('check-in-')) return i;
-    if (!a.completed) return i;
+    if (!a.id.startsWith('check-in-')) {
+      return i;
+    }
+    if (a.completed) {
+      continue;
+    }
+    if (checkInWindowNow != null) {
+      const period = a.params?.period;
+      if (period === 'morning' || period === 'afternoon' || period === 'evening') {
+        if (!isCheckInPeriodInWindow(period, checkInWindowNow)) {
+          continue;
+        }
+      }
+    }
+    return i;
+  }
+  for (let i = 0; i < actions.length; i++) {
+    const a = actions[i]!;
+    if (!a.id.startsWith('check-in-')) {
+      return i;
+    }
   }
   return Math.max(0, actions.length - 1);
 }
 
-function resolvePrimaryGuidanceAction(actions: WizardAction[]): WizardAction | null {
-  const i = getGuidanceCollapsedFocusIndex(actions);
+function resolvePrimaryGuidanceAction(
+  actions: WizardAction[],
+  checkInWindowNow?: Date,
+): WizardAction | null {
+  const i = getGuidanceCollapsedFocusIndex(actions, checkInWindowNow);
   const cand = actions[i];
   if (cand && !cand.completed) return cand;
   return actions.find((a) => !a.completed) ?? null;
@@ -732,7 +758,7 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
     const actions = stabilizeGuidanceActionOrder(limitDailyGuidanceActions(rawActions, dateKey));
     const incompleteActions = actions.filter((a) => !a.completed);
     const isComplete = incompleteActions.length === 0;
-    const primaryAction = resolvePrimaryGuidanceAction(actions);
+    const primaryAction = resolvePrimaryGuidanceAction(actions, input.checkInWindowNow);
     const riskWarnings = buildRiskWarnings(input);
 
     return {
@@ -762,7 +788,7 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
 
   const incompleteActions = actions.filter((a) => !a.completed);
   const isComplete = incompleteActions.length === 0;
-  const primaryAction = resolvePrimaryGuidanceAction(actions);
+  const primaryAction = resolvePrimaryGuidanceAction(actions, input.checkInWindowNow);
 
   return {
     setupProgress,

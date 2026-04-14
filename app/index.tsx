@@ -1,5 +1,6 @@
-import { Redirect } from "expo-router";
+import React from 'react';
+import { AppEntryRedirect } from '../components/AppEntryRedirect';
 
-export default function Page() {
-  return <Redirect href="/(tabs)/(home)/today-hub" />;
+export default function Index() {
+  return <AppEntryRedirect />;
 }
