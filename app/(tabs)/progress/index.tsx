@@ -22,6 +22,7 @@ import {
   Minus,
   Activity,
   ChevronRight,
+  BarChart3,
   Eye,
   AlertTriangle,
   Moon,
@@ -801,6 +802,26 @@ function StabilityTimelineScreen() {
           ) : null}
         </View>
 
+        <Pressable
+          style={styles.detectionLink}
+          onPress={() => {
+            Haptics.selectionAsync();
+            router.push('/advanced-analytics' as any);
+          }}
+          testID="progress-advanced-analytics-link"
+        >
+          <View style={styles.detectionLinkLeft}>
+            <View style={styles.detectionLinkIcon}>
+              <BarChart3 size={16} color={Colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.detectionLinkTitle}>Advanced Analytics</Text>
+              <Text style={styles.detectionLinkSub}>Stability improvement and risk warning</Text>
+            </View>
+          </View>
+          <ChevronRight size={16} color={Colors.textMuted} />
+        </Pressable>
+
         <View style={earlyStyles.progressTailSection}>
           <Pressable
             style={({ pressed }) => [
@@ -1031,7 +1052,7 @@ function StabilityTimelineScreen() {
             <TrendingUp size={16} color={Colors.primary} />
           </View>
           <View>
-            <Text style={styles.detectionLinkTitle}>View Recovery Insights</Text>
+            <Text style={styles.detectionLinkTitle}>Your Recovery Journey</Text>
             <Text style={styles.detectionLinkSub}>Engagement and long-term recovery signals</Text>
           </View>
         </View>
@@ -1107,6 +1128,26 @@ function StabilityTimelineScreen() {
           {badge10Rebuild ? <Text style={styles.badgeDone}>Done</Text> : <Text style={styles.badgeCount}>{rebuildActionsCount}/10</Text>}
         </View>
       </View>
+
+      <Pressable
+        style={styles.detectionLink}
+        onPress={() => {
+          Haptics.selectionAsync();
+          router.push('/advanced-analytics' as any);
+        }}
+        testID="progress-advanced-analytics-link"
+      >
+        <View style={styles.detectionLinkLeft}>
+          <View style={styles.detectionLinkIcon}>
+            <BarChart3 size={16} color={Colors.primary} />
+          </View>
+          <View>
+            <Text style={styles.detectionLinkTitle}>Advanced Analytics</Text>
+            <Text style={styles.detectionLinkSub}>Stability improvement and risk warning</Text>
+          </View>
+        </View>
+        <ChevronRight size={16} color={Colors.textMuted} />
+      </Pressable>
 
       <View style={earlyStyles.progressTailSection}>
         <Pressable

@@ -257,7 +257,7 @@ export default function TodayHubScreen() {
           <View style={styles.struggleIconWrap}>
             <AlertTriangle size={20} color={Colors.white} />
           </View>
-          <Text style={styles.struggleText}>I&apos;m struggling right now</Text>
+          <Text style={styles.struggleText}>Crisis tool... I&apos;m struggling</Text>
           <ArrowRight size={18} color={Colors.white} />
         </Pressable>
 

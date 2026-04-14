@@ -343,7 +343,7 @@ export default function RetentionInsightsScreen() {
   if (!hasRecoveryInsightsAccess) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Recovery Insights' }} />
+        <Stack.Screen options={{ title: 'Your Recovery Journey' }} />
         <ScreenScrollView
           style={styles.container}
           contentContainerStyle={styles.inactiveContent}
@@ -400,7 +400,7 @@ export default function RetentionInsightsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Recovery Insights' }} />
+      <Stack.Screen options={{ title: 'Your Recovery Journey' }} />
       <ScreenScrollView
         style={styles.container}
         contentContainerStyle={styles.content}

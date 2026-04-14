@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, type ScrollView } from 'react-native
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  BarChart3,
   RefreshCw,
   Info,
   Activity,
@@ -89,64 +88,6 @@ export default function InsightsHubScreen() {
           Explore advanced analytics and educational explainers that help you understand your
           scores, patterns, and recovery systems.
         </Text>
-      </View>
-
-      <Text style={styles.sectionTitle}>ADVANCED ANALYTICS</Text>
-
-      <View style={styles.cardShell} testID="insights-recovery-insights-card">
-        <Pressable
-          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-          onPress={() => router.push('/retention-insights' as any)}
-          testID="insights-retention-link"
-        >
-          <View style={[styles.iconCircle, { backgroundColor: Colors.primary + '18' }]}>
-            <BarChart3 size={18} color={Colors.primary} />
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.cardTitle}>Recovery Insights</Text>
-            <Text style={styles.cardSubtitle}>
-              Momentum, stability, and micro-progress across your last 30 days.
-            </Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.explainedBtn, pressed && { opacity: 0.85 }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/recovery-insights-explained' as any);
-          }}
-          testID="insights-recovery-insights-explained-link"
-        >
-          <Text style={styles.explainedBtnText}>Explained</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.cardShell} testID="insights-relapse-warning-card">
-        <Pressable
-          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-          onPress={() => router.push('/relapse-detection' as any)}
-          testID="insights-relapse-detection-link"
-        >
-          <View style={[styles.iconCircle, { backgroundColor: Colors.accent + '18' }]}>
-            <Activity size={18} color={Colors.accent} />
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.cardTitle}>Risk Warning</Text>
-            <Text style={styles.cardSubtitle}>
-              Real-time risk scoring, trends, and early warning signals.
-            </Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.explainedBtn, pressed && { opacity: 0.85 }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/early-warning-explained' as any);
-          }}
-          testID="insights-relapse-warning-explained-link"
-        >
-          <Text style={styles.explainedBtnText}>Explained</Text>
-        </Pressable>
       </View>
 
       {/* Growth Insights */}
@@ -264,7 +205,7 @@ export default function InsightsHubScreen() {
           <Brain size={18} color={Colors.primary} />
         </View>
         <View style={styles.cardBody}>
-          <Text style={styles.cardTitle}>Recovery Insights Explained</Text>
+          <Text style={styles.cardTitle}>Your Recovery Journey Explained</Text>
           <Text style={styles.cardSubtitle}>
             The reinforcement loops that keep you engaged and how they grow.
           </Text>
@@ -351,25 +292,6 @@ const styles = StyleSheet.create({
   cardPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
-  },
-  cardShell: {
-    position: 'relative',
-  },
-  explainedBtn: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: Colors.primary + '14',
-    borderWidth: 0.5,
-    borderColor: Colors.primary + '30',
-  },
-  explainedBtnText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: Colors.primary,
   },
   iconCircle: {
     width: 38,

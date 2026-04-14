@@ -67,12 +67,12 @@ export default function RecoveryInsightsExplainedScreen() {
       showsVerticalScrollIndicator={false}
       testID="recovery-insights-explained-screen"
     >
-      <Stack.Screen options={{ title: 'Recovery Insights Explained' }} />
+      <Stack.Screen options={{ title: 'Your Recovery Journey Explained' }} />
 
       <View style={styles.introCard}>
         <Info size={20} color={Colors.primary} />
         <Text style={styles.introText}>
-          Recovery Insights track the emotional and behavioral patterns that keep you engaged in your recovery. They measure how actively you're building positive reinforcement loops - the habits and actions that naturally motivate you to keep going.
+          Your Recovery Journey tracks the emotional and behavioral patterns that keep you engaged in your recovery. It measures how actively you're building positive reinforcement loops - the habits and actions that naturally motivate you to keep going.
         </Text>
       </View>
 
@@ -80,11 +80,11 @@ export default function RecoveryInsightsExplainedScreen() {
 
       <ExplainerCard
         icon={<BarChart3 size={18} color={Colors.primary} />}
-        title="The metrics at the top of Recovery Insights"
+        title="The metrics at the top of Your Recovery Journey"
         accentColor={Colors.primary}
       >
         <Text style={styles.bodyText}>
-          The card at the top of Recovery Insights gives you a quick read on momentum, emotional
+          The card at the top of Your Recovery Journey gives you a quick read on momentum, emotional
           steadiness, confidence, and how many reinforcement loops are active. Here is what each
           number represents.
         </Text>

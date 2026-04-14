@@ -194,7 +194,7 @@ export default function JournalWorkbookScreen() {
               <View style={styles.upgradeBannerText}>
                 <Text style={styles.upgradeBannerTitle}>Recovery Exercises</Text>
                 <Text style={styles.upgradeBannerDesc}>
-                  {`Exercises 1–${FREE_EXERCISE_COUNT} are free. Upgrade to Premium for all ${WORKBOOK_SECTIONS.length} exercises.`}
+                  {`Exercises 1–${FREE_EXERCISE_COUNT} are free. Upgrade to Premium for all ${WORKBOOK_SECTIONS.length} exercise modules.`}
                 </Text>
               </View>
               <ChevronRight size={18} color="#D4A574" />
@@ -206,7 +206,7 @@ export default function JournalWorkbookScreen() {
             <Text style={styles.workbookSubtitle}>
               {hasPremium
                 ? `${WORKBOOK_SECTIONS.length} sections to guide your journey`
-                : `${FREE_EXERCISE_COUNT} of ${WORKBOOK_SECTIONS.length} sections included — Premium unlocks the full library`}
+                : `${FREE_EXERCISE_COUNT} of ${WORKBOOK_SECTIONS.length} modules included — Premium unlocks the full library`}
             </Text>
             <View style={styles.overallProgressRow}>
               <View style={styles.overallProgressBg}>
