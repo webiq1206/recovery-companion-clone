@@ -43,6 +43,7 @@ import {
   mergeRecoveryProfiles,
   mergeTodayCheckInsFromSources,
 } from '../utils/mergeProfile';
+import { getIdentityProgramEffectiveWeek } from '../features/rebuild/utils/identityProgramWeek';
 import { mergeTrustedAndEmergencyContacts } from '../utils/mergeEmergencyContacts';
 import { getGuidanceDateKey } from '../utils/checkInDate';
 
@@ -372,7 +373,7 @@ export function useWizardEngineHook(): WizardEngineResult {
       hasConnectionTouchpointCompletedToday,
       hasAccountabilityCheckInCompletedToday,
       hasRelapsePlan,
-      identityCurrentWeek: rebuildData?.identityProgram?.currentWeek ?? 0,
+      identityCurrentWeek: getIdentityProgramEffectiveWeek(rebuildData?.identityProgram),
       highUrge: personalization?.highUrgeCrisisHint?.shouldHighlightCrisisTools ?? false,
       nightRisk: personalization?.nightRiskWarning?.shouldWarn ?? false,
       lowMood: personalization?.lowMoodSuggestions?.shouldSuggest ?? false,

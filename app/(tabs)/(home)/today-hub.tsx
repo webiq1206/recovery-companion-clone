@@ -145,6 +145,30 @@ export default function TodayHubScreen() {
     [guidanceActions, checkInNow],
   );
 
+  const guidanceHeadingScale = useRef(new RNAnimated.Value(1)).current;
+  useEffect(() => {
+    if (guidanceActions.length === 0 || dailyGuidance.isReentryMode) {
+      guidanceHeadingScale.setValue(1);
+      return;
+    }
+    const pulse = RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(guidanceHeadingScale, {
+          toValue: 1.06,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(guidanceHeadingScale, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [guidanceActions.length, dailyGuidance.isReentryMode, guidanceHeadingScale]);
+
   const displayProfile = centralProfile ?? profile;
 
 
@@ -290,9 +314,15 @@ export default function TodayHubScreen() {
           <>
             <View style={styles.guidanceTitleRow}>
               <View style={styles.guidanceTitleLeft}>
-                <Text style={styles.planTitle}>
-                  {dailyGuidance.isReentryMode ? "Today's plan" : "Today's guidance"}
-                </Text>
+                {dailyGuidance.isReentryMode ? (
+                  <Text style={styles.planTitle}>Today's plan</Text>
+                ) : (
+                  <RNAnimated.View
+                    style={[styles.guidanceHeadingZoomWrap, { transform: [{ scale: guidanceHeadingScale }] }]}
+                  >
+                    <Text style={styles.planTitle}>Today's Actions</Text>
+                  </RNAnimated.View>
+                )}
                 {!dailyGuidance.isReentryMode && dailyGuidance.isComplete ? (
                   <Text style={styles.guidanceAllComplete}>All Complete</Text>
                 ) : null}
@@ -308,7 +338,7 @@ export default function TodayHubScreen() {
                     setGuidanceExpanded((e) => !e);
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={guidanceExpanded ? 'Collapse guidance list' : 'Expand guidance list'}
+                  accessibilityLabel={guidanceExpanded ? 'Collapse actions list' : 'Expand actions list'}
                   testID={
                     guidanceExpanded
                       ? 'todayhub-guidance-collapse'
@@ -589,8 +619,11 @@ const styles = StyleSheet.create({
     gap: 8,
     minWidth: 0,
   },
+  guidanceHeadingZoomWrap: {
+    flexShrink: 1,
+  },
   planTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: Colors.text,
     flexShrink: 1,

@@ -62,3 +62,23 @@ export function countLocalCalendarDaysSinceSober(
   const t1 = new Date(ey, em - 1, ed).getTime();
   return Math.max(0, Math.round((t1 - t0) / 86400000));
 }
+
+/**
+ * Whole local calendar days from an ISO timestamp (e.g. program `startedAt`) to `now`.
+ * Same calendar day as start = 0; avoids UTC `toISOString().split('T')[0]` drift on Android.
+ */
+export function countLocalCalendarDaysSinceInstant(
+  startedAtIso: string,
+  now: Date = new Date(),
+): number {
+  if (!startedAtIso) return 0;
+  const anchor = new Date(startedAtIso);
+  if (Number.isNaN(anchor.getTime())) return 0;
+  const startKey = getLocalDateKey(anchor);
+  const endKey = getLocalDateKey(now);
+  const [sy, sm, sd] = startKey.split('-').map((x) => parseInt(x, 10));
+  const [ey, em, ed] = endKey.split('-').map((x) => parseInt(x, 10));
+  const t0 = new Date(sy, sm - 1, sd).getTime();
+  const t1 = new Date(ey, em - 1, ed).getTime();
+  return Math.max(0, Math.round((t1 - t0) / 86400000));
+}

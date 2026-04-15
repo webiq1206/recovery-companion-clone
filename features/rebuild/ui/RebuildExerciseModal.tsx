@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 
 import type { IdentityExercise, IdentityModule } from '../../../types';
@@ -31,10 +32,17 @@ export function RebuildExerciseModal(props: {
     styles,
   } = props;
 
+  const insets = useSafeAreaInsets();
+  const scrollBottomPad = (Platform.OS === 'ios' ? 36 : 24) + insets.bottom;
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.modalScroll}
+          contentContainerStyle={[styles.modalScrollContent, { paddingBottom: scrollBottomPad }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.modalContent}>
             {activeExercise && (
               <>

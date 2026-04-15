@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
 
 import type { ReplacementHabit } from '../../../types';
@@ -33,12 +34,15 @@ export function RebuildAddHabitModal(props: {
     styles,
   } = props;
 
+  const insets = useSafeAreaInsets();
+  const modalBottomPad = (Platform.OS === 'ios' ? 36 : 24) + insets.bottom;
+
   const canAdd = newHabitTrigger.trim().length > 0 && newHabitReplacement.trim().length > 0;
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { paddingBottom: modalBottomPad }]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>New Habit Replacement</Text>
             <TouchableOpacity onPress={onClose} activeOpacity={0.7}>

@@ -88,6 +88,11 @@ import { RebuildGoalsSection } from '../../../features/rebuild/ui/sections/Rebui
 import { RebuildConfidenceSection } from '../../../features/rebuild/ui/sections/RebuildConfidenceSection';
 import { RebuildProgramWelcome } from '../../../features/rebuild/ui/sections/RebuildProgramWelcome';
 import { TabHeaderActions } from '../../../components/TabHeaderActions';
+import { getLocalDateKey } from '../../../utils/checkInDate';
+import {
+  getIdentityProgramEffectiveWeek,
+  getIdentityProgramStoredWeek,
+} from '../../../features/rebuild/utils/identityProgramWeek';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -438,13 +443,13 @@ export default function RebuildScreen() {
   }, [newHabitTrigger, newHabitReplacement, newHabitCategory, addReplacementHabit]);
 
   const handleCompleteHabit = useCallback((habit: ReplacementHabit) => {
-    const today = new Date().toISOString().split('T')[0];
-    const lastDay = habit.lastCompleted ? habit.lastCompleted.split('T')[0] : '';
-    if (lastDay === today) return;
+    const todayKey = getLocalDateKey();
+    const lastDay = habit.lastCompleted ? getLocalDateKey(new Date(habit.lastCompleted)) : '';
+    if (lastDay === todayKey) return;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-    const newStreak = lastDay === yesterdayStr ? habit.streak + 1 : 1;
+    const yesterdayKey = getLocalDateKey(yesterday);
+    const newStreak = lastDay === yesterdayKey ? habit.streak + 1 : 1;
     updateReplacementHabit(habit.id, {
       streak: newStreak,
       lastCompleted: new Date().toISOString(),
@@ -546,8 +551,7 @@ export default function RebuildScreen() {
 
   const isHabitDoneToday = useCallback((habit: ReplacementHabit) => {
     if (!habit.lastCompleted) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return habit.lastCompleted.split('T')[0] === today;
+    return getLocalDateKey(new Date(habit.lastCompleted)) === getLocalDateKey();
   }, []);
 
   const routinesByTime = useMemo(() => {
@@ -621,16 +625,17 @@ export default function RebuildScreen() {
       return <RebuildProgramWelcome onStartProgram={handleStartProgram} Colors={Colors} styles={styles} />;
     }
 
-    const currentWeek = identityProgram.currentWeek;
-    const unlockedModules = IDENTITY_MODULES.filter(m => m.week <= currentWeek);
-    const lockedModules = IDENTITY_MODULES.filter(m => m.week > currentWeek);
+    const storedWeek = getIdentityProgramStoredWeek(identityProgram);
+    const effectiveWeek = getIdentityProgramEffectiveWeek(identityProgram);
+    const unlockedModules = IDENTITY_MODULES.filter(m => m.week <= effectiveWeek);
+    const lockedModules = IDENTITY_MODULES.filter(m => m.week > effectiveWeek);
 
     return (
       <View style={styles.sectionContent}>
         {renderGrowthIndicator()}
 
         <View style={styles.weekIndicator}>
-          <Text style={styles.weekLabel}>Week {currentWeek} of 8</Text>
+          <Text style={styles.weekLabel}>Week {effectiveWeek} of 8</Text>
           <Text style={styles.weekProgress}>
             {programProgress.exercisesCompleted}/{programProgress.totalExercises} exercises
           </Text>
@@ -657,7 +662,7 @@ export default function RebuildScreen() {
           </View>
         )}
 
-        {identityProgram.values.length === 0 && currentWeek >= 3 && (
+        {identityProgram.values.length === 0 && effectiveWeek >= 3 && (
           <TouchableOpacity
             style={styles.addValuesPrompt}
             onPress={() => setShowValueModal(true)}
@@ -735,7 +740,7 @@ export default function RebuildScreen() {
                     );
                   })}
 
-                  {isModuleComplete && mod.week === currentWeek && currentWeek < 8 && (
+                  {isModuleComplete && mod.week === storedWeek && storedWeek < 8 && (
                     <TouchableOpacity
                       style={styles.advanceWeekBtn}
                       onPress={() => {
@@ -744,7 +749,7 @@ export default function RebuildScreen() {
                       }}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.advanceWeekBtnText}>Unlock Week {currentWeek + 1}</Text>
+                      <Text style={styles.advanceWeekBtnText}>Unlock Week {storedWeek + 1}</Text>
                       <ArrowRight size={14} color={Colors.background} />
                     </TouchableOpacity>
                   )}

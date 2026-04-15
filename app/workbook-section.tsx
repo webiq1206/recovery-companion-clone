@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenFlatList } from '../components/ScreenFlatList';
 import { Redirect, useLocalSearchParams, Stack } from 'expo-router';
 import { useSubscription } from '../providers/SubscriptionProvider';
@@ -35,6 +36,7 @@ const TYPE_LABELS: Record<string, string> = {
 const FREE_EXERCISE_COUNT = 3;
 
 export default function WorkbookSectionScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const section = WORKBOOK_SECTIONS.find(s => s.id === id);
   const { hasFeature } = useSubscription();
@@ -180,7 +182,7 @@ export default function WorkbookSectionScreen() {
         data={section.questions}
         renderItem={renderQuestion}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: 40 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={styles.sectionHeader}>

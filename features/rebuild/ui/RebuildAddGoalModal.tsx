@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, X } from 'lucide-react-native';
 
 import type { PurposeGoal } from '../../../types';
@@ -37,12 +38,19 @@ export function RebuildAddGoalModal(props: {
     styles,
   } = props;
 
+  const insets = useSafeAreaInsets();
+  const scrollBottomPad = (Platform.OS === 'ios' ? 36 : 24) + insets.bottom;
+
   const canAdd = newGoalTitle.trim().length > 0;
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+        <ScrollView
+          style={styles.modalScroll}
+          contentContainerStyle={[styles.modalScrollContent, { paddingBottom: scrollBottomPad }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>New Purpose Goal</Text>
