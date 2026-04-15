@@ -793,7 +793,7 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
       limitDailyGuidanceActions(rawActions, input.guidanceDateKey),
     );
     const incompleteActions = actions.filter((a) => !a.completed);
-    const isComplete = incompleteActions.length === 0;
+    const isComplete = actions.length > 0 && incompleteActions.length === 0;
     const primaryAction = resolvePrimaryGuidanceAction(actions, input.checkInWindowNow);
     const riskWarnings = buildRiskWarnings(input);
 
@@ -824,7 +824,7 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
   const riskWarnings = buildRiskWarnings(input);
 
   const incompleteActions = actions.filter((a) => !a.completed);
-  const isComplete = incompleteActions.length === 0;
+  const isComplete = actions.length > 0 && incompleteActions.length === 0;
   const primaryAction = resolvePrimaryGuidanceAction(actions, input.checkInWindowNow);
 
   return {

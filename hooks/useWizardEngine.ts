@@ -173,6 +173,12 @@ export function useWizardEngineHook(): WizardEngineResult {
 
   const checkInsSlice = useCheckInsStore.use.checkIns();
   const pledgesList = usePledgesStore.use.pledges();
+  const toolUsageHydrated = useToolUsageStore.use.hasHydrated();
+  const checkInsHydrated = useCheckInsStore.use.hasHydrated();
+  const pledgesHydrated = usePledgesStore.use.hasHydrated();
+  /** Avoid false "X done" toasts when persisted state loads after the first plan snapshot. */
+  const guidanceCompletionInputsReady =
+    toolUsageHydrated && checkInsHydrated && pledgesHydrated;
 
   const clearRecentCompletion = useCallback(
     () => setRecentCompletion(null),
@@ -441,7 +447,28 @@ export function useWizardEngineHook(): WizardEngineResult {
 
   // Detect completions for feedback toast and behavioral tracking
   const prevActionsRef = useRef<Map<string, boolean>>(new Map());
+  const completionBaselineDateKeyRef = useRef<string | null>(null);
+  const completionBaselineReadyRef = useRef(false);
   useEffect(() => {
+    if (completionBaselineDateKeyRef.current !== guidanceDateKey) {
+      completionBaselineDateKeyRef.current = guidanceDateKey;
+      completionBaselineReadyRef.current = false;
+    }
+
+    if (!guidanceCompletionInputsReady) {
+      return;
+    }
+
+    if (!completionBaselineReadyRef.current) {
+      const seeded = new Map<string, boolean>();
+      for (const action of plan.dailyGuidance.actions) {
+        seeded.set(action.id, action.completed);
+      }
+      prevActionsRef.current = seeded;
+      completionBaselineReadyRef.current = true;
+      return;
+    }
+
     const prev = prevActionsRef.current;
     for (const action of plan.dailyGuidance.actions) {
       const wasPreviouslyIncomplete = prev.has(action.id) && !prev.get(action.id);
@@ -458,7 +485,12 @@ export function useWizardEngineHook(): WizardEngineResult {
       next.set(action.id, action.completed);
     }
     prevActionsRef.current = next;
-  }, [plan.dailyGuidance.actions, recordActionCompleted]);
+  }, [
+    plan.dailyGuidance.actions,
+    recordActionCompleted,
+    guidanceCompletionInputsReady,
+    guidanceDateKey,
+  ]);
 
   return { plan, recentCompletion, clearRecentCompletion };
 }

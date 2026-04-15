@@ -219,7 +219,8 @@ const baseStore = create<WizardBehaviorStore>()(
 
     getDaysSinceLastSession: () => {
       const { lastSessionDate } = get();
-      if (!lastSessionDate) return 999;
+      // Null = never recorded (new install / pre-hydrate). Do not treat as a multi-day gap.
+      if (!lastSessionDate) return 0;
       const last = new Date(lastSessionDate);
       const now = new Date();
       return Math.max(0, Math.floor((now.getTime() - last.getTime()) / 86400000));

@@ -286,8 +286,10 @@ export default function TodayHubScreen() {
           </View>
         )}
 
-        {/* Completion card */}
-        {dailyGuidance.isComplete && dailyGuidance.completionMessage && (
+        {/* Completion card (only when there is a real plan — empty actions must not read as "all done") */}
+        {guidanceActions.length > 0 &&
+          dailyGuidance.isComplete &&
+          dailyGuidance.completionMessage && (
           <View style={styles.completionCard}>
             <CheckCircle2 size={22} color={Colors.primary} />
             <View style={styles.completionTextWrap}>
