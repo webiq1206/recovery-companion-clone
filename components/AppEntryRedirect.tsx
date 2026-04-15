@@ -9,7 +9,7 @@ import { getFirstTappableCheckInPeriod } from '../utils/getFirstTappableCheckInP
 import Colors from '../constants/colors';
 
 /**
- * Root routing: onboarding → first tappable M/A/E check-in (in window, not done today) → Today Hub.
+ * Root routing: onboarding → Check-in Now (tappable M/A/E) → Today Hub when none.
  */
 export function AppEntryRedirect() {
   const { isLoading: userLoading, profile } = useUser();
@@ -43,7 +43,7 @@ export function AppEntryRedirect() {
       <Redirect
         href={
           {
-            pathname: '/daily-checkin',
+            pathname: '/check-in-now',
             params: { period: tappablePeriod },
           } as any
         }

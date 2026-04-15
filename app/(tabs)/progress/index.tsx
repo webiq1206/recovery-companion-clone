@@ -340,7 +340,7 @@ function StabilityTimelineScreen() {
 
   const [stabilityWindowDays, setStabilityWindowDays] = useState<StabilityWindowDays>(14);
   const [milestonesExpanded, setMilestonesExpanded] = useState<boolean>(false);
-  const [dailyStabilityExpanded, setDailyStabilityExpanded] = useState<boolean>(false);
+  const [dailyStabilityExpanded, setDailyStabilityExpanded] = useState<boolean>(true);
   const [progressTailExpanded, setProgressTailExpanded] = useState<boolean>(false);
   const [selectedMomentumMetric, setSelectedMomentumMetric] = useState<null | 'change' | 'plans' | 'crisis' | 'setbacks'>(null);
 
@@ -719,11 +719,11 @@ function StabilityTimelineScreen() {
         </View>
 
         <View style={earlyStyles.dailyStabilitySection}>
-          <Pressable
-            style={({ pressed }) => [
-              earlyStyles.dailyStabilityHeader,
-              pressed && earlyStyles.dailyStabilityHeaderPressed,
-            ]}
+        <Pressable
+          style={({ pressed }) => [
+            earlyStyles.dailyStabilityHeader,
+            pressed && earlyStyles.dailyStabilityHeaderPressed,
+          ]}
             onPress={() => {
               Haptics.selectionAsync();
               setDailyStabilityExpanded((e) => !e);
@@ -733,7 +733,15 @@ function StabilityTimelineScreen() {
             accessibilityLabel="Your Daily Stability"
             testID="progress-daily-stability-toggle"
           >
-            <Text style={earlyStyles.dailyStabilityHeaderTitle}>Your Daily Stability</Text>
+            <View style={earlyStyles.tealHeaderInner}>
+              <View style={earlyStyles.tealHeaderIconWrap}>
+                <Activity size={20} color={Colors.white} />
+              </View>
+              <View style={earlyStyles.tealHeaderTextBlock}>
+                <Text style={earlyStyles.dailyStabilityHeaderTitle}>Your Daily Stability</Text>
+                <Text style={earlyStyles.tealHeaderSubtitle}>7, 14, 30 day rolling stability</Text>
+              </View>
+            </View>
             {dailyStabilityExpanded ? (
               <ChevronUp size={20} color={Colors.white} />
             ) : (
@@ -802,26 +810,6 @@ function StabilityTimelineScreen() {
           ) : null}
         </View>
 
-        <Pressable
-          style={styles.detectionLink}
-          onPress={() => {
-            Haptics.selectionAsync();
-            router.push('/advanced-analytics' as any);
-          }}
-          testID="progress-advanced-analytics-link"
-        >
-          <View style={styles.detectionLinkLeft}>
-            <View style={styles.detectionLinkIcon}>
-              <BarChart3 size={16} color={Colors.primary} />
-            </View>
-            <View>
-              <Text style={styles.detectionLinkTitle}>Advanced Analytics</Text>
-              <Text style={styles.detectionLinkSub}>Stability improvement and risk warning</Text>
-            </View>
-          </View>
-          <ChevronRight size={16} color={Colors.textMuted} />
-        </Pressable>
-
         <View style={earlyStyles.progressTailSection}>
           <Pressable
             style={({ pressed }) => [
@@ -837,7 +825,15 @@ function StabilityTimelineScreen() {
             accessibilityLabel="Milestones"
             testID="progress-milestones-tail-toggle"
           >
-            <Text style={earlyStyles.dailyStabilityHeaderTitle}>Milestones</Text>
+            <View style={earlyStyles.tealHeaderInner}>
+              <View style={earlyStyles.tealHeaderIconWrap}>
+                <Trophy size={20} color={Colors.white} />
+              </View>
+              <View style={earlyStyles.tealHeaderTextBlock}>
+                <Text style={earlyStyles.dailyStabilityHeaderTitle}>Milestones</Text>
+                <Text style={earlyStyles.tealHeaderSubtitle}>Follow your accomplishments</Text>
+              </View>
+            </View>
             {progressTailExpanded ? (
               <ChevronUp size={20} color={Colors.white} />
             ) : (
@@ -913,6 +909,31 @@ function StabilityTimelineScreen() {
             </View>
           ) : null}
         </View>
+
+        <View style={earlyStyles.dailyStabilitySection}>
+          <Pressable
+            style={({ pressed }) => [
+              earlyStyles.progressTailHeader,
+              pressed && earlyStyles.progressTailHeaderPressed,
+            ]}
+            onPress={() => {
+              Haptics.selectionAsync();
+              router.push('/advanced-analytics' as any);
+            }}
+            testID="progress-advanced-analytics-link"
+          >
+            <View style={earlyStyles.tealHeaderInner}>
+              <View style={earlyStyles.tealHeaderIconWrap}>
+                <BarChart3 size={20} color={Colors.white} />
+              </View>
+              <View style={earlyStyles.tealHeaderTextBlock}>
+                <Text style={earlyStyles.dailyStabilityHeaderTitle}>Advanced Analytics</Text>
+                <Text style={earlyStyles.tealHeaderSubtitle}>Stability improvement and risk warning</Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={Colors.white} />
+          </Pressable>
+        </View>
       </ScreenScrollView>
     );
   }
@@ -943,61 +964,97 @@ function StabilityTimelineScreen() {
         <Text style={styles.summaryLabel}>{weeklyInsights.narrative}</Text>
       </View>
 
-      <ProgressStabilityChartCard
-        windowDays={stabilityWindowDays}
-        onChangeWindow={setStabilityWindowDays}
-        title="Mornings"
-        showSectionLabel={false}
-        dates={stabilitySeries.dates}
-        scores={stabilitySeries.scores}
-        pointCount={stabilityPointCount}
-        planCompletedSet={planCompletedSet}
-        currentScore={todayMorningScore}
-        lineColor={Colors.primary}
-        emptyTimeLabel="morning"
-      />
-      <ProgressStabilityChartCard
-        windowDays={stabilityWindowDays}
-        onChangeWindow={setStabilityWindowDays}
-        title="Afternoons"
-        showSectionLabel={false}
-        dates={afternoonStabilitySeries.dates}
-        scores={afternoonStabilitySeries.scores}
-        pointCount={afternoonStabilityPointCount}
-        planCompletedSet={planCompletedSet}
-        currentScore={todayAfternoonScore}
-        lineColor="#FF9800"
-        trendLineColor="rgba(255, 152, 0, 0.55)"
-        emptyTimeLabel="afternoon"
-      />
-      <ProgressStabilityChartCard
-        windowDays={stabilityWindowDays}
-        onChangeWindow={setStabilityWindowDays}
-        title="Evenings"
-        showSectionLabel={false}
-        dates={eveningStabilitySeries.dates}
-        scores={eveningStabilitySeries.scores}
-        pointCount={eveningStabilityPointCount}
-        planCompletedSet={planCompletedSet}
-        currentScore={todayEveningScore}
-        lineColor="#EF5350"
-        trendLineColor="rgba(239, 83, 80, 0.55)"
-        emptyTimeLabel="evening"
-      />
-      <ProgressStabilityChartCard
-        windowDays={stabilityWindowDays}
-        onChangeWindow={setStabilityWindowDays}
-        title="Daily Average"
-        showSectionLabel={false}
-        dates={dailyAverageStabilitySeries.dates}
-        scores={dailyAverageStabilitySeries.scores}
-        pointCount={dailyAveragePointCount}
-        planCompletedSet={planCompletedSet}
-        currentScore={todayDailyAverageScore}
-        lineColor="#0D47A1"
-        trendLineColor="rgba(13, 71, 161, 0.55)"
-        emptyTimeLabel="Morning, afternoon, or evening"
-      />
+      <View style={earlyStyles.dailyStabilitySection}>
+        <Pressable
+          style={({ pressed }) => [
+            earlyStyles.dailyStabilityHeader,
+            pressed && earlyStyles.dailyStabilityHeaderPressed,
+          ]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            setDailyStabilityExpanded((e) => !e);
+          }}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: dailyStabilityExpanded }}
+          accessibilityLabel="Your Daily Stability"
+          testID="progress-daily-stability-toggle"
+        >
+          <View style={earlyStyles.tealHeaderInner}>
+            <View style={earlyStyles.tealHeaderIconWrap}>
+              <Activity size={20} color={Colors.white} />
+            </View>
+            <View style={earlyStyles.tealHeaderTextBlock}>
+              <Text style={earlyStyles.dailyStabilityHeaderTitle}>Your Daily Stability</Text>
+              <Text style={earlyStyles.tealHeaderSubtitle}>7, 14, 30 day rolling stability</Text>
+            </View>
+          </View>
+          {dailyStabilityExpanded ? (
+            <ChevronUp size={20} color={Colors.white} />
+          ) : (
+            <ChevronDown size={20} color={Colors.white} />
+          )}
+        </Pressable>
+
+        {dailyStabilityExpanded ? (
+          <View>
+            <ProgressStabilityChartCard
+              windowDays={stabilityWindowDays}
+              onChangeWindow={setStabilityWindowDays}
+              title="Mornings"
+              showSectionLabel={false}
+              dates={stabilitySeries.dates}
+              scores={stabilitySeries.scores}
+              pointCount={stabilityPointCount}
+              planCompletedSet={planCompletedSet}
+              currentScore={todayMorningScore}
+              lineColor={Colors.primary}
+              emptyTimeLabel="morning"
+            />
+            <ProgressStabilityChartCard
+              windowDays={stabilityWindowDays}
+              onChangeWindow={setStabilityWindowDays}
+              title="Afternoons"
+              showSectionLabel={false}
+              dates={afternoonStabilitySeries.dates}
+              scores={afternoonStabilitySeries.scores}
+              pointCount={afternoonStabilityPointCount}
+              planCompletedSet={planCompletedSet}
+              currentScore={todayAfternoonScore}
+              lineColor="#FF9800"
+              trendLineColor="rgba(255, 152, 0, 0.55)"
+              emptyTimeLabel="afternoon"
+            />
+            <ProgressStabilityChartCard
+              windowDays={stabilityWindowDays}
+              onChangeWindow={setStabilityWindowDays}
+              title="Evenings"
+              showSectionLabel={false}
+              dates={eveningStabilitySeries.dates}
+              scores={eveningStabilitySeries.scores}
+              pointCount={eveningStabilityPointCount}
+              planCompletedSet={planCompletedSet}
+              currentScore={todayEveningScore}
+              lineColor="#EF5350"
+              trendLineColor="rgba(239, 83, 80, 0.55)"
+              emptyTimeLabel="evening"
+            />
+            <ProgressStabilityChartCard
+              windowDays={stabilityWindowDays}
+              onChangeWindow={setStabilityWindowDays}
+              title="Daily Average"
+              showSectionLabel={false}
+              dates={dailyAverageStabilitySeries.dates}
+              scores={dailyAverageStabilitySeries.scores}
+              pointCount={dailyAveragePointCount}
+              planCompletedSet={planCompletedSet}
+              currentScore={todayDailyAverageScore}
+              lineColor="#0D47A1"
+              trendLineColor="rgba(13, 71, 161, 0.55)"
+              emptyTimeLabel="Morning, afternoon, or evening"
+            />
+          </View>
+        ) : null}
+      </View>
 
       <View style={styles.momentumCard}>
         <Text style={styles.momentumTitle}>Momentum summary</Text>
@@ -1129,26 +1186,6 @@ function StabilityTimelineScreen() {
         </View>
       </View>
 
-      <Pressable
-        style={styles.detectionLink}
-        onPress={() => {
-          Haptics.selectionAsync();
-          router.push('/advanced-analytics' as any);
-        }}
-        testID="progress-advanced-analytics-link"
-      >
-        <View style={styles.detectionLinkLeft}>
-          <View style={styles.detectionLinkIcon}>
-            <BarChart3 size={16} color={Colors.primary} />
-          </View>
-          <View>
-            <Text style={styles.detectionLinkTitle}>Advanced Analytics</Text>
-            <Text style={styles.detectionLinkSub}>Stability improvement and risk warning</Text>
-          </View>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
-
       <View style={earlyStyles.progressTailSection}>
         <Pressable
           style={({ pressed }) => [
@@ -1164,7 +1201,15 @@ function StabilityTimelineScreen() {
           accessibilityLabel="Milestones"
           testID="progress-milestones-tail-toggle"
         >
-          <Text style={earlyStyles.dailyStabilityHeaderTitle}>Milestones</Text>
+          <View style={earlyStyles.tealHeaderInner}>
+            <View style={earlyStyles.tealHeaderIconWrap}>
+              <Trophy size={20} color={Colors.white} />
+            </View>
+            <View style={earlyStyles.tealHeaderTextBlock}>
+              <Text style={earlyStyles.dailyStabilityHeaderTitle}>Milestones</Text>
+              <Text style={earlyStyles.tealHeaderSubtitle}>Follow your accomplishments</Text>
+            </View>
+          </View>
           {progressTailExpanded ? (
             <ChevronUp size={20} color={Colors.white} />
           ) : (
@@ -1243,6 +1288,31 @@ function StabilityTimelineScreen() {
             <View style={{ height: 40 }} />
           </>
         ) : null}
+      </View>
+
+      <View style={earlyStyles.dailyStabilitySection}>
+        <Pressable
+          style={({ pressed }) => [
+            earlyStyles.progressTailHeader,
+            pressed && earlyStyles.progressTailHeaderPressed,
+          ]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            router.push('/advanced-analytics' as any);
+          }}
+          testID="progress-advanced-analytics-link"
+        >
+          <View style={earlyStyles.tealHeaderInner}>
+            <View style={earlyStyles.tealHeaderIconWrap}>
+              <BarChart3 size={20} color={Colors.white} />
+            </View>
+            <View style={earlyStyles.tealHeaderTextBlock}>
+              <Text style={earlyStyles.dailyStabilityHeaderTitle}>Advanced Analytics</Text>
+              <Text style={earlyStyles.tealHeaderSubtitle}>Stability improvement and risk warning</Text>
+            </View>
+          </View>
+          <ChevronRight size={20} color={Colors.white} />
+        </Pressable>
       </View>
     </ScreenScrollView>
   );
@@ -2283,9 +2353,36 @@ const earlyStyles = StyleSheet.create({
     paddingHorizontal: 14,
     borderWidth: 0,
     marginBottom: 12,
+    gap: 8,
   },
   dailyStabilityHeaderPressed: {
     opacity: 0.9,
+  },
+  tealHeaderInner: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    minWidth: 0,
+  },
+  tealHeaderIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  tealHeaderTextBlock: {
+    flex: 1,
+    minWidth: 0,
+  },
+  tealHeaderSubtitle: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    color: 'rgba(255,255,255,0.88)',
+    marginTop: 4,
+    lineHeight: 16,
   },
   dailyStabilityHeaderTitle: {
     fontSize: 16,
@@ -2304,6 +2401,7 @@ const earlyStyles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 14,
     marginBottom: 12,
+    gap: 8,
   },
   progressTailHeaderPressed: {
     opacity: 0.9,

@@ -218,11 +218,30 @@ export default function TodayHubScreen() {
         <View style={styles.header}>
           <Text style={styles.greetingLabel}>{greetingLabel}</Text>
           <Text style={styles.greetingDateTime}>{dateTimeLabel}</Text>
-          <Text style={styles.greetingSubtitle}>
-            {dailyGuidance.isReentryMode
-              ? 'Welcome back. Let\u2019s ease into today.'
-              : 'A quick snapshot of how you\u2019re doing and what to do next.'}
-          </Text>
+          {dailyGuidance.isReentryMode ? (
+            <Text style={styles.greetingSubtitle}>
+              Welcome back. Let\u2019s ease into today.
+            </Text>
+          ) : null}
+          <Pressable
+            style={({ pressed }) => [
+              styles.struggleButton,
+              styles.struggleButtonInHeader,
+              dailyGuidance.isReentryMode && styles.struggleButtonAfterReentrySubtitle,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push('/crisis-mode' as any);
+            }}
+            testID="todayhub-struggle-button"
+          >
+            <View style={styles.struggleIconWrap}>
+              <AlertTriangle size={16} color={Colors.white} />
+            </View>
+            <Text style={styles.struggleText}>Crisis tool... I&apos;m struggling</Text>
+            <ArrowRight size={15} color={Colors.white} />
+          </Pressable>
         </View>
 
         <ProfileHeaderSummaryCard
@@ -240,53 +259,6 @@ export default function TodayHubScreen() {
             </Text>
           </View>
         )}
-
-
-        {/* Primary crisis entry — above encouragement so support is one tap away */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.struggleButton,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-            router.push('/crisis-mode' as any);
-          }}
-          testID="todayhub-struggle-button"
-        >
-          <View style={styles.struggleIconWrap}>
-            <AlertTriangle size={20} color={Colors.white} />
-          </View>
-          <Text style={styles.struggleText}>Crisis tool... I&apos;m struggling</Text>
-          <ArrowRight size={18} color={Colors.white} />
-        </Pressable>
-
-        {showRelapsePlanCta && (
-          <Pressable
-            style={({ pressed }) => [
-              styles.relapsePlanCard,
-              pressed && styles.pressed,
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-              router.push('/relapse-plan' as any);
-            }}
-            testID="todayhub-relapse-plan-cta"
-          >
-            <View style={styles.relapsePlanIconWrap}>
-              <AlertTriangle size={20} color={Colors.danger} />
-            </View>
-            <View style={styles.relapsePlanTextWrap}>
-              <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
-              <Text style={styles.relapsePlanSubtitle}>
-                Review warning signs, triggers, and coping strategies while risk is
-                high.
-              </Text>
-            </View>
-            <ArrowRight size={20} color={Colors.danger} />
-          </Pressable>
-        )}
-
 
         {/* Completion card */}
         {dailyGuidance.isComplete && dailyGuidance.completionMessage && (
@@ -421,26 +393,6 @@ export default function TodayHubScreen() {
           </>
         )}
 
-        <View style={[styles.planCard, { marginTop: 8, marginBottom: 14 }]}>
-          <Pressable
-            style={({ pressed }) => [styles.planRow, pressed && styles.pressed]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/relapse-recovery' as any);
-            }}
-            testID="todayhub-log-relapse"
-          >
-            <View style={[styles.planStepBadge, { backgroundColor: Colors.danger + '18' }]}>
-              <AlertTriangle size={14} color={Colors.danger} />
-            </View>
-            <View style={styles.planTextWrap}>
-              <Text style={styles.planRowTitle}>Today was hard - log a setback</Text>
-              <Text style={styles.planRowSubtitle}>One event doesn’t erase your progress</Text>
-            </View>
-            <ChevronRight size={16} color={Colors.textMuted} />
-          </Pressable>
-        </View>
-
         {/* Risk warnings (from wizard engine) */}
         {dailyGuidance.riskWarnings.length > 0 && (
           <View style={styles.warningCard}>
@@ -453,6 +405,31 @@ export default function TodayHubScreen() {
           </View>
         )}
 
+        {showRelapsePlanCta && (
+          <Pressable
+            style={({ pressed }) => [
+              styles.relapsePlanCard,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push('/relapse-plan' as any);
+            }}
+            testID="todayhub-relapse-plan-cta"
+          >
+            <View style={styles.relapsePlanIconWrap}>
+              <AlertTriangle size={20} color={Colors.danger} />
+            </View>
+            <View style={styles.relapsePlanTextWrap}>
+              <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
+              <Text style={styles.relapsePlanSubtitle}>
+                Review warning signs, triggers, and coping strategies while risk is
+                high.
+              </Text>
+            </View>
+            <ArrowRight size={20} color={Colors.danger} />
+          </Pressable>
+        )}
 
         {/* Dev-only: full onboarding walkthrough from the hero screen */}
         {__DEV__ ? (
@@ -497,7 +474,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   header: {
-    marginBottom: 18,
+    marginBottom: 10,
   },
   topRightHeaderWrap: {
     position: 'absolute',
@@ -578,23 +555,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: Colors.danger,
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 14,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 0,
+  },
+  struggleButtonInHeader: {
+    marginTop: 6,
+  },
+  struggleButtonAfterReentrySubtitle: {
+    marginTop: 8,
   },
   struggleIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 10,
     backgroundColor: Colors.danger + '40',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 8,
   },
   struggleText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
     color: Colors.white,
   },
@@ -771,6 +754,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: Colors.danger + '35',
+    marginTop: 12,
     marginBottom: 18,
   },
   relapsePlanIconWrap: {

@@ -17,6 +17,7 @@ import {
   X,
   ChevronRight,
   Check,
+  AlertTriangle,
   Activity,
   Brain,
   Moon,
@@ -738,7 +739,31 @@ export default function DailyCheckInScreen() {
 
         {phase === 'metrics' ? (
           <>
-            <Text style={styles.prompt}>{periodConfigWithIcon.greeting}. How are you?</Text>
+            {currentCheckInPeriod === 'evening' ? (
+              <View style={styles.setbackCard}>
+                <Pressable
+                  style={({ pressed }) => [styles.setbackRow, pressed && { opacity: 0.85 }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push('/relapse-recovery' as any);
+                  }}
+                  testID="checkin-evening-log-setback"
+                >
+                  <View style={[styles.setbackBadge, { backgroundColor: Colors.danger + '18' }]}>
+                    <AlertTriangle size={14} color={Colors.danger} />
+                  </View>
+                  <View style={styles.setbackTextWrap}>
+                    <Text style={styles.setbackTitle}>Today was hard - log a setback</Text>
+                    <Text style={styles.setbackSubtitle}>
+                      One event doesn’t erase your progress
+                    </Text>
+                  </View>
+                  <ChevronRight size={16} color={Colors.textMuted} />
+                </Pressable>
+              </View>
+            ) : (
+              <Text style={styles.prompt}>{periodConfigWithIcon.greeting}. How are you?</Text>
+            )}
             <Text style={styles.promptSub}>
               {isMorning
                 ? 'Slide to adjust each area. Be honest \u2014 this is just for you.'
@@ -968,6 +993,41 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
     marginBottom: 20,
+  },
+  setbackCard: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 18,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 14,
+  },
+  setbackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    gap: 12,
+  },
+  setbackBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  setbackTextWrap: {
+    flex: 1,
+  },
+  setbackTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  setbackSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   liveScore: {
     flexDirection: 'row',

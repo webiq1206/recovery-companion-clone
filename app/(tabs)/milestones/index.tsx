@@ -566,9 +566,27 @@ export default function MilestonesScreen() {
     return Math.max(0, Math.floor((now.getTime() - soberDate.getTime()) / 86400000));
   }, [profile.soberDate]);
 
+  const checkInsFingerprint = useMemo(
+    () =>
+      checkIns
+        .map((c) =>
+          [
+            c.date,
+            c.mood,
+            c.cravingLevel,
+            c.stress,
+            c.sleepQuality,
+            c.environment,
+            c.reflection?.length ?? 0,
+          ].join(':'),
+        )
+        .join('|'),
+    [checkIns],
+  );
+
   useEffect(() => {
     updateGrowthDimensions(checkIns, daysSoberCalc, journal.length, pledgeStreak);
-  }, [checkIns.length, daysSoberCalc, journal.length, pledgeStreak]);
+  }, [checkIns, checkInsFingerprint, daysSoberCalc, journal.length, pledgeStreak, updateGrowthDimensions]);
 
   const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
   const [shareableMilestone, setShareableMilestone] = useState<ShareableMilestone | null>(null);

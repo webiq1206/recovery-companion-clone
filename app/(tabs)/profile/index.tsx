@@ -556,7 +556,7 @@ export default function ProfileScreen() {
             <BarChart3 size={17} color="#42A5F5" />
           </View>
           <View>
-            <Text style={styles.settingLabel}>Insights Hub</Text>
+            <Text style={styles.settingLabel}>Growth Insights</Text>
             <Text style={styles.settingValue}>Recovery and retention insights in one place</Text>
           </View>
         </View>

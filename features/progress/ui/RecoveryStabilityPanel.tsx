@@ -17,7 +17,7 @@ type Props = {
   relapseRiskTrendLabel: string;
   relapseRiskWhySentence?: string;
   relapseRiskFactors?: { label: string; value: number }[];
-  /** Opens Insights Hub at the Comprehensive Stability Explained block. */
+  /** Opens Growth Insights at the Comprehensive Stability Explained block. */
   onExplainedPress?: () => void;
 };
 

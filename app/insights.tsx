@@ -1,37 +1,55 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, type ScrollView } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import {
-  RefreshCw,
   Info,
-  Activity,
-  Brain,
   Shield,
-  Layers,
 } from 'lucide-react-native';
 import Colors from '../constants/colors';
 import * as Haptics from 'expo-haptics';
 import { useCheckin } from '../core/domains/useCheckin';
+import { useJournal } from '../core/domains/useJournal';
+import { usePledges } from '../core/domains/usePledges';
+import { useUser } from '../core/domains/useUser';
 import { useEngagement } from '../providers/EngagementProvider';
 
-/** Matches `params.focus` from deep links to the Comprehensive Stability Explained card. */
-export const INSIGHTS_FOCUS_COMPREHENSIVE_STABILITY = 'comprehensive-stability-explained';
-
-/** Matches `params.focus` for the Recovery Stages Explained card. */
-export const INSIGHTS_FOCUS_RECOVERY_STAGES = 'recovery-stages-explained';
-
-export default function InsightsHubScreen() {
+export default function GrowthInsightsScreen() {
   const router = useRouter();
-  const rawFocus = useLocalSearchParams<{ focus?: string | string[] }>().focus;
-  const focusParam = Array.isArray(rawFocus) ? rawFocus[0] : rawFocus;
-  const scrollRef = useRef<ScrollView>(null);
-  const [comprehensiveStabilitySectionY, setComprehensiveStabilitySectionY] = useState<number | null>(
-    null,
-  );
-  const [recoveryStagesSectionY, setRecoveryStagesSectionY] = useState<number | null>(null);
+  const { profile } = useUser();
   const { checkIns } = useCheckin();
-  const { growthDimensions, overallGrowthScore } = useEngagement();
+  const { journal } = useJournal();
+  const { currentStreak: pledgeStreak } = usePledges();
+  const { growthDimensions, overallGrowthScore, updateGrowthDimensions } = useEngagement();
+
+  const daysSoberCalc = useMemo(() => {
+    const soberDate = new Date(profile.soberDate);
+    const now = new Date();
+    return Math.max(0, Math.floor((now.getTime() - soberDate.getTime()) / 86400000));
+  }, [profile.soberDate]);
+
+  const growthInputsRef = useRef({
+    checkIns,
+    daysSoberCalc,
+    journalLength: journal.length,
+    pledgeStreak,
+  });
+  growthInputsRef.current = {
+    checkIns,
+    daysSoberCalc,
+    journalLength: journal.length,
+    pledgeStreak,
+  };
+
+  const updateGrowthDimensionsRef = useRef(updateGrowthDimensions);
+  updateGrowthDimensionsRef.current = updateGrowthDimensions;
+
+  useFocusEffect(
+    useCallback(() => {
+      const i = growthInputsRef.current;
+      updateGrowthDimensionsRef.current(i.checkIns, i.daysSoberCalc, i.journalLength, i.pledgeStreak);
+    }, []),
+  );
 
   const insights = useMemo(() => {
     const items: { label: string; value: string; color: string }[] = [];
@@ -47,6 +65,10 @@ export default function InsightsHubScreen() {
       const cravingTrend = avgCraving <= 30 ? 'Low' : avgCraving <= 60 ? 'Moderate' : 'High';
       const cravingColor = avgCraving <= 30 ? Colors.success : avgCraving <= 60 ? Colors.accentWarm : Colors.danger;
       items.push({ label: 'Craving Level', value: cravingTrend, color: cravingColor });
+    } else {
+      const muted = Colors.textMuted;
+      items.push({ label: 'Mood Trend', value: 'Need more check-ins', color: muted });
+      items.push({ label: 'Craving Level', value: 'Need more check-ins', color: muted });
     }
 
     items.push({
@@ -58,35 +80,20 @@ export default function InsightsHubScreen() {
     return items;
   }, [checkIns, overallGrowthScore]);
 
-  useEffect(() => {
-    if (focusParam !== INSIGHTS_FOCUS_COMPREHENSIVE_STABILITY || comprehensiveStabilitySectionY == null) {
-      return;
-    }
-    const t = setTimeout(() => {
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, comprehensiveStabilitySectionY - 44),
-        animated: true,
-      });
-    }, 80);
-    return () => clearTimeout(t);
-  }, [focusParam, comprehensiveStabilitySectionY]);
-
   return (
     <ScreenScrollView
-      ref={scrollRef}
-      scrollToTopOnFocus={!focusParam}
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
       testID="insights-hub-screen"
     >
-      <Stack.Screen options={{ title: 'Insights Hub' }} />
+      <Stack.Screen options={{ title: 'Growth Insights' }} />
 
-      <View style={styles.introCard}>
-        <Info size={18} color={Colors.primary} />
-        <Text style={styles.introText}>
-          Explore advanced analytics and educational explainers that help you understand your
-          scores, patterns, and recovery systems.
+      <View style={[styles.footerCard, styles.heroBanner]}>
+        <Shield size={16} color={Colors.primary} />
+        <Text style={styles.footerText}>
+          These insights are here to inform and support you - not to judge you. Use them as
+          a compass, then keep listening to your own wisdom and needs.
         </Text>
       </View>
 
@@ -157,87 +164,11 @@ export default function InsightsHubScreen() {
         </>
       )}
 
-      <Text style={[styles.sectionTitle, { marginTop: 24 }]}>EXPLAINERS</Text>
-
-      <View
-        onLayout={(e) => setComprehensiveStabilitySectionY(e.nativeEvent.layout.y)}
-        testID="insights-comprehensive-stability-explained-block"
-      >
-        <Pressable
-          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-          onPress={() => router.push('/comprehensive-stability-explained' as any)}
-          testID="insights-comprehensive-stability-explained-link"
-        >
-          <View style={[styles.iconCircle, { backgroundColor: Colors.primary + '18' }]}>
-            <Activity size={18} color={Colors.primary} />
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.cardTitle}>Comprehensive Stability Explained</Text>
-            <Text style={styles.cardSubtitle}>
-              How your daily check-ins roll up into the score you see on Home.
-            </Text>
-          </View>
-        </Pressable>
-      </View>
-
-      <Pressable
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-        onPress={() => router.push('/insights-explained' as any)}
-        testID="insights-explained-link"
-      >
-        <View style={[styles.iconCircle, { backgroundColor: Colors.accentWarm + '18' }]}>
-          <RefreshCw size={18} color={Colors.accentWarm} />
-        </View>
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle}>Growth Insights Explained</Text>
-          <Text style={styles.cardSubtitle}>
-            How Growth and related scores are calculated from your data.
-          </Text>
-        </View>
-      </Pressable>
-
-      <Pressable
-        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-        onPress={() => router.push('/recovery-insights-explained' as any)}
-        testID="recovery-insights-explained-link"
-      >
-        <View style={[styles.iconCircle, { backgroundColor: Colors.primary + '18' }]}>
-          <Brain size={18} color={Colors.primary} />
-        </View>
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle}>Your Recovery Journey Explained</Text>
-          <Text style={styles.cardSubtitle}>
-            The reinforcement loops that keep you engaged and how they grow.
-          </Text>
-        </View>
-      </Pressable>
-
-      <View
-        onLayout={(e) => setRecoveryStagesSectionY(e.nativeEvent.layout.y)}
-        testID="insights-recovery-stages-explained-block"
-      >
-        <Pressable
-          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-          onPress={() => router.push('/recovery-stages-explained' as any)}
-          testID="recovery-stages-explained-link"
-        >
-          <View style={[styles.iconCircle, { backgroundColor: '#42A5F518' }]}>
-            <Layers size={18} color="#42A5F5" />
-          </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.cardTitle}>Recovery Stages Explained</Text>
-            <Text style={styles.cardSubtitle}>
-              How the app detects your stage and adapts support over time.
-            </Text>
-          </View>
-        </Pressable>
-      </View>
-
-      <View style={styles.footerCard}>
-        <Shield size={16} color={Colors.primary} />
-        <Text style={styles.footerText}>
-          These insights are here to inform and support you - not to judge you. Use them as
-          a compass, then keep listening to your own wisdom and needs.
+      <View style={[styles.introCard, styles.introCardBottom]}>
+        <Info size={18} color={Colors.primary} />
+        <Text style={styles.introText}>
+          Explore advanced analytics and educational explainers that help you understand your
+          scores, patterns, and recovery systems.
         </Text>
       </View>
 
@@ -255,6 +186,10 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
+  heroBanner: {
+    marginTop: 0,
+    marginBottom: 24,
+  },
   introCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -266,18 +201,15 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(46,196,182,0.2)',
   },
+  introCardBottom: {
+    marginTop: 16,
+    marginBottom: 0,
+  },
   introText: {
     flex: 1,
     fontSize: 14,
     color: Colors.textSecondary,
     lineHeight: 21,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textMuted,
-    letterSpacing: 1.5,
-    marginBottom: 12,
   },
   card: {
     flexDirection: 'row',

@@ -260,7 +260,7 @@ export default function HowToUseScreen() {
           <Text style={styles.bodyText}>
             Your profile and app settings live off the main tab bar. On Today and other main screens, use the icons
             at the top right: open Profile for sobriety date, notifications, subscription, and Help—including this
-            guide, Insights Hub, and Quick Coping Tools. Use Settings for security, privacy, and app preferences.
+            guide, Growth Insights, and Quick Coping Tools. Use Settings for security, privacy, and app preferences.
           </Text>
           <View style={styles.infoCard}>
             <Text style={styles.infoCardTitle}>Quick Coping Tools</Text>
@@ -410,7 +410,7 @@ export default function HowToUseScreen() {
             <View style={styles.guidelineItem}>
               <CheckCircle size={16} color={Colors.success} />
               <Text style={styles.guidelineText}>
-                Open Profile for Insights Hub when you want deeper analytics and explainers.
+                Open Profile for Growth Insights when you want deeper analytics and explainers.
               </Text>
             </View>
             <View style={styles.guidelineItem}>

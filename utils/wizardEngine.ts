@@ -667,18 +667,22 @@ export function stabilizeGuidanceActionOrder(actions: WizardAction[]): WizardAct
 }
 
 /**
- * Collapsed guidance shows this index first: earliest incomplete check-in in M→A→E order
- * that is inside its window (tappable), else the first non-check-in row.
+ * Collapsed guidance shows this index first: earliest incomplete M/A/E check-in that is
+ * inside its window (tappable). If none, earliest incomplete M/A/E that is outside its
+ * window (PLEASE WAIT) so evening still surfaces after morning/afternoon are done.
+ * Otherwise the first non-check-in row.
  * When `checkInWindowNow` is omitted, locked check-ins are still eligible (legacy).
  */
 export function getGuidanceCollapsedFocusIndex(
   actions: WizardAction[],
   checkInWindowNow?: Date,
 ): number {
+  let firstLockedMaeCheckIn: number | null = null;
+
   for (let i = 0; i < actions.length; i++) {
     const a = actions[i]!;
     if (!a.id.startsWith('check-in-')) {
-      return i;
+      return firstLockedMaeCheckIn ?? i;
     }
     if (a.completed) {
       continue;
@@ -686,13 +690,20 @@ export function getGuidanceCollapsedFocusIndex(
     if (checkInWindowNow != null) {
       const period = a.params?.period;
       if (period === 'morning' || period === 'afternoon' || period === 'evening') {
-        if (!isCheckInPeriodInWindow(period, checkInWindowNow)) {
-          continue;
+        if (isCheckInPeriodInWindow(period, checkInWindowNow)) {
+          return i;
         }
+        firstLockedMaeCheckIn ??= i;
+        continue;
       }
     }
     return i;
   }
+
+  if (firstLockedMaeCheckIn !== null) {
+    return firstLockedMaeCheckIn;
+  }
+
   for (let i = 0; i < actions.length; i++) {
     const a = actions[i]!;
     if (!a.id.startsWith('check-in-')) {
