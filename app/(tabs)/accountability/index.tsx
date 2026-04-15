@@ -43,6 +43,7 @@ import { useCheckin } from '../../../core/domains/useCheckin';
 import { usePledges } from '../../../core/domains/usePledges';
 import { useSubscription } from '../../../providers/SubscriptionProvider';
 import { CommitmentContract, AccountabilityPartner } from '../../../types';
+import { getGuidanceDateKey } from '../../../utils/checkInDate';
 
 const CATEGORIES: { key: CommitmentContract['category']; label: string; icon: string }[] = [
   { key: 'sobriety', label: 'Sobriety', icon: 'shield' },
@@ -83,7 +84,7 @@ function getDriftAlerts(
   daysSober: number,
 ): { id: string; type: string; severity: 'gentle' | 'moderate' | 'urgent'; message: string; suggestion: string }[] {
   const alerts: { id: string; type: string; severity: 'gentle' | 'moderate' | 'urgent'; message: string; suggestion: string }[] = [];
-  const today = new Date().toISOString().split('T')[0];
+  const today = getGuidanceDateKey(new Date());
 
   contracts.forEach(c => {
     if (!c.isActive) return;
@@ -401,7 +402,7 @@ export default function AccountabilityScreen() {
 
   const renderContractCard = (contract: CommitmentContract) => {
     const catColor = getCategoryColor(contract.category);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getGuidanceDateKey(new Date());
     const checkedToday = contract.lastCheckedIn === today;
 
     return (

@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useUser } from '../core/domains/useUser';
-import { useCheckin } from '../core/domains/useCheckin';
 import { useAppStore } from '../stores/useAppStore';
 import { useCheckInsStore } from '../stores/useCheckInsStore';
 import { getFirstTappableCheckInPeriod } from '../utils/getFirstTappableCheckInPeriod';
@@ -13,14 +12,14 @@ import Colors from '../constants/colors';
  */
 export function AppEntryRedirect() {
   const { isLoading: userLoading, profile } = useUser();
-  const { todayCheckIns } = useCheckin();
+  const sliceCheckIns = useCheckInsStore.use.checkIns();
   const centralDailyCheckIns = useAppStore((s) => s.dailyCheckIns);
   const centralProfile = useAppStore((s) => s.userProfile);
   const checkInsHydrated = useCheckInsStore.use.hasHydrated();
 
   const tappablePeriod = useMemo(
-    () => getFirstTappableCheckInPeriod(new Date(), todayCheckIns, centralDailyCheckIns),
-    [todayCheckIns, centralDailyCheckIns],
+    () => getFirstTappableCheckInPeriod(new Date(), sliceCheckIns, centralDailyCheckIns),
+    [sliceCheckIns, centralDailyCheckIns],
   );
 
   const onboarded =

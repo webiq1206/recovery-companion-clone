@@ -4,6 +4,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 
 import type { Pledge } from '../../../types';
 import { STORAGE_KEYS, loadStorageItem, saveStorageItem } from '../../../core/persistence';
+import { addDaysToDateKey, getGuidanceDateKey } from '../../../utils/checkInDate';
 import { createSelectors } from '../../../stores/zustand/createSelectors';
 
 type PledgesState = {
@@ -55,8 +56,8 @@ export function useHydratePledgesStore() {
 export function useTodayPledge(): Pledge | null {
   const pledges = usePledgesStore.use.pledges();
   return useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return pledges.find((p) => p.date === today) ?? null;
+    const guidanceDay = getGuidanceDateKey(new Date());
+    return pledges.find((p) => p.date === guidanceDay) ?? null;
   }, [pledges]);
 }
 
@@ -65,20 +66,16 @@ export function usePledgeStreak(): number {
   return useMemo(() => {
     if (pledges.length === 0) return 0;
 
+    const anchor = getGuidanceDateKey(new Date());
+    const sorted = [...pledges].sort((a, b) => {
+      if (a.date === b.date) return 0;
+      return a.date < b.date ? 1 : -1;
+    });
+
     let streak = 0;
-    const sorted = [...pledges].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     for (let i = 0; i < sorted.length; i++) {
-      const pledgeDate = new Date(sorted[i].date);
-      pledgeDate.setHours(0, 0, 0, 0);
-
-      const expectedDate = new Date(today);
-      expectedDate.setDate(expectedDate.getDate() - i);
-      expectedDate.setHours(0, 0, 0, 0);
-
-      if (pledgeDate.getTime() === expectedDate.getTime() && sorted[i].completed) {
+      const expected = addDaysToDateKey(anchor, -i);
+      if (sorted[i]!.date === expected && sorted[i]!.completed) {
         streak++;
       } else {
         break;

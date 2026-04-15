@@ -1,13 +1,12 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
-import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import { Stack, useFocusEffect } from 'expo-router';
 import {
   Info,
   Shield,
 } from 'lucide-react-native';
 import Colors from '../constants/colors';
-import * as Haptics from 'expo-haptics';
 import { useCheckin } from '../core/domains/useCheckin';
 import { useJournal } from '../core/domains/useJournal';
 import { usePledges } from '../core/domains/usePledges';
@@ -15,7 +14,6 @@ import { useUser } from '../core/domains/useUser';
 import { useEngagement } from '../providers/EngagementProvider';
 
 export default function GrowthInsightsScreen() {
-  const router = useRouter();
   const { profile } = useUser();
   const { checkIns } = useCheckin();
   const { journal } = useJournal();
@@ -104,34 +102,10 @@ export default function GrowthInsightsScreen() {
 
           <View style={styles.insightsGrid}>
             {insights.map((item) => (
-              <View
-                key={item.label}
-                style={[
-                  styles.insightCard,
-                  item.label === 'Growth Score' && styles.insightCardWithButton,
-                ]}
-              >
+              <View key={item.label} style={styles.insightCard}>
                 <View
                   style={[styles.insightDot, { backgroundColor: item.color }]}
                 />
-
-                {item.label === 'Growth Score' && (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.growthScoreExplainedBtn,
-                      pressed && { opacity: 0.85 },
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      router.push('/insights-explained' as any);
-                    }}
-                    testID="growth-score-explained-link"
-                  >
-                    <Text style={styles.growthScoreExplainedBtnText}>
-                      Explained
-                    </Text>
-                  </Pressable>
-                )}
 
                 <Text style={styles.insightLabel}>{item.label}</Text>
                 <Text style={[styles.insightValue, { color: item.color }]}>
@@ -211,42 +185,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 21,
   },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  cardPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
-  },
-  iconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: 2,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 19,
-  },
   footerCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -288,9 +226,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: Colors.border,
   },
-  insightCardWithButton: {
-    position: 'relative',
-  },
   insightDot: {
     width: 6,
     height: 6,
@@ -306,22 +241,6 @@ const styles = StyleSheet.create({
   insightValue: {
     fontSize: 16,
     fontWeight: '700' as const,
-  },
-  growthScoreExplainedBtn: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: Colors.primary + '14',
-    borderWidth: 0.5,
-    borderColor: Colors.primary + '30',
-  },
-  growthScoreExplainedBtnText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: Colors.primary,
   },
   growthCard: {
     backgroundColor: Colors.cardBackground,

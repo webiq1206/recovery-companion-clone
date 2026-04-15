@@ -6,8 +6,8 @@ import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCheckin } from '../core/domains/useCheckin';
 import { useAppStore } from '../stores/useAppStore';
+import { useCheckInsStore } from '../stores/useCheckInsStore';
 import { useWizardEngineHook } from '../hooks/useWizardEngine';
 import { getFirstTappableCheckInPeriod } from '../utils/getFirstTappableCheckInPeriod';
 import { isCheckInPeriodInWindow } from '../utils/checkInWindows';
@@ -54,7 +54,7 @@ function checkInRowLocked(action: WizardAction, checkInNow: Date): boolean {
 export default function CheckInNowScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { todayCheckIns } = useCheckin();
+  const sliceCheckIns = useCheckInsStore.use.checkIns();
   const centralDailyCheckIns = useAppStore((s) => s.dailyCheckIns);
   const { plan: wizardPlan } = useWizardEngineHook();
 
@@ -67,8 +67,8 @@ export default function CheckInNowScreen() {
   const checkInNow = useMemo(() => new Date(), [checkInWindowTick]);
 
   const tappablePeriod = useMemo(
-    () => getFirstTappableCheckInPeriod(checkInNow, todayCheckIns, centralDailyCheckIns),
-    [checkInNow, todayCheckIns, centralDailyCheckIns],
+    () => getFirstTappableCheckInPeriod(checkInNow, sliceCheckIns, centralDailyCheckIns),
+    [checkInNow, sliceCheckIns, centralDailyCheckIns],
   );
 
   const action = useMemo(() => {

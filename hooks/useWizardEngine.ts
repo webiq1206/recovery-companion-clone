@@ -9,13 +9,14 @@ import { useShallow } from 'zustand/react/shallow';
 import { useUser } from '../core/domains/useUser';
 import { useCheckin } from '../core/domains/useCheckin';
 import { useRebuild } from '../core/domains/useRebuild';
-import { usePledges } from '../core/domains/usePledges';
 import { useSupportContacts } from '../core/domains/useSupportContacts';
 import { useAccountability } from '../core/domains/useAccountability';
 import { useJournal } from '../core/domains/useJournal';
 import { useRelapse } from '../core/domains/useRelapse';
 import { useAppMeta } from '../core/domains/useAppMeta';
 import { useAppStore } from '../stores/useAppStore';
+import { useCheckInsStore } from '../stores/useCheckInsStore';
+import { usePledgesStore } from '../features/pledges/state/usePledgesStore';
 import { useRiskPrediction } from '../providers/RiskPredictionProvider';
 import { useStageDetection } from '../providers/StageDetectionProvider';
 import { useConnection } from '../providers/ConnectionProvider';
@@ -43,6 +44,7 @@ import {
   mergeTodayCheckInsFromSources,
 } from '../utils/mergeProfile';
 import { mergeTrustedAndEmergencyContacts } from '../utils/mergeEmergencyContacts';
+import { getGuidanceDateKey } from '../utils/checkInDate';
 
 const EMPTY_PLAN: WizardPlan = {
   setupProgress: null,
@@ -69,10 +71,6 @@ export interface WizardEngineResult {
   clearRecentCompletion: () => void;
 }
 
-function getToday(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
 function getDateKey(dateValue: string | undefined | null): string {
   if (!dateValue) return '';
   // Supports both `YYYY-MM-DD` and ISO timestamps like `2026-03-20T12:34:56.000Z`.
@@ -89,14 +87,10 @@ export function useWizardEngineHook(): WizardEngineResult {
   const daysSober = userHook?.daysSober ?? 0;
 
   const checkinHook = useCheckin();
-  const todayCheckIns = checkinHook?.todayCheckIns ?? [];
   const currentCheckInPeriod = checkinHook?.currentCheckInPeriod;
 
   const rebuildHook = useRebuild();
   const rebuildData = rebuildHook?.rebuildData;
-
-  const pledgesHook = usePledges();
-  const todayPledge = pledgesHook?.todayPledge ?? null;
 
   const contactsHook = useSupportContacts();
   const emergencyContacts = contactsHook?.emergencyContacts ?? [];
@@ -171,6 +165,14 @@ export function useWizardEngineHook(): WizardEngineResult {
     return () => clearInterval(id);
   }, []);
 
+  const guidanceDateKey = useMemo(
+    () => getGuidanceDateKey(checkInWindowNow),
+    [checkInWindowNow],
+  );
+
+  const checkInsSlice = useCheckInsStore.use.checkIns();
+  const pledgesList = usePledgesStore.use.pledges();
+
   const clearRecentCompletion = useCallback(
     () => setRecentCompletion(null),
     [],
@@ -194,26 +196,26 @@ export function useWizardEngineHook(): WizardEngineResult {
   }, [recordSessionStart, currentPeriod, updateStabilityStreak, stabilityScore]);
 
   const hasJournalEntryToday = useMemo(() => {
-    const today = getToday();
-    return (journal ?? []).some((e) => getDateKey(e.date) === today);
-  }, [journal]);
+    return (journal ?? []).some((e) => getDateKey(e.date) === guidanceDateKey);
+  }, [journal, guidanceDateKey]);
 
   const daysSinceLastSession = useMemo(
     () => getDaysSinceLastSession(),
     [getDaysSinceLastSession, behaviorState.lastSessionDate],
   );
 
-  const today = getToday();
   const rebuildHabitsCompletedToday = useMemo(
     () =>
-      (rebuildData?.habits ?? []).filter((h) => getDateKey(h.lastCompleted) === today).length,
-    [rebuildData?.habits, today],
+      (rebuildData?.habits ?? []).filter((h) => getDateKey(h.lastCompleted) === guidanceDateKey)
+        .length,
+    [rebuildData?.habits, guidanceDateKey],
   );
 
   const rebuildRoutinesCompletedToday = useMemo(
     () =>
-      (rebuildData?.routines ?? []).filter((r) => getDateKey(r.completedAt) === today).length,
-    [rebuildData?.routines, today],
+      (rebuildData?.routines ?? []).filter((r) => getDateKey(r.completedAt) === guidanceDateKey)
+        .length,
+    [rebuildData?.routines, guidanceDateKey],
   );
 
   const hasCrisisToolCompletedToday = useMemo(() => {
@@ -228,28 +230,32 @@ export function useWizardEngineHook(): WizardEngineResult {
     // We treat "opened any crisis step" as "crisis tools engagement completed".
     return toolUsageEvents.some((e) => {
       if (!crisisToolIds.includes(e.toolId)) return false;
-      if (getDateKey(e.timestamp) !== today) return false;
+      if (getDateKey(e.timestamp) !== guidanceDateKey) return false;
       return (e.context === 'crisis' && e.action === 'opened') || (e.action === 'completed' && e.toolId !== 'journal-prompt');
     });
-  }, [toolUsageEvents, today]);
+  }, [toolUsageEvents, guidanceDateKey]);
 
   const hasCopingToolCompletedToday = useMemo(() => {
     const copingToolIds: ToolId[] = ['breathing', 'urge-timer'];
     return toolUsageEvents.some((e) => {
       if (!copingToolIds.includes(e.toolId)) return false;
-      if (getDateKey(e.timestamp) !== today) return false;
+      if (getDateKey(e.timestamp) !== guidanceDateKey) return false;
       // Embedded crisis steps emit `opened` with `context: 'crisis'`.
       // Tools screens emit `completed` when the user finishes.
       return e.action === 'completed' || (e.context === 'crisis' && e.action === 'opened');
     });
-  }, [toolUsageEvents, today]);
+  }, [toolUsageEvents, guidanceDateKey]);
 
   const hasConnectionTouchpointCompletedToday = useMemo(() => {
     const isOwnMessageToday = (timestamp: string, isOwn: boolean) =>
-      isOwn && getDateKey(timestamp) === today;
+      isOwn && getDateKey(timestamp) === guidanceDateKey;
 
     const viaConnectTool = toolUsageEvents.some((e) => {
-      return e.toolId === 'connect' && e.action === 'completed' && getDateKey(e.timestamp) === today;
+      return (
+        e.toolId === 'connect' &&
+        e.action === 'completed' &&
+        getDateKey(e.timestamp) === guidanceDateKey
+      );
     });
     if (viaConnectTool) return true;
 
@@ -268,18 +274,18 @@ export function useWizardEngineHook(): WizardEngineResult {
     );
 
     return sentInSponsor;
-  }, [peerChats, safeRooms, sponsorPairing, today, toolUsageEvents]);
+  }, [peerChats, safeRooms, sponsorPairing, guidanceDateKey, toolUsageEvents]);
 
-  /** True only when every active commitment has at least one check-in dated today. */
+  /** True only when every active commitment has at least one check-in dated for the guidance day. */
   const hasAccountabilityCheckInCompletedToday = useMemo(() => {
     const activeContracts = (accountabilityData?.contracts ?? []).filter(
       (c) => (c as { isActive?: boolean }).isActive !== false,
     );
     if (activeContracts.length === 0) return false;
     return activeContracts.every((c) =>
-      (c.checkIns ?? []).some((ci) => getDateKey(ci.date) === today),
+      (c.checkIns ?? []).some((ci) => getDateKey(ci.date) === guidanceDateKey),
     );
-  }, [accountabilityData, today]);
+  }, [accountabilityData, guidanceDateKey]);
 
   const stabilityTrend: 'rising' | 'declining' | 'stable' = useMemo(() => {
     const raw = trendLabel?.toLowerCase() ?? '';
@@ -309,15 +315,24 @@ export function useWizardEngineHook(): WizardEngineResult {
 
   const safeProfile = mergedProfile as UserProfile & Record<string, unknown>;
 
-  /** Merge today's rows from check-ins slice + persisted app store (per-period field merge). */
+  const sliceGuidanceDayCheckIns = useMemo(
+    () => checkInsSlice.filter((c) => c.date === guidanceDateKey),
+    [checkInsSlice, guidanceDateKey],
+  );
+
+  const guidanceDayPledge = useMemo(
+    () => pledgesList.find((p) => p.date === guidanceDateKey) ?? null,
+    [pledgesList, guidanceDateKey],
+  );
+
+  /** Merge check-ins for the guidance day from slice + central store (per-period field merge). */
   const mergedTodayCheckIns = useMemo((): DailyCheckIn[] => {
-    const todayStr = getToday();
     return mergeTodayCheckInsFromSources(
-      todayCheckIns ?? [],
+      sliceGuidanceDayCheckIns,
       centralDailyCheckIns,
-      todayStr,
+      guidanceDateKey,
     );
-  }, [todayCheckIns, centralDailyCheckIns]);
+  }, [sliceGuidanceDayCheckIns, centralDailyCheckIns, guidanceDateKey]);
 
   const input: WizardEngineInput = useMemo(
     () => ({
@@ -338,6 +353,7 @@ export function useWizardEngineHook(): WizardEngineResult {
       todayCheckIns: mergedTodayCheckIns,
       currentPeriod,
       checkInWindowNow,
+      guidanceDateKey,
       stabilityScore: stabilityScore ?? 50,
       stabilityTrend,
       relapseRisk: riskCategory ?? 'low',
@@ -346,7 +362,7 @@ export function useWizardEngineHook(): WizardEngineResult {
       recoveryStage: currentStage ?? safeProfile.recoveryProfile?.recoveryStage ?? 'crisis',
       stageProgramDay: currentProgram?.day,
       stageProgramDuration: currentProgram?.duration,
-      todayPledge: todayPledge ?? null,
+      todayPledge: guidanceDayPledge,
       hasJournalEntryToday,
       rebuildGoalsCount: rebuildData?.goals?.length ?? 0,
       rebuildHabitsCompletedToday,
@@ -377,6 +393,7 @@ export function useWizardEngineHook(): WizardEngineResult {
       mergedTodayCheckIns,
       currentPeriod,
       checkInWindowNow,
+      guidanceDateKey,
       stabilityScore,
       stabilityTrend,
       riskCategory,
@@ -385,7 +402,7 @@ export function useWizardEngineHook(): WizardEngineResult {
       currentStage,
       currentProgram?.day,
       currentProgram?.duration,
-      todayPledge,
+      guidanceDayPledge,
       hasJournalEntryToday,
       rebuildHabitsCompletedToday,
       rebuildRoutinesCompletedToday,

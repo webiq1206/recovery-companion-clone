@@ -342,12 +342,14 @@ function StabilityTimelineScreen() {
   const [milestonesExpanded, setMilestonesExpanded] = useState<boolean>(false);
   const [dailyStabilityExpanded, setDailyStabilityExpanded] = useState<boolean>(true);
   const [progressTailExpanded, setProgressTailExpanded] = useState<boolean>(false);
+  const [savingsExpanded, setSavingsExpanded] = useState<boolean>(false);
   const [selectedMomentumMetric, setSelectedMomentumMetric] = useState<null | 'change' | 'plans' | 'crisis' | 'setbacks'>(null);
 
   useFocusEffect(
     useCallback(() => {
       setDailyStabilityExpanded(false);
       setProgressTailExpanded(false);
+      setSavingsExpanded(false);
     }, []),
   );
 
@@ -908,6 +910,49 @@ function StabilityTimelineScreen() {
               </Pressable>
             </View>
           ) : null}
+
+          <Pressable
+            style={({ pressed }) => [
+              earlyStyles.progressTailHeader,
+              pressed && earlyStyles.progressTailHeaderPressed,
+            ]}
+            onPress={() => {
+              Haptics.selectionAsync();
+              setSavingsExpanded((e) => !e);
+            }}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: savingsExpanded }}
+            accessibilityLabel="Savings"
+            testID="progress-savings-toggle"
+          >
+            <View style={earlyStyles.tealHeaderInner}>
+              <View style={earlyStyles.tealHeaderIconWrap}>
+                <Shield size={20} color={Colors.white} />
+              </View>
+              <View style={earlyStyles.tealHeaderTextBlock}>
+                <Text style={earlyStyles.dailyStabilityHeaderTitle}>Savings</Text>
+                <Text style={earlyStyles.tealHeaderSubtitle}>Time and money</Text>
+              </View>
+            </View>
+            {savingsExpanded ? (
+              <ChevronUp size={20} color={Colors.white} />
+            ) : (
+              <ChevronDown size={20} color={Colors.white} />
+            )}
+          </Pressable>
+
+          {savingsExpanded ? (
+            <View style={styles.savingsExpandBody}>
+              <Text style={styles.savingsExpandLine}>
+                <Text style={styles.savingsExpandLabel}>Time: </Text>
+                <Text style={styles.savingsExpandValue}>{savingsToDateLabels.time}</Text>
+              </Text>
+              <Text style={[styles.savingsExpandLine, styles.savingsExpandLineSecond]}>
+                <Text style={styles.savingsExpandLabel}>Money: </Text>
+                <Text style={styles.savingsExpandValue}>{savingsToDateLabels.money}</Text>
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={earlyStyles.dailyStabilitySection}>
@@ -1116,18 +1161,6 @@ function StabilityTimelineScreen() {
         <ChevronRight size={16} color={Colors.textMuted} />
       </Pressable>
 
-      <View style={styles.savingsToDateCard}>
-        <Text style={styles.savingsToDateHeading}>Savings to date</Text>
-        <View style={[styles.savingsToDateRow, styles.savingsToDateRowFirst]}>
-          <Text style={styles.savingsToDateFieldLabel}>Time</Text>
-          <Text style={styles.savingsToDateFieldValue}>{savingsToDateLabels.time}</Text>
-        </View>
-        <View style={[styles.savingsToDateRow, styles.savingsToDateRowDivider]}>
-          <Text style={styles.savingsToDateFieldLabel}>Money</Text>
-          <Text style={styles.savingsToDateFieldValue}>{savingsToDateLabels.money}</Text>
-        </View>
-      </View>
-
       <Modal
         visible={selectedMomentumMetric !== null}
         transparent
@@ -1218,76 +1251,117 @@ function StabilityTimelineScreen() {
         </Pressable>
 
         {progressTailExpanded ? (
-          <>
-            <View style={[styles.milestonesSection, styles.milestonesSectionInTail]}>
-              <View style={styles.milestonesSectionHeader}>
-                <View style={styles.milestonesTitleRow}>
-                  <Trophy size={18} color={Colors.primary} />
-                  <Text style={styles.milestonesSectionTitle}>Milestones</Text>
-                </View>
-                <Text style={styles.milestonesSubtitle}>
-                  {unlockedCount}/{MILESTONE_DATA.length} unlocked
-                  {nextMilestone ? ` · ${nextMilestone.days - daysSober}d to next` : ''}
-                </Text>
+          <View style={[styles.milestonesSection, styles.milestonesSectionInTail]}>
+            <View style={styles.milestonesSectionHeader}>
+              <View style={styles.milestonesTitleRow}>
+                <Trophy size={18} color={Colors.primary} />
+                <Text style={styles.milestonesSectionTitle}>Milestones</Text>
               </View>
-
-              {(milestonesExpanded ? MILESTONE_DATA : MILESTONE_DATA.slice(0, 4)).map((milestone, index, arr) => {
-                const unlocked = daysSober >= milestone.days;
-                const IconComponent = ICON_MAP[milestone.icon] ?? Star;
-                const progress = unlocked ? 1 : Math.min(daysSober / milestone.days, 1);
-                return (
-                  <View key={milestone.days} style={styles.msCard} testID={`progress-milestone-${milestone.days}`}>
-                    <View style={styles.msLeft}>
-                      <View style={[styles.msIconContainer, unlocked ? styles.msIconUnlocked : styles.msIconLocked]}>
-                        {unlocked ? <IconComponent size={18} color={Colors.white} /> : <Lock size={14} color={Colors.textMuted} />}
-                      </View>
-                      {index < arr.length - 1 && (
-                        <View style={[styles.msConnector, unlocked && styles.msConnectorUnlocked]} />
-                      )}
-                    </View>
-                    <View style={styles.msRight}>
-                      <View style={styles.msHeader}>
-                        <Text style={[styles.msTitle, !unlocked && styles.msTextLocked]}>{milestone.title}</Text>
-                        <Text style={[styles.msDays, unlocked && styles.msDaysUnlocked]}>{milestone.days}d</Text>
-                      </View>
-                      <Text style={[styles.msDesc, !unlocked && styles.msTextLocked]} numberOfLines={2}>
-                        {milestone.description}
-                      </Text>
-                      {!unlocked && (
-                        <View style={styles.msProgressContainer}>
-                          <View style={styles.msProgressBg}>
-                            <View style={[styles.msProgressFill, { width: `${progress * 100}%` }]} />
-                          </View>
-                        </View>
-                      )}
-                      {unlocked && <Text style={styles.msUnlockedText}>Achieved</Text>}
-                    </View>
-                  </View>
-                );
-              })}
-
-              <Pressable
-                style={styles.msToggle}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setMilestonesExpanded(!milestonesExpanded);
-                }}
-                testID="progress-toggle-milestones"
-              >
-                {milestonesExpanded ? (
-                  <ChevronUp size={16} color={Colors.primary} />
-                ) : (
-                  <ChevronDown size={16} color={Colors.primary} />
-                )}
-                <Text style={styles.msToggleText}>
-                  {milestonesExpanded ? 'Show Less' : `Show All ${MILESTONE_DATA.length} Milestones`}
-                </Text>
-              </Pressable>
+              <Text style={styles.milestonesSubtitle}>
+                {unlockedCount}/{MILESTONE_DATA.length} unlocked
+                {nextMilestone ? ` · ${nextMilestone.days - daysSober}d to next` : ''}
+              </Text>
             </View>
 
-            <View style={{ height: 40 }} />
-          </>
+            {(milestonesExpanded ? MILESTONE_DATA : MILESTONE_DATA.slice(0, 4)).map((milestone, index, arr) => {
+              const unlocked = daysSober >= milestone.days;
+              const IconComponent = ICON_MAP[milestone.icon] ?? Star;
+              const progress = unlocked ? 1 : Math.min(daysSober / milestone.days, 1);
+              return (
+                <View key={milestone.days} style={styles.msCard} testID={`progress-milestone-${milestone.days}`}>
+                  <View style={styles.msLeft}>
+                    <View style={[styles.msIconContainer, unlocked ? styles.msIconUnlocked : styles.msIconLocked]}>
+                      {unlocked ? <IconComponent size={18} color={Colors.white} /> : <Lock size={14} color={Colors.textMuted} />}
+                    </View>
+                    {index < arr.length - 1 && (
+                      <View style={[styles.msConnector, unlocked && styles.msConnectorUnlocked]} />
+                    )}
+                  </View>
+                  <View style={styles.msRight}>
+                    <View style={styles.msHeader}>
+                      <Text style={[styles.msTitle, !unlocked && styles.msTextLocked]}>{milestone.title}</Text>
+                      <Text style={[styles.msDays, unlocked && styles.msDaysUnlocked]}>{milestone.days}d</Text>
+                    </View>
+                    <Text style={[styles.msDesc, !unlocked && styles.msTextLocked]} numberOfLines={2}>
+                      {milestone.description}
+                    </Text>
+                    {!unlocked && (
+                      <View style={styles.msProgressContainer}>
+                        <View style={styles.msProgressBg}>
+                          <View style={[styles.msProgressFill, { width: `${progress * 100}%` }]} />
+                        </View>
+                      </View>
+                    )}
+                    {unlocked && <Text style={styles.msUnlockedText}>Achieved</Text>}
+                  </View>
+                </View>
+              );
+            })}
+
+            <Pressable
+              style={styles.msToggle}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setMilestonesExpanded(!milestonesExpanded);
+              }}
+              testID="progress-toggle-milestones"
+            >
+              {milestonesExpanded ? (
+                <ChevronUp size={16} color={Colors.primary} />
+              ) : (
+                <ChevronDown size={16} color={Colors.primary} />
+              )}
+              <Text style={styles.msToggleText}>
+                {milestonesExpanded ? 'Show Less' : `Show All ${MILESTONE_DATA.length} Milestones`}
+              </Text>
+            </Pressable>
+          </View>
         ) : null}
+
+        <Pressable
+          style={({ pressed }) => [
+            earlyStyles.progressTailHeader,
+            pressed && earlyStyles.progressTailHeaderPressed,
+          ]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            setSavingsExpanded((e) => !e);
+          }}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: savingsExpanded }}
+          accessibilityLabel="Savings"
+          testID="progress-savings-toggle"
+        >
+          <View style={earlyStyles.tealHeaderInner}>
+            <View style={earlyStyles.tealHeaderIconWrap}>
+              <Shield size={20} color={Colors.white} />
+            </View>
+            <View style={earlyStyles.tealHeaderTextBlock}>
+              <Text style={earlyStyles.dailyStabilityHeaderTitle}>Savings</Text>
+              <Text style={earlyStyles.tealHeaderSubtitle}>Time and money</Text>
+            </View>
+          </View>
+          {savingsExpanded ? (
+            <ChevronUp size={20} color={Colors.white} />
+          ) : (
+            <ChevronDown size={20} color={Colors.white} />
+          )}
+        </Pressable>
+
+        {savingsExpanded ? (
+          <View style={styles.savingsExpandBody}>
+            <Text style={styles.savingsExpandLine}>
+              <Text style={styles.savingsExpandLabel}>Time: </Text>
+              <Text style={styles.savingsExpandValue}>{savingsToDateLabels.time}</Text>
+            </Text>
+            <Text style={[styles.savingsExpandLine, styles.savingsExpandLineSecond]}>
+              <Text style={styles.savingsExpandLabel}>Money: </Text>
+              <Text style={styles.savingsExpandValue}>{savingsToDateLabels.money}</Text>
+            </Text>
+          </View>
+        ) : null}
+
+        <View style={{ height: 40 }} />
       </View>
 
       <View style={earlyStyles.dailyStabilitySection}>
@@ -1844,6 +1918,30 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: Colors.text,
+  },
+  savingsExpandBody: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  savingsExpandLine: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  savingsExpandLineSecond: {
+    marginTop: 10,
+  },
+  savingsExpandLabel: {
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  savingsExpandValue: {
+    fontWeight: '500' as const,
+    color: Colors.textSecondary,
   },
   milestonesSection: {
     marginTop: 18,

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, Animated, TextInput, Modal } from 'react-native';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
-import { User, Shield, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, BarChart3, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Scale, Gauge, PauseCircle, PlayCircle, Activity } from 'lucide-react-native';
+import { User, Shield, Target, TrendingUp, Bell, BellOff, Lock, Unlock, MessageCircle, ChevronRight, Sparkles, Clock, Heart, AlertTriangle, Sun, Moon as MoonIcon, ShieldAlert, Award, Crown, RotateCcw, Calendar, DollarSign, BookOpen, Check, X, Scale, Gauge, PauseCircle, PlayCircle, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
 import { useUser } from '../../../core/domains/useUser';
@@ -538,26 +538,6 @@ export default function ProfileScreen() {
           <View>
             <Text style={styles.settingLabel}>How to Use Recovery Companion</Text>
             <Text style={styles.settingValue}>Daily flow, scores, and guides</Text>
-          </View>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
-
-      <Pressable
-        style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push('/insights' as any);
-        }}
-        testID="insights-hub-link"
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.settingIcon, { backgroundColor: 'rgba(66,165,245,0.12)' }]}>
-            <BarChart3 size={17} color="#42A5F5" />
-          </View>
-          <View>
-            <Text style={styles.settingLabel}>Growth Insights</Text>
-            <Text style={styles.settingValue}>Recovery and retention insights in one place</Text>
           </View>
         </View>
         <ChevronRight size={16} color={Colors.textMuted} />

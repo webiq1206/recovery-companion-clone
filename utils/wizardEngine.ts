@@ -15,7 +15,6 @@ import {
   getCheckInWindowHint,
   isCheckInPeriodInWindow,
 } from './checkInWindows';
-import { getLocalDateKey } from './checkInDate';
 import type { WizardBehaviorState, ActionHistoryEntry } from '../stores/useWizardBehaviorStore';
 import { getCompletedOnboardingSteps, ONBOARDING_STEP_IDS } from './wizardSteps';
 import type { UserProfile, EmergencyContact, AccountabilityData } from '../types';
@@ -86,6 +85,8 @@ export interface WizardEngineInput {
   currentPeriod: CheckInTimeOfDay;
   /** Wall clock for check-in window logic; should tick periodically in the hook. */
   checkInWindowNow: Date;
+  /** Date key (YYYY-MM-DD local) for guidance completions and daily cap seeding; use 5:00 AM rollover (see `getGuidanceDateKey`). */
+  guidanceDateKey: string;
 
   stabilityScore: number;
   stabilityTrend: 'rising' | 'declining' | 'stable';
@@ -666,11 +667,18 @@ export function stabilizeGuidanceActionOrder(actions: WizardAction[]): WizardAct
   return [...chain, ...rest];
 }
 
+function allGuidanceActionsCompleteExcept(
+  actions: WizardAction[],
+  exceptIds: ReadonlySet<string>,
+): boolean {
+  return actions.every((a) => exceptIds.has(a.id) || a.completed);
+}
+
 /**
  * Collapsed guidance shows this index first: earliest incomplete M/A/E check-in that is
- * inside its window (tappable). If none, earliest incomplete M/A/E that is outside its
- * window (PLEASE WAIT) so evening still surfaces after morning/afternoon are done.
- * Otherwise the first non-check-in row.
+ * inside its window (tappable). If none, a PLEASE WAIT M/A/E row may fill the slot only when
+ * allowed: afternoon only if every other row is complete except evening; evening only if
+ * every other row is complete. Otherwise the first non-check-in row.
  * When `checkInWindowNow` is omitted, locked check-ins are still eligible (legacy).
  */
 export function getGuidanceCollapsedFocusIndex(
@@ -693,7 +701,23 @@ export function getGuidanceCollapsedFocusIndex(
         if (isCheckInPeriodInWindow(period, checkInWindowNow)) {
           return i;
         }
-        firstLockedMaeCheckIn ??= i;
+        // PLEASE WAIT: afternoon only if all other tasks done except evening; evening only if all others done.
+        if (period === 'morning') {
+          firstLockedMaeCheckIn ??= i;
+        } else if (period === 'afternoon') {
+          if (
+            allGuidanceActionsCompleteExcept(
+              actions,
+              new Set(['check-in-afternoon', 'check-in-evening']),
+            )
+          ) {
+            firstLockedMaeCheckIn ??= i;
+          }
+        } else if (period === 'evening') {
+          if (allGuidanceActionsCompleteExcept(actions, new Set(['check-in-evening']))) {
+            firstLockedMaeCheckIn ??= i;
+          }
+        }
         continue;
       }
     }
@@ -765,8 +789,9 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
       : pickRandom(REENTRY_MESSAGES);
 
     const rawActions = buildScoredWizardActions(input);
-    const dateKey = getLocalDateKey(input.checkInWindowNow);
-    const actions = stabilizeGuidanceActionOrder(limitDailyGuidanceActions(rawActions, dateKey));
+    const actions = stabilizeGuidanceActionOrder(
+      limitDailyGuidanceActions(rawActions, input.guidanceDateKey),
+    );
     const incompleteActions = actions.filter((a) => !a.completed);
     const isComplete = incompleteActions.length === 0;
     const primaryAction = resolvePrimaryGuidanceAction(actions, input.checkInWindowNow);
@@ -791,8 +816,9 @@ export function generateWizardPlan(input: WizardEngineInput): WizardPlan {
 
   // Normal mode
   const rawActions = buildScoredWizardActions(input);
-  const dateKey = getLocalDateKey(input.checkInWindowNow);
-  const actions = stabilizeGuidanceActionOrder(limitDailyGuidanceActions(rawActions, dateKey));
+  const actions = stabilizeGuidanceActionOrder(
+    limitDailyGuidanceActions(rawActions, input.guidanceDateKey),
+  );
   const contextHint = buildContextHint(input);
   const encouragement = buildEncouragement(input);
   const riskWarnings = buildRiskWarnings(input);

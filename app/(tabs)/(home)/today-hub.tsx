@@ -18,7 +18,6 @@ import {
   ChevronRight,
   ChevronUp,
   Info,
-  Sparkles,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
@@ -30,6 +29,7 @@ import { HomeLoadingSkeleton } from '../../../components/LoadingSkeleton';
 import { getStrictRedirectTarget, resolveCanonicalRoute } from '../../../utils/legacyRoutes';
 import { isCheckInPeriodInWindow } from '../../../utils/checkInWindows';
 import { getGuidanceCollapsedFocusIndex, type WizardAction } from '../../../utils/wizardEngine';
+import { formatGuidanceDateKeyUs, getGuidanceDateKey } from '../../../utils/checkInDate';
 import { TabHeaderActions } from '../../../components/TabHeaderActions';
 import { ProfileHeaderSummaryCard } from '../../../components/ProfileHeaderSummaryCard';
 
@@ -127,13 +127,15 @@ export default function TodayHubScreen() {
   }, [guidanceActionIdsKey]);
 
   const dateTimeLabel = useMemo(() => {
-    const now = new Date();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const yyyy = String(now.getFullYear());
-    const time = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-    return `${mm}/${dd}/${yyyy} · ${time}`;
-  }, [checkInWindowTick]);
+    const wallClock = new Date();
+    const guidanceKey = getGuidanceDateKey(checkInNow);
+    const datePart = formatGuidanceDateKeyUs(guidanceKey);
+    const time = wallClock.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    return `${datePart} · ${time}`;
+  }, [checkInNow, checkInWindowTick]);
 
   const dailyGuidance = wizardPlan.dailyGuidance;
   const guidanceActions = dailyGuidance.actions;
@@ -268,23 +270,6 @@ export default function TodayHubScreen() {
               <Text style={styles.completionMessage}>
                 {dailyGuidance.completionMessage}
               </Text>
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/progress' as any);
-                }}
-              >
-                <Text style={styles.completionLink}>See your progress</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/journal' as any);
-                }}
-                testID="todayhub-completion-journal-link"
-              >
-                <Text style={styles.completionLink}>Open journal — past entries & new entry</Text>
-              </Pressable>
             </View>
           </View>
         )}
@@ -304,9 +289,14 @@ export default function TodayHubScreen() {
         {guidanceActions.length > 0 && (
           <>
             <View style={styles.guidanceTitleRow}>
-              <Text style={styles.planTitle}>
-                {dailyGuidance.isReentryMode ? "Today's plan" : "Today's guidance"}
-              </Text>
+              <View style={styles.guidanceTitleLeft}>
+                <Text style={styles.planTitle}>
+                  {dailyGuidance.isReentryMode ? "Today's plan" : "Today's guidance"}
+                </Text>
+                {!dailyGuidance.isReentryMode && dailyGuidance.isComplete ? (
+                  <Text style={styles.guidanceAllComplete}>All Complete</Text>
+                ) : null}
+              </View>
               {guidanceMultiple ? (
                 <Pressable
                   style={({ pressed }) => [
@@ -422,6 +412,7 @@ export default function TodayHubScreen() {
             </View>
             <View style={styles.relapsePlanTextWrap}>
               <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
+              <Text style={styles.relapsePlanRiskLine}>Your risk level is elevated right now.</Text>
               <Text style={styles.relapsePlanSubtitle}>
                 Review warning signs, triggers, and coping strategies while risk is
                 high.
@@ -430,31 +421,6 @@ export default function TodayHubScreen() {
             <ArrowRight size={20} color={Colors.danger} />
           </Pressable>
         )}
-
-        {/* Dev-only: full onboarding walkthrough from the hero screen */}
-        {__DEV__ ? (
-          <View style={styles.devOnboardingBlock}>
-            <Text style={styles.devOnboardingLabel}>Testing</Text>
-            <Pressable
-              style={({ pressed }) => [
-                styles.devOnboardingBtn,
-                pressed && styles.pressed,
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push({
-                  pathname: '/onboarding',
-                  params: { devFullOnboarding: '1' },
-                } as any);
-              }}
-              testID="todayhub-dev-onboarding"
-            >
-              <Sparkles size={18} color={Colors.primary} />
-              <Text style={styles.devOnboardingBtnText}>Open onboarding</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} />
-            </Pressable>
-          </View>
-        ) : null}
       </ScreenScrollView>
     </View>
   );
@@ -504,33 +470,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 4,
-  },
-  devOnboardingBlock: {
-    marginTop: 28,
-    gap: 8,
-  },
-  devOnboardingLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textMuted,
-    letterSpacing: 0.6,
-  },
-  devOnboardingBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  devOnboardingBtnText: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.text,
   },
   contextHintCard: {
     flexDirection: 'row',
@@ -602,11 +541,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     lineHeight: 22,
   },
-  completionLink: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
   primaryActionCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -647,12 +581,24 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 12,
   },
+  guidanceTitleLeft: {
+    flex: 1,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    flexWrap: 'wrap' as const,
+    gap: 8,
+    minWidth: 0,
+  },
   planTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: Colors.text,
-    flex: 1,
     flexShrink: 1,
+  },
+  guidanceAllComplete: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.primary,
   },
   guidanceTitleChevronHit: {
     padding: 6,
@@ -774,10 +720,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.danger,
   },
+  relapsePlanRiskLine: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginTop: 6,
+    lineHeight: 18,
+  },
   relapsePlanSubtitle: {
     fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 2,
+    marginTop: 6,
   },
   toastCard: {
     flexDirection: 'row',

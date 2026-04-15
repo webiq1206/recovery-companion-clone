@@ -9,6 +9,7 @@ import { useUser } from '../../../core/domains/useUser';
 import { usePledges } from '../../../core/domains/usePledges';
 import { MOOD_EMOJIS, MOOD_LABELS } from '../../../constants/milestones';
 import { Pledge } from '../../../types';
+import { getGuidanceDateKey } from '../../../utils/checkInDate';
 
 export default function PledgesScreen() {
   const { profile } = useUser();
@@ -30,10 +31,10 @@ export default function PledgesScreen() {
   const handleTakePledge = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    const today = new Date().toISOString().split('T')[0];
+    const pledgeDay = getGuidanceDateKey(new Date());
     const newPledge: Pledge = {
       id: Date.now().toString(),
-      date: today,
+      date: pledgeDay,
       completed: true,
       feeling: selectedMood,
       note: note.trim(),

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
-import { BarChart3, Activity } from 'lucide-react-native';
+import { BarChart3, Activity, Sparkles } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
 
@@ -41,6 +41,34 @@ export default function AdvancedAnalyticsScreen() {
             router.push('/recovery-insights-explained' as any);
           }}
           testID="advanced-analytics-recovery-insights-explained-link"
+        >
+          <Text style={styles.explainedBtnText}>Explained</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.cardShell} testID="advanced-analytics-growth-insights-card">
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          onPress={() => router.push('/insights' as any)}
+          testID="advanced-analytics-growth-insights-link"
+        >
+          <View style={[styles.iconCircle, { backgroundColor: Colors.success + '18' }]}>
+            <Sparkles size={18} color={Colors.success} />
+          </View>
+          <View style={styles.cardBody}>
+            <Text style={styles.cardTitle}>Growth Insights</Text>
+            <Text style={styles.cardSubtitle}>
+              Mood, cravings, and growth scores from your check-ins and daily engagement.
+            </Text>
+          </View>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.explainedBtn, pressed && { opacity: 0.85 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/insights-explained' as any);
+          }}
+          testID="advanced-analytics-growth-insights-explained-link"
         >
           <Text style={styles.explainedBtnText}>Explained</Text>
         </Pressable>

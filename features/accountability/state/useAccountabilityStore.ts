@@ -4,6 +4,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 
 import type { AccountabilityData, AccountabilityPartner, CommitmentContract, DriftAlert } from '../../../types';
 import { DEFAULT_ACCOUNTABILITY, STORAGE_KEYS, loadStorageItem, saveStorageItem } from '../../../core/persistence';
+import { getGuidanceDateKey } from '../../../utils/checkInDate';
 import { createSelectors } from '../../../stores/zustand/createSelectors';
 
 type AccountabilityState = {
@@ -65,7 +66,7 @@ const baseUseAccountabilityStore = create<AccountabilityState>()(
 
     checkInContract: (contractId, honored, note) => {
       const d = get().accountabilityData;
-      const today = new Date().toISOString().split('T')[0];
+      const today = getGuidanceDateKey(new Date());
       const updatedContracts = d.contracts.map((c) => {
         if (c.id !== contractId) return c;
         const checkIn = {

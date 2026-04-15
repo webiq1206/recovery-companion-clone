@@ -458,7 +458,7 @@ export default function ConnectionScreen() {
       <View style={styles.peerHeader}>
         <View style={styles.peerSafeNotice}>
           <Heart size={16} color="#E8917A" />
-          <Text style={styles.peerSafeText}>Small, safe spaces. No overwhelm.</Text>
+          <Text style={styles.peerSafeText}>Small, safe spaces.</Text>
         </View>
       </View>
       <Pressable
