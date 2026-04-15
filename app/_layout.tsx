@@ -76,7 +76,6 @@ function RootLayoutNav() {
         <Stack.Screen name="rebuild" options={{ presentation: 'modal', animation: modalAnimation }} />
         <Stack.Screen name="checkin" options={{ title: 'Daily Check-In', animation: modalAnimation }} />
         <Stack.Screen name="emergency" options={{ headerShown: false, presentation: 'fullScreenModal', animation: fadeAnimation }} />
-        <Stack.Screen name="companion-chat" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
         <Stack.Screen name="recovery-rooms" options={{ title: 'Recovery Rooms' }} />
         <Stack.Screen name="room-session" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
         <Stack.Screen name="premium-upgrade" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation }} />
@@ -91,6 +90,7 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen name="how-to-use" options={{ title: 'How to Use Recovery Companion', animation: modalAnimation }} />
+        <Stack.Screen name="why-stability-important" options={{ title: 'Why is Stability Important?', animation: modalAnimation }} />
         <Stack.Screen name="relapse-recovery" options={{ title: 'Log a Setback', animation: defaultAnimation }} />
         <Stack.Screen name="relapse-detection" options={{ title: 'Risk Warning', animation: defaultAnimation }} />
         <Stack.Screen name="provider-portal" options={{ title: 'Provider Portal', animation: defaultAnimation }} />

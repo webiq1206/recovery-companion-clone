@@ -13,7 +13,7 @@ const SHAKE_COOLDOWN_MS = 2000;
  * Listens for device shake on native and opens crisis mode. No-op on web.
  * Mount once at app root (e.g. in _layout) so it works from anywhere.
  *
- * Disabled in Expo Go: that host already maps shake to the Expo developer menu, which cannot
+ * Disabled in Expo Go: Expo Go already maps shake to the Expo developer menu, which cannot
  * be turned off from JS; we avoid also navigating to crisis on the same gesture.
  */
 export function useShakeToCrisis() {

@@ -7,23 +7,36 @@ import { crisisStyles, CRISIS_COLORS } from './styles';
 export function CrisisCompanionBar(props: {
   companionFade: Animated.Value;
   message: string;
-  onPress: () => void;
+  /** When omitted, the bar is informational only (no link affordance). */
+  onPress?: () => void;
 }) {
   const { companionFade, message, onPress } = props;
 
+  const inner = (
+    <>
+      <View style={crisisStyles.companionBarDot} />
+      <Text style={crisisStyles.companionBarText} numberOfLines={2}>
+        {message}
+      </Text>
+      {onPress ? <ChevronRight size={16} color={CRISIS_COLORS.MUTED} /> : null}
+    </>
+  );
+
   return (
     <Animated.View style={[crisisStyles.companionBar, { opacity: companionFade }]}>
-      <Pressable
-        style={({ pressed }) => [crisisStyles.companionBarInner, pressed && { opacity: 0.85 }]}
-        onPress={onPress}
-        testID="crisis-companion-btn"
-      >
-        <View style={crisisStyles.companionBarDot} />
-        <Text style={crisisStyles.companionBarText} numberOfLines={2}>
-          {message}
-        </Text>
-        <ChevronRight size={16} color={CRISIS_COLORS.MUTED} />
-      </Pressable>
+      {onPress ? (
+        <Pressable
+          style={({ pressed }) => [crisisStyles.companionBarInner, pressed && { opacity: 0.85 }]}
+          onPress={onPress}
+          testID="crisis-companion-btn"
+        >
+          {inner}
+        </Pressable>
+      ) : (
+        <View style={crisisStyles.companionBarInner} testID="crisis-companion-message">
+          {inner}
+        </View>
+      )}
     </Animated.View>
   );
 }

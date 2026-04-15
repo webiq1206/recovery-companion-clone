@@ -86,7 +86,7 @@ export default function RoomSessionScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     reportMessage(roomId, reportingMessageId, reportReason, reportDescription);
     setShowReportModal(false);
-    Alert.alert('Report Submitted', 'Thank you. A moderator will review this message.');
+    Alert.alert('Report Submitted', 'Thank you. Your report has been recorded.');
   }, [roomId, reportingMessageId, reportReason, reportDescription, reportMessage]);
 
   const handleLeaveRoom = useCallback(() => {
@@ -149,18 +149,9 @@ export default function RoomSessionScreen() {
       <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
         {!isOwn && (
           <View style={styles.messageAuthorRow}>
-            <Text style={[
-              styles.messageAuthor,
-              item.isModeratorMessage && styles.messageAuthorMod,
-            ]}>
+            <Text style={styles.messageAuthor}>
               {item.isAnonymous ? 'Anonymous' : item.authorName}
             </Text>
-            {item.isModeratorMessage && (
-              <View style={styles.modBadge}>
-                <Shield size={9} color={Colors.primary} />
-                <Text style={styles.modBadgeText}>Mod</Text>
-              </View>
-            )}
           </View>
         )}
         <Pressable
@@ -205,7 +196,7 @@ export default function RoomSessionScreen() {
         <View style={styles.sessionBannerInfo}>
           <Text style={styles.sessionBannerTitle}>{activeSession.title}</Text>
           <Text style={styles.sessionBannerMeta}>
-            Led by {activeSession.facilitatorName} · {activeSession.durationMinutes}min
+            {activeSession.durationMinutes} min session
           </Text>
         </View>
       </View>
@@ -224,11 +215,6 @@ export default function RoomSessionScreen() {
           <Users size={18} color={Colors.primary} />
           <Text style={styles.infoStatValue}>{room.memberCount}/{room.maxMembers}</Text>
           <Text style={styles.infoStatLabel}>Members</Text>
-        </View>
-        <View style={styles.infoStat}>
-          <Shield size={18} color={Colors.primary} />
-          <Text style={styles.infoStatValue}>{room.moderatorName}</Text>
-          <Text style={styles.infoStatLabel}>Moderator</Text>
         </View>
         <View style={styles.infoStat}>
           <MessageSquare size={18} color={Colors.primary} />
@@ -252,9 +238,9 @@ export default function RoomSessionScreen() {
         <View style={styles.safetyCard}>
           <Shield size={20} color="#7DC9A0" />
           <View style={styles.safetyInfo}>
-            <Text style={styles.safetyTitle}>Moderated Space</Text>
+            <Text style={styles.safetyTitle}>Reporting</Text>
             <Text style={styles.safetyDesc}>
-              This room is actively moderated. Long press any message to report it. All reports are reviewed.
+              Long press any message to report content that feels unsafe or breaks group guidelines.
             </Text>
           </View>
         </View>
@@ -309,12 +295,7 @@ export default function RoomSessionScreen() {
               <Clock size={12} color={Colors.textMuted} />
               <Text style={styles.scheduleCardMetaText}>
                 {formatSessionTime(session.scheduledAt)} · {session.durationMinutes}min
-              </Text>
-            </View>
-            <View style={styles.scheduleCardMeta}>
-              <Shield size={12} color={Colors.textMuted} />
-              <Text style={styles.scheduleCardMetaText}>
-                Facilitated by {session.facilitatorName}
+                {session.attendeeCount > 0 ? ` · ${session.attendeeCount} attending` : ''}
               </Text>
             </View>
           </View>
@@ -430,7 +411,7 @@ export default function RoomSessionScreen() {
               <View style={styles.chatWelcome}>
                 <Shield size={20} color={Colors.primary} />
                 <Text style={styles.chatWelcomeText}>
-                  Welcome to {room.name}. This is a safe, moderated space. Be kind.
+                  Welcome to {room.name}. This is a supportive space. Be kind.
                 </Text>
                 <Pressable onPress={() => setShowRules(true)}>
                   <Text style={styles.chatWelcomeLink}>View guidelines</Text>
@@ -734,23 +715,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
-  },
-  messageAuthorMod: {
-    color: Colors.primary,
-  },
-  modBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(46, 196, 182, 0.12)',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  modBadgeText: {
-    fontSize: 9,
-    fontWeight: '700' as const,
-    color: Colors.primary,
   },
   messageBubble: {
     borderRadius: 18,

@@ -441,7 +441,6 @@ export interface RecoveryRoom {
   maxMembers: number;
   isJoined: boolean;
   isAnonymous: boolean;
-  moderatorName: string;
   createdAt: string;
   lastActivity: string;
   scheduledSessions: ScheduledSession[];
@@ -470,7 +469,6 @@ export interface ScheduledSession {
   description: string;
   scheduledAt: string;
   durationMinutes: number;
-  facilitatorName: string;
   isActive: boolean;
   attendeeCount: number;
 }
@@ -484,7 +482,6 @@ export interface RecoveryRoomMessage {
   timestamp: string;
   isOwn: boolean;
   isAnonymous: boolean;
-  isModeratorMessage: boolean;
   isReported: boolean;
   reportReason: string;
 }
@@ -501,7 +498,6 @@ export type PremiumFeature =
   | 'predictive_engine'
   | 'advanced_analytics'
   | 'deep_exercises'
-  | 'ai_companion'
   | 'rebuild_programs'
   | 'therapist_export'
   | 'recovery_rooms'
@@ -571,7 +567,7 @@ export interface NotificationPreferences {
 
 export type RiskTrend = 'rising' | 'stable' | 'falling';
 export type AlertSeverity = 'info' | 'caution' | 'warning' | 'critical';
-export type InterventionType = 'breathing' | 'grounding' | 'journaling' | 'connection' | 'crisis' | 'checkin' | 'companion' | 'isolation_outreach';
+export type InterventionType = 'breathing' | 'grounding' | 'journaling' | 'connection' | 'crisis' | 'checkin' | 'isolation_outreach';
 
 export type RiskCategory = 'low' | 'guarded' | 'elevated' | 'high';
 

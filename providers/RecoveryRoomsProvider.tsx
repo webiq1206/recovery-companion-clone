@@ -48,7 +48,6 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
     maxMembers: 8,
     isJoined: false,
     isAnonymous: false,
-    moderatorName: 'Gentle Oak',
     createdAt: '2026-02-10T06:00:00.000Z',
     lastActivity: '2026-02-16T07:45:00.000Z',
     scheduledSessions: [
@@ -59,7 +58,6 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
         description: 'Start the day by sharing one thing you are grateful for.',
         scheduledAt: '2026-02-17T07:00:00.000Z',
         durationMinutes: 30,
-        facilitatorName: 'Gentle Oak',
         isActive: false,
         attendeeCount: 0,
       },
@@ -70,22 +68,21 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
         description: 'Set your recovery intention for the day ahead.',
         scheduledAt: '2026-02-18T07:00:00.000Z',
         durationMinutes: 25,
-        facilitatorName: 'Gentle Oak',
         isActive: false,
         attendeeCount: 0,
       },
     ],
     messages: [
-      { id: 'rrm_1', roomId: 'rr_1', authorName: 'Quiet River', authorId: 'u_qr', content: 'Good morning everyone. Day 62 and feeling stronger.', timestamp: '2026-02-16T07:15:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: false, isReported: false, reportReason: '' },
-      { id: 'rrm_2', roomId: 'rr_1', authorName: 'Warm Breeze', authorId: 'u_wb', content: 'Morning! Had some tough dreams last night but I am here. Showing up matters.', timestamp: '2026-02-16T07:22:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: false, isReported: false, reportReason: '' },
-      { id: 'rrm_3', roomId: 'rr_1', authorName: 'Gentle Oak', authorId: 'u_go', content: 'Showing up IS the win. Proud of both of you. Let us carry this energy forward today.', timestamp: '2026-02-16T07:30:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: true, isReported: false, reportReason: '' },
+      { id: 'rrm_1', roomId: 'rr_1', authorName: 'Quiet River', authorId: 'u_qr', content: 'Good morning everyone. Day 62 and feeling stronger.', timestamp: '2026-02-16T07:15:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_2', roomId: 'rr_1', authorName: 'Warm Breeze', authorId: 'u_wb', content: 'Morning! Had some tough dreams last night but I am here. Showing up matters.', timestamp: '2026-02-16T07:22:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_3', roomId: 'rr_1', authorName: 'Gentle Oak', authorId: 'u_go', content: 'Showing up IS the win. Proud of both of you. Let us carry this energy forward today.', timestamp: '2026-02-16T07:30:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Be kind and respectful at all times',
       'What is shared here stays here',
       'No advice unless asked - just listen and support',
       'Use "I" statements when sharing',
-      'Respect the facilitator and group flow',
+      'Respect the group flow',
     ],
     isLive: false,
     currentSessionId: null,
@@ -99,7 +96,6 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
     maxMembers: 8,
     isJoined: false,
     isAnonymous: false,
-    moderatorName: 'Safe Harbor',
     createdAt: '2026-02-08T10:00:00.000Z',
     lastActivity: '2026-02-16T06:20:00.000Z',
     scheduledSessions: [
@@ -110,15 +106,14 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
         description: 'Learn to ride the wave of cravings without giving in.',
         scheduledAt: '2026-02-17T18:00:00.000Z',
         durationMinutes: 45,
-        facilitatorName: 'Safe Harbor',
         isActive: false,
         attendeeCount: 0,
       },
     ],
     messages: [
-      { id: 'rrm_4', roomId: 'rr_2', authorName: 'Anonymous', authorId: 'u_anon1', content: 'Really struggling right now. The pull is strong tonight.', timestamp: '2026-02-16T05:50:00.000Z', isOwn: false, isAnonymous: true, isModeratorMessage: false, isReported: false, reportReason: '' },
-      { id: 'rrm_5', roomId: 'rr_2', authorName: 'Safe Harbor', authorId: 'u_sh', content: 'You are here instead of there. That is already a victory. Breathe with us. 4 in, 7 hold, 8 out.', timestamp: '2026-02-16T05:52:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: true, isReported: false, reportReason: '' },
-      { id: 'rrm_6', roomId: 'rr_2', authorName: 'Still Water', authorId: 'u_sw', content: 'I was where you are 3 weeks ago. It passed. It always passes. Stay with us.', timestamp: '2026-02-16T05:55:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: false, isReported: false, reportReason: '' },
+      { id: 'rrm_4', roomId: 'rr_2', authorName: 'Anonymous', authorId: 'u_anon1', content: 'Really struggling right now. The pull is strong tonight.', timestamp: '2026-02-16T05:50:00.000Z', isOwn: false, isAnonymous: true, isReported: false, reportReason: '' },
+      { id: 'rrm_5', roomId: 'rr_2', authorName: 'Safe Harbor', authorId: 'u_sh', content: 'You are here instead of there. That is already a victory. Breathe with us. 4 in, 7 hold, 8 out.', timestamp: '2026-02-16T05:52:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_6', roomId: 'rr_2', authorName: 'Still Water', authorId: 'u_sw', content: 'I was where you are 3 weeks ago. It passed. It always passes. Stay with us.', timestamp: '2026-02-16T05:55:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'This is a crisis-safe space - be gentle',
@@ -139,7 +134,6 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
     maxMembers: 10,
     isJoined: false,
     isAnonymous: false,
-    moderatorName: 'Deep Roots',
     createdAt: '2026-02-09T14:00:00.000Z',
     lastActivity: '2026-02-15T21:00:00.000Z',
     scheduledSessions: [
@@ -150,7 +144,6 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
         description: 'Release the tension of the day with a guided body scan meditation.',
         scheduledAt: '2026-02-16T21:00:00.000Z',
         durationMinutes: 20,
-        facilitatorName: 'Deep Roots',
         isActive: true,
         attendeeCount: 4,
       },
@@ -161,18 +154,17 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
         description: 'Simple box breathing exercise. No experience needed.',
         scheduledAt: '2026-02-18T12:00:00.000Z',
         durationMinutes: 15,
-        facilitatorName: 'Deep Roots',
         isActive: false,
         attendeeCount: 0,
       },
     ],
     messages: [
-      { id: 'rrm_7', roomId: 'rr_3', authorName: 'Deep Roots', authorId: 'u_dr', content: 'Welcome to tonight\'s session. Let us begin by finding a comfortable position.', timestamp: '2026-02-15T21:00:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: true, isReported: false, reportReason: '' },
-      { id: 'rrm_8', roomId: 'rr_3', authorName: 'Open Sky', authorId: 'u_os', content: 'This is my favorite part of the day. Thank you for holding this space.', timestamp: '2026-02-15T21:02:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: false, isReported: false, reportReason: '' },
+      { id: 'rrm_7', roomId: 'rr_3', authorName: 'Deep Roots', authorId: 'u_dr', content: 'Welcome to tonight\'s session. Let us begin by finding a comfortable position.', timestamp: '2026-02-15T21:00:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_8', roomId: 'rr_3', authorName: 'Open Sky', authorId: 'u_os', content: 'This is my favorite part of the day. Thank you for holding this space.', timestamp: '2026-02-15T21:02:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Silence is welcome - you do not need to speak',
-      'Follow the facilitator\'s guidance during sessions',
+      'During exercises, follow the session structure until the reflection window',
       'Share reflections after, not during, exercises',
       'Be patient with yourself and others',
     ],
@@ -188,7 +180,6 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
     maxMembers: 6,
     isJoined: false,
     isAnonymous: false,
-    moderatorName: 'Bright Path',
     createdAt: '2026-02-12T12:00:00.000Z',
     lastActivity: '2026-02-16T04:30:00.000Z',
     scheduledSessions: [
@@ -199,15 +190,14 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
         description: 'Introductions and sharing what brought you here. Completely optional to speak.',
         scheduledAt: '2026-02-17T19:00:00.000Z',
         durationMinutes: 40,
-        facilitatorName: 'Bright Path',
         isActive: false,
         attendeeCount: 0,
       },
     ],
     messages: [
-      { id: 'rrm_9', roomId: 'rr_4', authorName: 'Anonymous', authorId: 'u_anon2', content: 'Day 5. I am scared but I am trying.', timestamp: '2026-02-16T04:10:00.000Z', isOwn: false, isAnonymous: true, isModeratorMessage: false, isReported: false, reportReason: '' },
-      { id: 'rrm_10', roomId: 'rr_4', authorName: 'Bright Path', authorId: 'u_bp', content: 'Day 5 is huge. Fear is normal. You are doing something incredibly brave right now.', timestamp: '2026-02-16T04:15:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: true, isReported: false, reportReason: '' },
-      { id: 'rrm_11', roomId: 'rr_4', authorName: 'Rising Sun', authorId: 'u_rs', content: 'I remember day 5. I am on day 28 now. It is so worth it. Keep going.', timestamp: '2026-02-16T04:20:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: false, isReported: false, reportReason: '' },
+      { id: 'rrm_9', roomId: 'rr_4', authorName: 'Anonymous', authorId: 'u_anon2', content: 'Day 5. I am scared but I am trying.', timestamp: '2026-02-16T04:10:00.000Z', isOwn: false, isAnonymous: true, isReported: false, reportReason: '' },
+      { id: 'rrm_10', roomId: 'rr_4', authorName: 'Bright Path', authorId: 'u_bp', content: 'Day 5 is huge. Fear is normal. You are doing something incredibly brave right now.', timestamp: '2026-02-16T04:15:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_11', roomId: 'rr_4', authorName: 'Rising Sun', authorId: 'u_rs', content: 'I remember day 5. I am on day 28 now. It is so worth it. Keep going.', timestamp: '2026-02-16T04:20:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Zero judgment - everyone starts somewhere',
@@ -228,7 +218,6 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
     maxMembers: 8,
     isJoined: false,
     isAnonymous: false,
-    moderatorName: 'Kind Heart',
     createdAt: '2026-02-11T16:00:00.000Z',
     lastActivity: '2026-02-15T20:00:00.000Z',
     scheduledSessions: [
@@ -239,14 +228,13 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
         description: 'Learning to set and maintain boundaries with loved ones.',
         scheduledAt: '2026-02-18T19:00:00.000Z',
         durationMinutes: 35,
-        facilitatorName: 'Kind Heart',
         isActive: false,
         attendeeCount: 0,
       },
     ],
     messages: [
-      { id: 'rrm_12', roomId: 'rr_5', authorName: 'Kind Heart', authorId: 'u_kh', content: 'Tonight\'s theme: What does rebuilding trust look like for you?', timestamp: '2026-02-15T19:30:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: true, isReported: false, reportReason: '' },
-      { id: 'rrm_13', roomId: 'rr_5', authorName: 'Golden Leaf', authorId: 'u_gl', content: 'For me it is showing up consistently. Small promises kept. That is how trust comes back.', timestamp: '2026-02-15T19:35:00.000Z', isOwn: false, isAnonymous: false, isModeratorMessage: false, isReported: false, reportReason: '' },
+      { id: 'rrm_12', roomId: 'rr_5', authorName: 'Kind Heart', authorId: 'u_kh', content: 'Tonight\'s theme: What does rebuilding trust look like for you?', timestamp: '2026-02-15T19:30:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_13', roomId: 'rr_5', authorName: 'Golden Leaf', authorId: 'u_gl', content: 'For me it is showing up consistently. Small promises kept. That is how trust comes back.', timestamp: '2026-02-15T19:35:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Respect everyone\'s relationships - no unsolicited opinions',
@@ -269,6 +257,80 @@ const SUPPORT_RESPONSES = [
   'I felt something similar recently. You are seen here.',
   'One breath at a time. You are doing great.',
 ];
+
+/** Removes "facilitator" wording from guideline strings (including legacy persisted rules). */
+function sanitizeRoomGuideline(rule: string): string {
+  let s = rule;
+  s = s.replace(/Respect the facilitator and group flow/gi, 'Respect the group flow');
+  s = s.replace(/Follow the facilitator's guidance during sessions/gi, 'During exercises, follow the session structure until the reflection window');
+  s = s.replace(/Follow the facilitator\u2019s guidance during sessions/gi, 'During exercises, follow the session structure until the reflection window');
+  s = s.replace(/\bfacilitators\b/gi, 'groups');
+  s = s.replace(/\bfacilitator's\b/gi, "group's");
+  s = s.replace(/\bfacilitator\u2019s\b/gi, "group's");
+  s = s.replace(/\bfacilitator\b/gi, 'group');
+  s = s.replace(/\s{2,}/g, ' ').replace(/\s+,/g, ',').trim();
+  return s;
+}
+
+for (const room of SAMPLE_ROOMS) {
+  room.rules = room.rules.map(sanitizeRoomGuideline);
+}
+
+/** Normalizes recovery room objects loaded from AsyncStorage (supports prior storage shapes). */
+function migrateRecoveryRoomsFromStorage(data: unknown): RecoveryRoom[] {
+  if (!Array.isArray(data)) return SAMPLE_ROOMS;
+  return data.map((entry: unknown) => {
+    const r = entry as Record<string, unknown>;
+    const rawMessages = Array.isArray(r.messages) ? r.messages : [];
+    const messages: RecoveryRoomMessage[] = rawMessages.map((m: unknown) => {
+      const msg = m as Record<string, unknown>;
+      return {
+        id: String(msg.id ?? ''),
+        roomId: String(msg.roomId ?? ''),
+        authorName: String(msg.authorName ?? ''),
+        authorId: String(msg.authorId ?? ''),
+        content: String(msg.content ?? ''),
+        timestamp: String(msg.timestamp ?? ''),
+        isOwn: Boolean(msg.isOwn),
+        isAnonymous: Boolean(msg.isAnonymous),
+        isReported: Boolean(msg.isReported),
+        reportReason: String(msg.reportReason ?? ''),
+      };
+    });
+    const rawSessions = Array.isArray(r.scheduledSessions) ? r.scheduledSessions : [];
+    const scheduledSessions: ScheduledSession[] = rawSessions.map((s: unknown) => {
+      const ss = s as Record<string, unknown>;
+      return {
+        id: String(ss.id ?? ''),
+        roomId: String(ss.roomId ?? ''),
+        title: String(ss.title ?? ''),
+        description: String(ss.description ?? ''),
+        scheduledAt: String(ss.scheduledAt ?? ''),
+        durationMinutes: Number(ss.durationMinutes ?? 0),
+        isActive: Boolean(ss.isActive),
+        attendeeCount: Number(ss.attendeeCount ?? 0),
+      };
+    });
+    const rules = (Array.isArray(r.rules) ? r.rules.map((x) => String(x)) : []).map(sanitizeRoomGuideline);
+    return {
+      id: String(r.id ?? ''),
+      name: String(r.name ?? ''),
+      description: String(r.description ?? ''),
+      topic: (r.topic ?? 'general') as RecoveryRoomTopic,
+      memberCount: Number(r.memberCount ?? 0),
+      maxMembers: Number(r.maxMembers ?? 0),
+      isJoined: Boolean(r.isJoined),
+      isAnonymous: Boolean(r.isAnonymous),
+      createdAt: String(r.createdAt ?? ''),
+      lastActivity: String(r.lastActivity ?? ''),
+      scheduledSessions,
+      messages,
+      rules,
+      isLive: Boolean(r.isLive),
+      currentSessionId: r.currentSessionId != null ? String(r.currentSessionId) : null,
+    };
+  });
+}
 
 async function loadData<T>(key: string, fallback: T): Promise<T> {
   try {
@@ -297,7 +359,10 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
 
   const roomsQuery = useQuery({
     queryKey: ['recoveryRooms'],
-    queryFn: () => loadData<RecoveryRoom[]>(STORAGE_KEYS.ROOMS, SAMPLE_ROOMS),
+    queryFn: async () => {
+      const raw = await loadData<unknown>(STORAGE_KEYS.ROOMS, SAMPLE_ROOMS);
+      return migrateRecoveryRoomsFromStorage(raw);
+    },
     staleTime: Infinity,
   });
 
@@ -399,7 +464,6 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
       timestamp: new Date().toISOString(),
       isOwn: true,
       isAnonymous: anonymous,
-      isModeratorMessage: false,
       isReported: false,
       reportReason: '',
     };
@@ -421,7 +485,6 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
         timestamp: new Date().toISOString(),
         isOwn: false,
         isAnonymous: false,
-        isModeratorMessage: false,
         isReported: false,
         reportReason: '',
       };

@@ -1,5 +1,5 @@
 /**
- * Expo CLI uses `lan-network` to pick the packager host. On some Windows setups
+ * Expo CLI uses `lan-network` to pick the packager network address. On some Windows setups
  * that call fails and the dev-client QR still embeds http://127.0.0.1:8081.
  * Setting REACT_NATIVE_PACKAGER_HOSTNAME first matches Expo's own override
  * (see @expo/cli UrlCreator.getDefaultHostname).
@@ -27,9 +27,9 @@ function pickLanIPv4() {
 }
 
 /** Reject placeholders like 192.168.x.x from copy-pasted docs. */
-function isValidIPv4(host) {
-  if (!host || /[a-z]/i.test(host)) return false;
-  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host.trim());
+function isValidIPv4(address) {
+  if (!address || /[a-z]/i.test(address)) return false;
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(address.trim());
   if (!m) return false;
   return m.slice(1).every((oct) => {
     const n = Number(oct);
@@ -58,24 +58,24 @@ const env = { ...process.env };
 if (!useTunnel && !useLocalhost) {
   const fromEnv = process.env.REACT_NATIVE_PACKAGER_HOSTNAME?.trim();
   const picked = pickLanIPv4();
-  let host = null;
+  let packagerIpv4 = null;
 
   if (fromEnv && isValidIPv4(fromEnv)) {
-    host = fromEnv;
-    console.log(`[expo] Using REACT_NATIVE_PACKAGER_HOSTNAME from environment: ${host}`);
+    packagerIpv4 = fromEnv;
+    console.log(`[expo] Using REACT_NATIVE_PACKAGER_HOSTNAME from environment: ${packagerIpv4}`);
   } else if (fromEnv) {
     console.warn(
       `[expo] Ignoring invalid REACT_NATIVE_PACKAGER_HOSTNAME="${fromEnv}" — use your PC's real Wi‑Fi IPv4 (e.g. 192.168.1.42), not the literal "x.x" from examples.`,
     );
   }
 
-  if (!host && picked) {
-    host = picked;
-    console.log(`[expo] REACT_NATIVE_PACKAGER_HOSTNAME=${host}`);
+  if (!packagerIpv4 && picked) {
+    packagerIpv4 = picked;
+    console.log(`[expo] REACT_NATIVE_PACKAGER_HOSTNAME=${packagerIpv4}`);
   }
 
-  if (host) {
-    env.REACT_NATIVE_PACKAGER_HOSTNAME = host;
+  if (packagerIpv4) {
+    env.REACT_NATIVE_PACKAGER_HOSTNAME = packagerIpv4;
   } else {
     console.warn(
       "[expo] No usable LAN IPv4; QR may use 127.0.0.1. Run `ipconfig` (Windows) and set REACT_NATIVE_PACKAGER_HOSTNAME, or use: npm run start:dev-client:tunnel",

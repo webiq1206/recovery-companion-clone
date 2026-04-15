@@ -551,9 +551,29 @@ export default function ProfileScreen() {
           <View style={[styles.settingIcon, { backgroundColor: 'rgba(46,196,182,0.12)' }]}>
             <BookOpen size={17} color={Colors.primary} />
           </View>
-          <View>
+          <View style={styles.settingTextColumn}>
             <Text style={styles.settingLabel}>How to Use Recovery Companion</Text>
             <Text style={styles.settingValue}>Daily flow, scores, and guides</Text>
+          </View>
+        </View>
+        <ChevronRight size={16} color={Colors.textMuted} />
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push('/why-stability-important' as any);
+        }}
+        testID="why-stability-important-link"
+      >
+        <View style={styles.settingLeft}>
+          <View style={[styles.settingIcon, { backgroundColor: 'rgba(46,196,182,0.12)' }]}>
+            <Gauge size={17} color={Colors.primary} />
+          </View>
+          <View style={styles.settingTextColumn}>
+            <Text style={styles.settingLabel}>Why is Stability Important?</Text>
+            <Text style={styles.settingValue}>Stability, recovery, and how this app uses your check-ins</Text>
           </View>
         </View>
         <ChevronRight size={16} color={Colors.textMuted} />
@@ -571,7 +591,7 @@ export default function ProfileScreen() {
           <View style={[styles.settingIcon, { backgroundColor: 'rgba(171,71,188,0.12)' }]}>
             <Sparkles size={17} color="#AB47BC" />
           </View>
-          <View>
+          <View style={styles.settingTextColumn}>
             <Text style={styles.settingLabel}>Quick Coping Tools</Text>
             <Text style={styles.settingValue}>Breathing, urge timer, and quick coping tools</Text>
           </View>
@@ -1016,6 +1036,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     flex: 1,
+    minWidth: 0,
+  },
+  /** Lets label/value wrap without overlapping the trailing chevron */
+  settingTextColumn: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 6,
   },
   settingIcon: {
     width: 34,
@@ -1033,6 +1060,7 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: 13,
     color: Colors.textSecondary,
+    flexShrink: 1,
   },
   editRow: {
     backgroundColor: Colors.cardBackground,

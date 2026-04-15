@@ -306,10 +306,6 @@ export default function RecoveryRoomsScreen() {
         <Text style={styles.roomCardDesc} numberOfLines={2}>{item.description}</Text>
 
         <View style={styles.roomCardBottom}>
-          <View style={styles.roomModRow}>
-            <Shield size={12} color={Colors.textMuted} />
-            <Text style={styles.roomModText}>Mod: {item.moderatorName}</Text>
-          </View>
           {item.scheduledSessions.length > 0 && (
             <View style={styles.roomSessionBadge}>
               <Calendar size={11} color={Colors.primary} />
@@ -359,9 +355,13 @@ export default function RecoveryRoomsScreen() {
           <Text style={styles.sessionDesc} numberOfLines={2}>{item.description}</Text>
           <View style={styles.sessionMeta}>
             <Clock size={12} color={Colors.textMuted} />
-            <Text style={styles.sessionMetaText}>{item.durationMinutes}min</Text>
-            <Users size={12} color={Colors.textMuted} />
-            <Text style={styles.sessionMetaText}>{item.facilitatorName}</Text>
+            <Text style={styles.sessionMetaText}>{item.durationMinutes} min</Text>
+            {item.attendeeCount > 0 ? (
+              <>
+                <Users size={12} color={Colors.textMuted} />
+                <Text style={styles.sessionMetaText}>{item.attendeeCount} attending</Text>
+              </>
+            ) : null}
           </View>
         </View>
       </View>
@@ -424,7 +424,7 @@ export default function RecoveryRoomsScreen() {
           </View>
           <Text style={styles.premiumGateTitle}>Recovery Rooms</Text>
           <Text style={styles.premiumGateDesc}>
-            Join moderated small-group sessions with peers on similar recovery journeys. Safe, supportive, and anonymous.
+            Join small-group sessions with peers on similar recovery journeys. Safe, supportive, and anonymous.
           </Text>
           <Pressable
             style={({ pressed }) => [styles.premiumGateBtn, pressed && { opacity: 0.8 }]}
@@ -831,17 +831,8 @@ const styles = StyleSheet.create({
   roomCardBottom: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginBottom: 8,
-  },
-  roomModRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  roomModText: {
-    fontSize: 12,
-    color: Colors.textMuted,
   },
   roomSessionBadge: {
     flexDirection: 'row',

@@ -474,7 +474,7 @@ export default function ConnectionScreen() {
         </View>
         <View style={styles.recoveryRoomsBannerInfo}>
           <Text style={styles.recoveryRoomsBannerTitle}>Recovery Rooms</Text>
-          <Text style={styles.recoveryRoomsBannerDesc}>Structured small groups with live sessions, moderation, and anonymous support</Text>
+          <Text style={styles.recoveryRoomsBannerDesc}>Structured small groups with live sessions and anonymous peer support</Text>
         </View>
         <ChevronRight size={18} color={Colors.textMuted} />
       </Pressable>

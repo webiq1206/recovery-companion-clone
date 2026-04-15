@@ -82,10 +82,6 @@ const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: strin
     title: 'Deep Emotional Exercises',
     description: 'Guided therapeutic exercises for processing emotions and building resilience.',
   },
-  ai_companion: {
-    title: 'AI Adaptive Guidance',
-    description: 'Personalized AI companion that adapts to your recovery stage and emotional state.',
-  },
   rebuild_programs: {
     title: 'Life Rebuild Programs',
     description: 'Structured programs for habit replacement, routine building, and identity reconstruction.',
@@ -96,7 +92,7 @@ const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: strin
   },
   recovery_rooms: {
     title: 'Recovery Rooms',
-    description: 'Join moderated small-group sessions with peers on similar recovery journeys.',
+    description: 'Join small-group sessions with peers on similar recovery journeys.',
   },
   advanced_accountability: {
     title: 'Advanced Accountability',

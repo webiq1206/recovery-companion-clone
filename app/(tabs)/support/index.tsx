@@ -172,6 +172,26 @@ const HELP_CENTERS: HelpCenter[] = [
     available: 'Mon–Thu, 11am–9pm ET; Fri 11am–5pm ET',
     category: 'specialized',
   },
+  {
+    id: '16',
+    name: 'Sex Addicts Anonymous (SAA)',
+    description:
+      'Twelve Step fellowship for anyone who wants to stop addictive sexual behavior. Members share experience, strength, and hope.',
+    phone: '1-713-869-4902',
+    website: 'https://www.saa-recovery.org',
+    available: 'ISO office business hours; meetings worldwide',
+    category: 'specialized',
+  },
+  {
+    id: '17',
+    name: 'Sex and Love Addicts Anonymous (SLAA)',
+    description:
+      'Twelve Step fellowship for recovery from sex and love addiction. The only requirement for membership is a desire to stop living out a pattern of sex and love addiction.',
+    phone: '1-210-828-7900',
+    website: 'https://www.slaafws.org',
+    available: 'Mon–Fri, 9am–5pm CST (Fellowship-Wide Services); meetings worldwide',
+    category: 'specialized',
+  },
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {

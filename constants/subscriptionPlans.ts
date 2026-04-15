@@ -1,7 +1,6 @@
 import type { ComponentType } from 'react';
 import {
   Shield,
-  Brain,
   BarChart3,
   Heart,
   Hammer,
@@ -43,13 +42,6 @@ export type PremiumMarketingCard = {
 
 export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
   {
-    icon: Brain,
-    title: 'AI Adaptive Guidance',
-    desc: 'Personalized companion that learns your patterns and adapts support to your recovery stage.',
-    color: '#7C9AE0',
-    featureKey: 'ai_companion',
-  },
-  {
     icon: Shield,
     title: 'Predictive Relapse Engine',
     desc: 'Early warning system that detects vulnerability patterns before they escalate.',
@@ -80,7 +72,7 @@ export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
   {
     icon: Users,
     title: 'Recovery Rooms',
-    desc: 'Join moderated small-group sessions with peers on similar journeys.',
+    desc: 'Join small-group sessions with peers on similar journeys.',
     color: '#C07CE0',
     featureKey: 'recovery_rooms',
   },
@@ -138,12 +130,6 @@ export const TIER_COMPARISON_ROWS: TierComparisonRow[] = [
     premium: true,
   },
   {
-    id: 'ai_companion',
-    label: 'AI Recovery Companion',
-    freemium: false,
-    premium: true,
-  },
-  {
     id: 'deep_exercises',
     label: 'Deep workbook exercises (therapeutic tracks)',
     freemium: false,
@@ -157,7 +143,7 @@ export const TIER_COMPARISON_ROWS: TierComparisonRow[] = [
   },
   {
     id: 'rooms',
-    label: 'Recovery Rooms (moderated groups)',
+    label: 'Recovery Rooms (small groups)',
     freemium: false,
     premium: true,
   },

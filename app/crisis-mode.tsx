@@ -406,10 +406,6 @@ export default function CrisisModeScreen() {
         <CrisisCompanionBar
           companionFade={companionFade}
           message={companionMessage}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push({ pathname: '/companion-chat' as any, params: { context: 'crisis' } });
-          }}
         />
       )}
 
