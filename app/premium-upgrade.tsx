@@ -44,39 +44,6 @@ interface PlanOption {
   savings?: string;
 }
 
-/** Dev-only placeholder plans when RevenueCat has no offerings; never shown in release (store-review risk). */
-const FALLBACK_PLANS: PlanOption[] = [
-  {
-    id: 'monthly',
-    identifier: '$rc_monthly',
-    label: 'Monthly',
-    price: '$9.99',
-    period: '/month',
-    icon: Clock,
-    productId: 'monthly',
-  },
-  {
-    id: 'yearly',
-    identifier: '$rc_annual',
-    label: 'Yearly',
-    price: '$29.99',
-    period: '/year',
-    badge: 'Best Value',
-    icon: Star,
-    productId: 'yearly',
-    savings: 'Save 75%',
-  },
-  {
-    id: 'lifetime',
-    identifier: '$rc_lifetime',
-    label: 'Lifetime',
-    price: '$79.99',
-    period: 'one-time',
-    icon: InfinityIcon,
-    productId: 'lifetime',
-  },
-];
-
 const FeatureItem = React.memo(({ item, index }: { item: PremiumMarketingCard; index: number }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -208,12 +175,12 @@ export default function PremiumUpgradeScreen() {
 
   const plans: PlanOption[] = React.useMemo(() => {
     if (!offerings || offerings.length === 0) {
-      return __DEV__ ? FALLBACK_PLANS : [];
+      return [];
     }
 
     const currentOffering = offerings[0];
     if (!currentOffering?.packages || currentOffering.packages.length === 0) {
-      return __DEV__ ? FALLBACK_PLANS : [];
+      return [];
     }
 
     return currentOffering.packages.map((pkg) => {
@@ -307,8 +274,8 @@ export default function PremiumUpgradeScreen() {
                 }
                 console.log('Store purchase failed:', error);
                 Alert.alert(
-                  'Purchase unavailable',
-                  'We could not complete this purchase. Check your connection, confirm the product is available in your store account, then try again or use Restore.',
+                  'Purchase did not complete',
+                  'Check your connection and try again, or use Restore if you already subscribed on this store account.',
                 );
               },
             });
@@ -440,12 +407,8 @@ export default function PremiumUpgradeScreen() {
               <Text style={styles.releaseBillingNoticeTitle}>Subscriptions</Text>
               <Text style={styles.releaseBillingNoticeBody}>
                 {Platform.OS === 'web'
-                  ? 'Subscriptions are available in the Recovery Companion mobile app through the App Store or Google Play.'
-                  : !purchasesApiKeyConfigured
-                    ? 'Subscription billing is not configured in this build. Ensure RevenueCat SDK keys are set for the target platform.'
-                    : !storePurchasesReady
-                      ? 'Connecting to the store… If this lasts more than a minute, check your network and that RevenueCat is linked to App Store Connect products.'
-                      : 'No subscription plans were returned. In RevenueCat, attach products to your current offering and ensure they match App Store Connect / Play Console.'}
+                  ? 'Subscribe in the Recovery Companion iOS or Android app with your App Store or Google Play account.'
+                  : 'We could not load subscription options right now. Check your internet connection, wait a moment, and open this screen again.'}
               </Text>
             </View>
           ) : (

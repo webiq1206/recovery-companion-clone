@@ -20,13 +20,10 @@ const RC_USER_ID_KEY = 'rc_user_id';
 export const REVENUECAT_PRO_ENTITLEMENT_ID = 'Recovery Companion Pro';
 
 /**
- * RevenueCat **SDK** public API key (e.g. `appl_…`, `goog_…`, or `test_…` in sandbox).
- * In __DEV__, defaults to the test-store key when set. Release uses platform keys only.
+ * RevenueCat **SDK** public API key (e.g. `appl_…` / `goog_…`). Same resolution in dev and release
+ * so subscription behavior matches store binaries.
  */
 function getPurchasesSdkApiKey(): string {
-  if (__DEV__) {
-    return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY ?? '';
-  }
   return (
     Platform.select({
       ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? '',
@@ -316,17 +313,6 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     storePurchasesReady,
   ]);
 
-  const saveMutation = useMutation({
-    mutationFn: async (state: SubscriptionState) => {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      return state;
-    },
-    onSuccess: (data) => {
-      setSubscription(data);
-      queryClient.setQueryData(['subscription'], data);
-    },
-  });
-
   const refreshOfferingsPackageMap = useCallback(async () => {
     if (!storePurchasesReady || !shouldUseNativePurchases) return;
     const data = await Purchases.getOfferings();
@@ -339,7 +325,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         throw new Error('Store purchases are only available in the iOS and Android apps.');
       }
       if (!storePurchasesReady) {
-        throw new Error('Store billing is still starting up. Please try again in a moment.');
+        throw new Error('The store is still connecting. Please try again in a moment.');
       }
       let pkg = nativePackagesByProductId.current.get(storeProductId);
       if (!pkg) {
@@ -347,7 +333,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         pkg = nativePackagesByProductId.current.get(storeProductId);
       }
       if (!pkg) {
-        throw new Error('That subscription option is not available. Pull to refresh or try again later.');
+        throw new Error('That plan could not be loaded yet. Try this screen again in a moment.');
       }
       try {
         const { customerInfo } = await Purchases.purchasePackage(pkg);
@@ -370,7 +356,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const restoreMutation = useMutation({
     mutationFn: async () => {
       if (!shouldUseNativePurchases || !storePurchasesReady) {
-        throw new Error('Restore is only available in the iOS and Android apps with billing enabled.');
+        throw new Error('Restore is only available in the iOS and Android apps once the store has finished connecting.');
       }
       const info = await Purchases.restorePurchases();
       applyCustomerInfoRef.current(info);
@@ -395,80 +381,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     return FEATURE_LABELS[feature];
   }, []);
 
-  const activatePremiumMutation = useMutation({
-    mutationFn: async () => {
-      if (!__DEV__) {
-        throw new Error('Local premium activation is only available in __DEV__ builds.');
-      }
-      console.log('[Subscription] DEV: Activating premium locally');
-      const newState: SubscriptionState = {
-        tier: 'premium',
-        subscribedAt: new Date().toISOString(),
-        expiresAt: null,
-      };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
-      return newState;
-    },
-    onSuccess: (data) => {
-      setSubscription(data);
-      queryClient.setQueryData(['subscription'], data);
-      console.log('[Subscription] Premium activated successfully');
-    },
-  });
-
-  const activatePremium = useCallback(() => {
-    if (!__DEV__) {
-      console.warn('[Subscription] activatePremium is only available in __DEV__');
-      return;
-    }
-    activatePremiumMutation.mutate();
-  }, [activatePremiumMutation]);
-
-  const upgradeToPremium = useCallback(async () => {
-    if (!shouldUseNativePurchases || !storePurchasesReady) {
-      if (__DEV__) {
-        console.warn('[Subscription] DEV: Purchases not ready — using local premium bypass');
-        activatePremiumMutation.mutate();
-      } else {
-        console.log('[Subscription] Purchases not ready — cannot start checkout');
-      }
-      return;
-    }
-    const data = await Purchases.getOfferings();
-    const first = data.current?.availablePackages?.[0];
-    if (!first) {
-      if (__DEV__) {
-        console.warn('[Subscription] DEV: No packages — using local premium bypass');
-        activatePremiumMutation.mutate();
-      } else {
-        console.log('[Subscription] No offering packages — checkout unavailable');
-      }
-      return;
-    }
-    purchaseMutation.mutate(first.product.identifier);
-  }, [
-    shouldUseNativePurchases,
-    storePurchasesReady,
-    activatePremiumMutation,
-    purchaseMutation,
-  ]);
-
   const restorePurchase = useCallback(() => {
     restoreMutation.mutate();
   }, [restoreMutation]);
-
-  const cancelSubscription = useCallback(() => {
-    if (!__DEV__) {
-      console.warn('[Subscription] cancelSubscription is only for __DEV__ builds');
-      return;
-    }
-    const newState: SubscriptionState = {
-      tier: 'free',
-      subscribedAt: null,
-      expiresAt: null,
-    };
-    saveMutation.mutate(newState);
-  }, [saveMutation]);
 
   const offerings = useMemo(() => offeringsQuery.data ?? [], [offeringsQuery.data]);
 
@@ -507,11 +422,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       isPremium,
       hasFeature,
       getFeatureInfo,
-      upgradeToPremium,
-      activatePremium,
       restorePurchase,
-      cancelSubscription,
-      canUseDevLocalPremium: __DEV__,
       /** Native StoreKit / Play Billing is configured and the Purchases SDK finished startup. */
       storePurchasesReady,
       /** Public SDK key is present for the current platform (required for real IAP). */
@@ -526,7 +437,6 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       restoreStatus,
       purchaseMutation,
       restoreMutation,
-      activatePremiumMutation,
       rcUserId,
       /** @deprecated Use purchasesApiKeyConfigured */
       revenueCatConfigured: purchasesApiKeyConfigured,
@@ -536,10 +446,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       isPremium,
       hasFeature,
       getFeatureInfo,
-      upgradeToPremium,
-      activatePremium,
       restorePurchase,
-      cancelSubscription,
       subscriptionQuery.isLoading,
       userIdQuery.isLoading,
       offerings,
@@ -550,7 +457,6 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       restoreStatus,
       purchaseMutation,
       restoreMutation,
-      activatePremiumMutation,
       rcUserId,
       purchasesApiKeyConfigured,
       storePurchasesReady,

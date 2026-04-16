@@ -49,7 +49,7 @@ export default function SubscriptionPlansScreen() {
     if (!purchasesApiKeyConfigured || !storePurchasesReady) {
       Alert.alert(
         'Please wait',
-        'Store billing is still starting up, or billing is not configured in this build. Try again shortly.',
+        'The App Store or Google Play is still connecting. Try again in a moment.',
         [{ text: 'OK' }],
       );
       return;
