@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack, useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Eye,
   EyeOff,
@@ -54,6 +55,7 @@ const ANONYMOUS_NAMES = [
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { profile, updateProfile } = useUser();
   const { resetAllData } = useAppMeta();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
@@ -61,6 +63,7 @@ export default function SettingsScreen() {
     isPremium,
     restoreMutation,
     activatePremiumMutation,
+    canUseDevLocalPremium,
   } = useSubscription();
   const {
     intensity,
@@ -72,6 +75,7 @@ export default function SettingsScreen() {
     pauseNotifications,
     resumeNotifications,
     isPermissionGranted,
+    promptForNotificationPermission,
   } = useNotifications();
   const { providerModeEnabled } = useProviderMode();
 
@@ -98,23 +102,38 @@ export default function SettingsScreen() {
     [privacyControls, updateProfile],
   );
 
-  const handleClearData = useCallback(() => {
+  const handleDeleteAllDataOnDevice = useCallback(() => {
     Alert.alert(
-      'Clear All Data',
-      'This will permanently delete all recovery data from this device. This cannot be undone.',
+      'Delete all data on this device?',
+      'Recovery Companion keeps your recovery data on this device. There is no separate cloud login to delete—this removes everything stored in the app on this phone or tablet.\n\nRemoved: profile & check-ins, journal, pledges, contacts, practice community & room data, subscription status cache, reminders, and security settings. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Clear Everything',
+          text: 'Continue',
           style: 'destructive',
           onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            resetAllData();
+            Alert.alert(
+              'Delete everything?',
+              'You will need to set up the app again from the beginning.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete all data',
+                  style: 'destructive',
+                  onPress: async () => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    await resetAllData();
+                    queryClient.clear();
+                    router.replace('/onboarding' as any);
+                  },
+                },
+              ],
+            );
           },
         },
       ],
     );
-  }, [resetAllData]);
+  }, [resetAllData, queryClient, router]);
 
   const handleRestorePurchases = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -123,31 +142,43 @@ export default function SettingsScreen() {
         if (result.restored) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           Alert.alert('Restored', 'Your premium access has been restored.');
-        } else {
+        } else if (canUseDevLocalPremium) {
           activatePremiumMutation.mutate(undefined, {
             onSuccess: () => {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated', 'Your premium access has been restored.');
+              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.');
             },
             onError: () => {
               Alert.alert('No Purchase Found', 'We couldn\'t find a previous purchase to restore.');
             },
           });
+        } else {
+          Alert.alert(
+            'No purchase found',
+            'We could not find an active subscription for this device’s store account.',
+          );
         }
       },
       onError: () => {
-        activatePremiumMutation.mutate(undefined, {
-          onSuccess: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Premium Activated', 'Your premium access has been restored.');
-          },
-          onError: () => {
-            Alert.alert('Error', 'Unable to restore purchases. Please try again.');
-          },
-        });
+        if (canUseDevLocalPremium) {
+          activatePremiumMutation.mutate(undefined, {
+            onSuccess: () => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.');
+            },
+            onError: () => {
+              Alert.alert('Error', 'Unable to restore purchases. Please try again.');
+            },
+          });
+        } else {
+          Alert.alert(
+            'Restore failed',
+            'Check your connection and try again, or manage your subscription in the App Store / Google Play.',
+          );
+        }
       },
     });
-  }, [restoreMutation, activatePremiumMutation]);
+  }, [restoreMutation, activatePremiumMutation, canUseDevLocalPremium]);
 
   const openManageSubscription = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -186,7 +217,7 @@ export default function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.premiumActiveTitle}>Premium active</Text>
                 <Text style={styles.premiumActiveSubtitle}>
-                  Full access to AI, programs, rooms & more
+                  Full access to insights, programs, practice tools & more
                 </Text>
               </View>
             </View>
@@ -482,8 +513,19 @@ export default function SettingsScreen() {
             </View>
             <Switch
               value={notificationPreferences?.enabled ?? false}
-              onValueChange={(val) => {
+              onValueChange={async (val) => {
                 Haptics.selectionAsync();
+                if (val && Platform.OS !== 'web') {
+                  const ok = await promptForNotificationPermission();
+                  if (!ok) {
+                    Alert.alert(
+                      'Notifications not enabled',
+                      'Reminders need notification permission. You can allow them in system Settings when you are ready.',
+                      [{ text: 'OK' }],
+                    );
+                    return;
+                  }
+                }
                 updateNotificationPrefs({ enabled: val });
               }}
               trackColor={{ false: Colors.surface, true: Colors.primary + '40' }}
@@ -650,13 +692,33 @@ export default function SettingsScreen() {
             </View>
 
             {!isPermissionGranted && (
-              <View style={styles.frequencyRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.frequencyRow,
+                  pressed && { opacity: 0.85 },
+                ]}
+                onPress={async () => {
+                  Haptics.selectionAsync();
+                  if (Platform.OS === 'web') return;
+                  const ok = await promptForNotificationPermission();
+                  if (!ok) {
+                    Alert.alert(
+                      'Still blocked',
+                      'Open system Settings for this app and turn on notifications.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Open Settings', onPress: () => void Linking.openSettings() },
+                      ],
+                    );
+                  }
+                }}
+              >
                 <Text
                   style={[styles.frequencyText, { color: Colors.danger }]}
                 >
-                  Notification permission not granted
+                  Notification permission not granted — tap to request
                 </Text>
-              </View>
+              </Pressable>
             )}
 
             <Pressable
@@ -730,7 +792,7 @@ export default function SettingsScreen() {
                 <View>
                   <Text style={styles.settingLabel}>Provider Portal</Text>
                   <Text style={styles.settingValue}>
-                    Manage clients and treatment oversight
+                    Provider tools and shared progress (with consent)
                   </Text>
                 </View>
               </View>
@@ -759,7 +821,7 @@ export default function SettingsScreen() {
                 <View>
                   <Text style={styles.settingLabel}>Compliance Mode</Text>
                   <Text style={styles.settingValue}>
-                    Optional court-ordered tracking
+                    Optional structured accountability tools
                   </Text>
                 </View>
               </View>
@@ -796,10 +858,12 @@ export default function SettingsScreen() {
           </>
         )}
 
-        <Text style={[styles.sectionLabel, { marginTop: 28 }]}>
-          DANGER ZONE
-        </Text>
-        <Pressable style={styles.dangerRow} onPress={handleClearData} testID="settings-clear-all-data">
+        <Text style={[styles.sectionLabel, { marginTop: 28 }]}>ACCOUNT</Text>
+        <Pressable
+          style={styles.dangerRow}
+          onPress={handleDeleteAllDataOnDevice}
+          testID="settings-delete-all-data-on-device"
+        >
           <View style={styles.settingLeft}>
             <View
               style={[
@@ -811,10 +875,10 @@ export default function SettingsScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.settingLabel, { color: Colors.danger }]}>
-                Clear All Data
+                Delete all data on this device
               </Text>
               <Text style={styles.settingValue}>
-                Permanently remove recovery data stored on this device. This cannot be undone.
+                Remove every trace of this app from this device (no separate cloud account)
               </Text>
             </View>
           </View>

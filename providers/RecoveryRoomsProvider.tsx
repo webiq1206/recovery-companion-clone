@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   RecoveryRoom,
   RecoveryRoomMessage,
@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   USER_ID: 'recovery_rooms_user_id',
   IS_ANONYMOUS: 'recovery_rooms_anonymous',
   DISPLAY_NAME: 'recovery_rooms_display_name',
+  BLOCKED_AUTHORS: 'recovery_rooms_blocked_authors',
 };
 
 const ANONYMOUS_NAMES = [
@@ -356,6 +357,16 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
   const [userId, setUserId] = useState<string>('');
   const [isAnonymousDefault, setIsAnonymousDefault] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string>('');
+  const [blockedAuthors, setBlockedAuthors] = useState<string[]>([]);
+  const blockedAuthorsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    blockedAuthorsRef.current = blockedAuthors;
+  }, [blockedAuthors]);
+
+  useEffect(() => {
+    void loadData<string[]>(STORAGE_KEYS.BLOCKED_AUTHORS, []).then(setBlockedAuthors);
+  }, []);
 
   const roomsQuery = useQuery({
     queryKey: ['recoveryRooms'],
@@ -473,9 +484,17 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
     });
     saveRoomsMutation.mutate(updated);
 
-    // Demo reply: still runs after release unless replaced with real-time/backend chat.
+    // On-device practice reply (not live peer chat). Skipped if the sampled author is blocked.
     setTimeout(() => {
-      const randomAuthor = ANONYMOUS_NAMES[Math.floor(Math.random() * ANONYMOUS_NAMES.length)];
+      let randomAuthor = ANONYMOUS_NAMES[Math.floor(Math.random() * ANONYMOUS_NAMES.length)];
+      let tries = 0;
+      while (blockedAuthorsRef.current.includes(randomAuthor) && tries < 12) {
+        randomAuthor = ANONYMOUS_NAMES[Math.floor(Math.random() * ANONYMOUS_NAMES.length)];
+        tries += 1;
+      }
+      if (blockedAuthorsRef.current.includes(randomAuthor)) {
+        return;
+      }
       const response: RecoveryRoomMessage = {
         id: 'rrm_r_' + Date.now().toString(),
         roomId,
@@ -525,6 +544,17 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
     saveRoomsMutation.mutate(updatedRooms);
   }, [rooms, reports, userId]);
 
+  const blockAuthor = useCallback((authorName: string) => {
+    const name = authorName.trim();
+    if (!name) return;
+    setBlockedAuthors((prev) => {
+      if (prev.includes(name)) return prev;
+      const next = [...prev, name];
+      void saveData(STORAGE_KEYS.BLOCKED_AUTHORS, next);
+      return next;
+    });
+  }, []);
+
   const getRoomById = useCallback((roomId: string): RecoveryRoom | undefined => {
     return rooms.find(r => r.id === roomId);
   }, [rooms]);
@@ -565,6 +595,8 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
     leaveRoom,
     sendMessage,
     reportMessage,
+    blockAuthor,
+    blockedAuthors,
     getRoomById,
     getUpcomingSessions,
     topicLabels: TOPIC_LABELS,
@@ -572,7 +604,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
     rooms, joinedRooms, availableRooms, liveRooms, reports,
     userId, displayName, isAnonymousDefault, isLoading,
     setRoomDisplayName, setAnonymousDefault,
-    joinRoom, leaveRoom, sendMessage, reportMessage,
+    joinRoom, leaveRoom, sendMessage, reportMessage, blockAuthor, blockedAuthors,
     getRoomById, getUpcomingSessions,
   ]);
 });

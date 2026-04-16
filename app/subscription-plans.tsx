@@ -36,6 +36,7 @@ export default function SubscriptionPlansScreen() {
     isPremium,
     restoreMutation,
     activatePremiumMutation,
+    canUseDevLocalPremium,
   } = useSubscription();
 
   const isRestoring = restoreMutation.isPending;
@@ -49,11 +50,11 @@ export default function SubscriptionPlansScreen() {
           Alert.alert('Restored', 'Your premium access has been restored.', [
             { text: 'OK', onPress: () => router.back() },
           ]);
-        } else {
+        } else if (canUseDevLocalPremium) {
           activatePremiumMutation.mutate(undefined, {
             onSuccess: () => {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated', 'Your premium access has been restored.', [
+              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
                 { text: 'OK', onPress: () => router.back() },
               ]);
             },
@@ -61,23 +62,35 @@ export default function SubscriptionPlansScreen() {
               Alert.alert('No Purchase Found', 'We couldn\'t find a previous purchase to restore.');
             },
           });
+        } else {
+          Alert.alert(
+            'No purchase found',
+            'We could not find an active subscription. Use the same App Store / Google Play account you purchased with.',
+          );
         }
       },
       onError: () => {
-        activatePremiumMutation.mutate(undefined, {
-          onSuccess: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Premium Activated', 'Your premium access has been restored.', [
-              { text: 'OK', onPress: () => router.back() },
-            ]);
-          },
-          onError: () => {
-            Alert.alert('Error', 'Unable to restore purchases. Please try again.');
-          },
-        });
+        if (canUseDevLocalPremium) {
+          activatePremiumMutation.mutate(undefined, {
+            onSuccess: () => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
+                { text: 'OK', onPress: () => router.back() },
+              ]);
+            },
+            onError: () => {
+              Alert.alert('Error', 'Unable to restore purchases. Please try again.');
+            },
+          });
+        } else {
+          Alert.alert(
+            'Restore failed',
+            'Check your connection and try again, or open subscription management in the store.',
+          );
+        }
       },
     });
-  }, [restoreMutation, activatePremiumMutation, router]);
+  }, [restoreMutation, activatePremiumMutation, router, canUseDevLocalPremium]);
 
   const handleUpgrade = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -94,7 +107,7 @@ export default function SubscriptionPlansScreen() {
           <Text style={styles.leadStrong}>Freemium</Text>
           {' '}is our free tier with full core recovery tools.{' '}
           <Text style={styles.leadStrong}>Premium</Text>
-          {' '}unlocks AI guidance, deeper programs, groups, and professional export.
+          {' '}unlocks deeper insights, structured programs, practice group tools, and export options.
         </Text>
 
         {isPremium ? (

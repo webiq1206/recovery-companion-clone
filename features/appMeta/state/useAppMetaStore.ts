@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { useEffect, useMemo } from 'react';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-import { RECOVERY_KEYS_TO_CLEAR } from '../../../core/persistence';
+import { getAllAccountDeletionAsyncStorageKeys } from '../../../core/accountDeletionKeys';
 import { calculateStability } from '../../../utils/stabilityEngine';
 import { useRecoveryProfileStore, useHydrateRecoveryProfileStore } from '../../../stores/useRecoveryProfileStore';
 import { useCheckInsStore, useHydrateCheckInsStore } from '../../../stores/useCheckInsStore';
@@ -15,15 +16,51 @@ import { useAccountabilityStore } from '../../accountability/state/useAccountabi
 import { useWorkbookStore } from '../../workbook/state/useWorkbookStore';
 import { useMediaStore } from '../../media/state/useMediaStore';
 import { createSelectors } from '../../../stores/zustand/createSelectors';
+import { useAppStore } from '../../../stores/useAppStore';
+import { removePIN } from '../../../utils/secureStorage';
 
 type AppMetaState = {
+  /** Full local wipe: recovery data, persisted app store, subscriptions cache, social demo state, security prefs, scheduled notifications, PIN. */
   resetAllData: () => Promise<void>;
+};
+
+const defaultOnboarding = {
+  currentStep: 0,
+  totalSteps: 0,
+  answers: {} as Record<string, unknown>,
+  isComplete: false,
+};
+
+const defaultProgress = {
+  daysSober: 0,
+  totalCheckIns: 0,
+  relapseCount: 0,
+  streakLength: 0,
 };
 
 const baseUseAppMetaStore = create<AppMetaState>()(
   subscribeWithSelector(() => ({
     resetAllData: async () => {
-      await AsyncStorage.multiRemove(RECOVERY_KEYS_TO_CLEAR);
+      const keys = getAllAccountDeletionAsyncStorageKeys();
+      await AsyncStorage.multiRemove(keys);
+      try {
+        await removePIN();
+      } catch (e) {
+        console.log('[resetAllData] removePIN:', e);
+      }
+      try {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+      } catch (e) {
+        console.log('[resetAllData] cancel notifications:', e);
+      }
+
+      useAppStore.setState({
+        userProfile: null,
+        onboarding: defaultOnboarding,
+        dailyCheckIns: [],
+        relapseLogs: [],
+        progress: defaultProgress,
+      });
 
       // Reset each store slice to defaults in-memory.
       useRecoveryProfileStore.getState().hydrate?.();

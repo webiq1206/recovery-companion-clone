@@ -4,7 +4,7 @@ import {
   Modal, Alert, Animated, ScrollView, Platform,
 } from 'react-native';
 import { ScreenFlatList } from '../components/ScreenFlatList';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Users, Shield, Clock, Radio, ChevronRight, Lock,
@@ -368,6 +368,11 @@ export default function RecoveryRoomsScreen() {
     );
   }, [formatSessionDate, formatSessionTime]);
 
+  const listContentStyle = useMemo(
+    () => [styles.listContent, { paddingBottom: 100 + insets.bottom }],
+    [insets.bottom],
+  );
+
   const renderContent = () => {
     if (viewMode === 'sessions') {
       return (
@@ -375,7 +380,7 @@ export default function RecoveryRoomsScreen() {
           data={upcomingSessions}
           renderItem={renderSessionCard}
           keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={listContentStyle}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
@@ -393,7 +398,7 @@ export default function RecoveryRoomsScreen() {
         data={filteredRooms}
         renderItem={renderRoomCard}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={listContentStyle}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           viewMode === 'rooms' ? renderTopicFilter() : null
@@ -497,25 +502,31 @@ export default function RecoveryRoomsScreen() {
       {renderLiveBanner()}
       {renderContent()}
 
-      <View style={styles.anonToggleBar}>
-        <Pressable
-          style={[styles.anonToggle, isAnonymousDefault && styles.anonToggleActive]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setAnonymousDefault(!isAnonymousDefault);
-          }}
-          testID="anon-toggle"
-        >
-          {isAnonymousDefault ? (
-            <EyeOff size={16} color="#FFFFFF" />
-          ) : (
-            <Eye size={16} color={Colors.textMuted} />
-          )}
-          <Text style={[styles.anonToggleText, isAnonymousDefault && styles.anonToggleTextActive]}>
-            {isAnonymousDefault ? 'Anonymous Mode' : 'Visible'}
-          </Text>
-        </Pressable>
-      </View>
+      <SafeAreaView
+        edges={['bottom']}
+        style={styles.anonToggleSafeWrap}
+        pointerEvents="box-none"
+      >
+        <View style={styles.anonToggleBar}>
+          <Pressable
+            style={[styles.anonToggle, isAnonymousDefault && styles.anonToggleActive]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setAnonymousDefault(!isAnonymousDefault);
+            }}
+            testID="anon-toggle"
+          >
+            {isAnonymousDefault ? (
+              <EyeOff size={16} color="#FFFFFF" />
+            ) : (
+              <Eye size={16} color={Colors.textMuted} />
+            )}
+            <Text style={[styles.anonToggleText, isAnonymousDefault && styles.anonToggleTextActive]}>
+              {isAnonymousDefault ? 'Anonymous Mode' : 'Visible'}
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
 
       <Modal visible={showNameSetup} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
@@ -957,10 +968,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  anonToggleBar: {
+  anonToggleSafeWrap: {
     position: 'absolute',
-    bottom: 20,
-    right: 16,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+  },
+  anonToggleBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   anonToggle: {
     flexDirection: 'row',

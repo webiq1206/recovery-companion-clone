@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import {
   Heart, Shield, MessageCircle, Users, Phone, Plus, X,
   Send, UserPlus, CircleDot, ChevronRight,
-  PhoneCall, Trash2, ToggleLeft, ToggleRight, Radio,
+  PhoneCall, Trash2, ToggleLeft, ToggleRight, Radio, BookOpen,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
@@ -44,11 +44,18 @@ export default function ConnectionScreen() {
   const logToolUsage = useToolUsageStore.use.logToolUsage();
   const {
     trustedContacts, peerChats, safeRooms, displayName,
+    blockedPeerNames, blockedRoomAuthors,
     isLoading, setUserDisplayName,
     addTrustedContact, removeTrustedContact, updateContactAvailability,
     startPeerChat, sendPeerMessage, endPeerChat,
+    blockPeerPartner, blockConnectionRoomAuthor, recordLocalUgcReport,
     joinRoom, leaveRoom, sendRoomMessage,
   } = useConnection();
+
+  const visiblePeerChats = useMemo(
+    () => peerChats.filter(c => !blockedPeerNames.includes(c.anonymousName)),
+    [peerChats, blockedPeerNames],
+  );
 
   const [activeTab, setActiveTab] = useState<ConnectionTab>('circle');
   const [showAddContact, setShowAddContact] = useState<boolean>(false);
@@ -178,6 +185,15 @@ export default function ConnectionScreen() {
     if (!activeRoomId) return null;
     return safeRooms.find(r => r.id === activeRoomId) ?? null;
   }, [activeRoomId, safeRooms]);
+
+  React.useEffect(() => {
+    if (!activeChatId) return;
+    const c = peerChats.find(x => x.id === activeChatId);
+    if (c && blockedPeerNames.includes(c.anonymousName)) {
+      setActiveChatId(null);
+      setMessageText('');
+    }
+  }, [activeChatId, peerChats, blockedPeerNames]);
 
   const availableContacts = useMemo(() => {
     return trustedContacts.filter(c => c.isAvailable);
@@ -370,11 +386,24 @@ export default function ConnectionScreen() {
       <View style={styles.peerHeader}>
         <View style={styles.peerSafeNotice}>
           <Shield size={16} color="#7DC9A0" />
-          <Text style={styles.peerSafeText}>All chats are anonymous and private</Text>
+          <Text style={styles.peerSafeText}>
+            Practice peer chat on this device only — not a live crisis service
+          </Text>
         </View>
       </View>
+      <Pressable
+        style={({ pressed }) => [styles.guidelinesLink, pressed && { opacity: 0.85 }]}
+        onPress={() => {
+          Haptics.selectionAsync();
+          router.push('/community-guidelines' as any);
+        }}
+      >
+        <BookOpen size={16} color={Colors.primary} />
+        <Text style={styles.guidelinesLinkText}>Guidelines & report / block</Text>
+        <ChevronRight size={16} color={Colors.textMuted} />
+      </Pressable>
       <ScreenFlatList
-        data={peerChats}
+        data={visiblePeerChats}
         renderItem={renderPeerChatItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
@@ -473,10 +502,23 @@ export default function ConnectionScreen() {
           <Radio size={20} color="#FF6B6B" />
         </View>
         <View style={styles.recoveryRoomsBannerInfo}>
-          <Text style={styles.recoveryRoomsBannerTitle}>Recovery Rooms</Text>
-          <Text style={styles.recoveryRoomsBannerDesc}>Structured small groups with live sessions and anonymous peer support</Text>
+          <Text style={styles.recoveryRoomsBannerTitle}>Recovery Rooms (practice)</Text>
+          <Text style={styles.recoveryRoomsBannerDesc}>
+            On-device prompts and sample threads for reflection—not real-time moderated therapy or guaranteed live peers
+          </Text>
         </View>
         <ChevronRight size={18} color={Colors.textMuted} />
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [styles.guidelinesLink, pressed && { opacity: 0.85 }]}
+        onPress={() => {
+          Haptics.selectionAsync();
+          router.push('/community-guidelines' as any);
+        }}
+      >
+        <BookOpen size={16} color={Colors.primary} />
+        <Text style={styles.guidelinesLinkText}>Community guidelines & reporting</Text>
+        <ChevronRight size={16} color={Colors.textMuted} />
       </Pressable>
       <ScreenFlatList
         data={safeRooms}
@@ -688,6 +730,9 @@ export default function ConnectionScreen() {
   const renderChatModal = () => {
     const chat = activeChat;
     if (!chat) return null;
+    const peerMessages = blockedPeerNames.includes(chat.anonymousName)
+      ? []
+      : chat.messages;
     return (
       <Modal visible={!!activeChatId} animationType="slide" transparent>
         <KeyboardAvoidingView
@@ -703,36 +748,94 @@ export default function ConnectionScreen() {
                 <Text style={styles.chatModalTitle}>{chat.anonymousName}</Text>
                 {chat.isActive && <View style={styles.activeDotSmall} />}
               </View>
-              {chat.isActive ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Pressable
                   onPress={() => {
-                    Alert.alert('End Chat', 'Are you sure you want to end this chat?', [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'End', style: 'destructive', onPress: () => { endPeerChat(chat.id); setActiveChatId(null); } },
-                    ]);
+                    Haptics.selectionAsync();
+                    router.push('/community-guidelines' as any);
                   }}
                   hitSlop={12}
                 >
-                  <Text style={styles.endChatText}>End</Text>
+                  <BookOpen size={20} color={Colors.primary} />
                 </Pressable>
-              ) : (
-                <View style={{ width: 36 }} />
-              )}
+                {chat.isActive ? (
+                  <Pressable
+                    onPress={() => {
+                      Alert.alert('End Chat', 'Are you sure you want to end this chat?', [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'End', style: 'destructive', onPress: () => { endPeerChat(chat.id); setActiveChatId(null); } },
+                      ]);
+                    }}
+                    hitSlop={12}
+                  >
+                    <Text style={styles.endChatText}>End</Text>
+                  </Pressable>
+                ) : (
+                  <View style={{ width: 28 }} />
+                )}
+              </View>
             </View>
             <ScreenFlatList
-              data={chat.messages}
+              data={peerMessages}
               keyExtractor={item => item.id}
               style={styles.messageList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }: { item: PeerMessage }) => (
-                <View style={[styles.messageBubble, item.isOwn ? styles.ownBubble : styles.otherBubble]}>
-                  <Text style={[styles.messageText, item.isOwn ? styles.ownMessageText : styles.otherMessageText]}>
-                    {item.content}
-                  </Text>
-                  <Text style={[styles.messageTime, item.isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
-                    {formatTime(item.timestamp)}
-                  </Text>
-                </View>
+                <Pressable
+                  delayLongPress={400}
+                  onLongPress={() => {
+                    if (item.isOwn) return;
+                    Alert.alert('Message options', 'Practice content on this device only.', [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Report',
+                        onPress: () => {
+                          recordLocalUgcReport({
+                            scope: 'peer',
+                            contextId: chat.id,
+                            authorLabel: chat.anonymousName,
+                            contentPreview: item.content.slice(0, 200),
+                          });
+                          Alert.alert(
+                            'Report saved',
+                            'Stored only on this device. There is no live moderation queue for this practice feature.',
+                          );
+                        },
+                      },
+                      {
+                        text: 'Block partner',
+                        style: 'destructive',
+                        onPress: () => {
+                          Alert.alert(
+                            'Block this partner?',
+                            'You will not see this practice partner name again on this device.',
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              {
+                                text: 'Block',
+                                style: 'destructive',
+                                onPress: () => {
+                                  blockPeerPartner(chat.id);
+                                  setActiveChatId(null);
+                                  setMessageText('');
+                                },
+                              },
+                            ],
+                          );
+                        },
+                      },
+                    ]);
+                  }}
+                >
+                  <View style={[styles.messageBubble, item.isOwn ? styles.ownBubble : styles.otherBubble]}>
+                    <Text style={[styles.messageText, item.isOwn ? styles.ownMessageText : styles.otherMessageText]}>
+                      {item.content}
+                    </Text>
+                    <Text style={[styles.messageTime, item.isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
+                      {formatTime(item.timestamp)}
+                    </Text>
+                  </View>
+                </Pressable>
               )}
             />
             {chat.isActive && (
@@ -764,6 +867,9 @@ export default function ConnectionScreen() {
   const renderRoomModal = () => {
     const room = activeRoom;
     if (!room) return null;
+    const roomMessages = room.messages.filter(
+      m => m.isOwn || !blockedRoomAuthors.includes(m.authorName),
+    );
     return (
       <Modal visible={!!activeRoomId} animationType="slide" transparent>
         <KeyboardAvoidingView
@@ -779,41 +885,95 @@ export default function ConnectionScreen() {
                 <Text style={styles.chatModalTitle}>{room.name}</Text>
                 <Text style={styles.roomMembersBadge}>{room.memberCount} here</Text>
               </View>
-              {room.isJoined ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Pressable
                   onPress={() => {
-                    Alert.alert('Leave Room', 'Leave this room?', [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Leave', style: 'destructive', onPress: () => { leaveRoom(room.id); setActiveRoomId(null); } },
-                    ]);
+                    Haptics.selectionAsync();
+                    router.push('/community-guidelines' as any);
                   }}
                   hitSlop={12}
                 >
-                  <Text style={styles.endChatText}>Leave</Text>
+                  <BookOpen size={20} color={Colors.primary} />
                 </Pressable>
-              ) : (
-                <View style={{ width: 36 }} />
-              )}
+                {room.isJoined ? (
+                  <Pressable
+                    onPress={() => {
+                      Alert.alert('Leave Room', 'Leave this room?', [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Leave', style: 'destructive', onPress: () => { leaveRoom(room.id); setActiveRoomId(null); } },
+                      ]);
+                    }}
+                    hitSlop={12}
+                  >
+                    <Text style={styles.endChatText}>Leave</Text>
+                  </Pressable>
+                ) : (
+                  <View style={{ width: 28 }} />
+                )}
+              </View>
             </View>
             <ScreenFlatList
-              data={room.messages}
+              data={roomMessages}
               keyExtractor={item => item.id}
               style={styles.messageList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }: { item: RoomMessage }) => (
-                <View style={[styles.roomMessageContainer, item.isOwn && styles.roomMessageOwn]}>
-                  {!item.isOwn && (
-                    <Text style={styles.roomMessageAuthor}>{item.authorName}</Text>
-                  )}
-                  <View style={[styles.messageBubble, item.isOwn ? styles.ownBubble : styles.otherBubble]}>
-                    <Text style={[styles.messageText, item.isOwn ? styles.ownMessageText : styles.otherMessageText]}>
-                      {item.content}
-                    </Text>
-                    <Text style={[styles.messageTime, item.isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
-                      {formatTime(item.timestamp)}
-                    </Text>
+                <Pressable
+                  delayLongPress={400}
+                  onLongPress={() => {
+                    if (item.isOwn) return;
+                    Alert.alert('Message options', 'Practice room on this device only.', [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Report',
+                        onPress: () => {
+                          recordLocalUgcReport({
+                            scope: 'connection_room',
+                            contextId: room.id,
+                            authorLabel: item.authorName,
+                            contentPreview: item.content.slice(0, 200),
+                          });
+                          Alert.alert(
+                            'Report saved',
+                            'Stored only on this device. There is no live moderation queue for this practice feature.',
+                          );
+                        },
+                      },
+                      {
+                        text: 'Block author',
+                        style: 'destructive',
+                        onPress: () => {
+                          Alert.alert(
+                            `Block ${item.authorName}?`,
+                            'Their practice messages will be hidden on this device.',
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              {
+                                text: 'Block',
+                                style: 'destructive',
+                                onPress: () => blockConnectionRoomAuthor(item.authorName),
+                              },
+                            ],
+                          );
+                        },
+                      },
+                    ]);
+                  }}
+                >
+                  <View style={[styles.roomMessageContainer, item.isOwn && styles.roomMessageOwn]}>
+                    {!item.isOwn && (
+                      <Text style={styles.roomMessageAuthor}>{item.authorName}</Text>
+                    )}
+                    <View style={[styles.messageBubble, item.isOwn ? styles.ownBubble : styles.otherBubble]}>
+                      <Text style={[styles.messageText, item.isOwn ? styles.ownMessageText : styles.otherMessageText]}>
+                        {item.content}
+                      </Text>
+                      <Text style={[styles.messageTime, item.isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
+                        {formatTime(item.timestamp)}
+                      </Text>
+                    </View>
                   </View>
-                </View>
+                </Pressable>
               )}
             />
             {room.isJoined && (
@@ -1990,5 +2150,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 16,
+  },
+  guidelinesLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  guidelinesLinkText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
 });

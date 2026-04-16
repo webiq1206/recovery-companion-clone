@@ -27,6 +27,7 @@ import { ADDICTION_TYPES } from '../../../constants/milestones';
 import { NOTIFICATION_INTENSITY_CONFIG, NotificationIntensity } from '../../../constants/notifications';
 import { useWizardEngineHook } from '../../../hooks/useWizardEngine';
 import { resolveCanonicalRoute } from '../../../utils/legacyRoutes';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 const STAGE_CONFIG: Record<RecoveryStage, { label: string; color: string; icon: string; description: string }> = {
@@ -39,6 +40,7 @@ const STAGE_CONFIG: Record<RecoveryStage, { label: string; color: string; icon: 
 const STAGE_ORDER: RecoveryStage[] = ['crisis', 'stabilize', 'rebuild', 'maintain'];
 
 export default function ProfileScreen() {
+  const queryClient = useQueryClient();
   const { resetAllData } = useAppMeta();
   const { profile, updateProfile } = useUser();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
@@ -187,21 +189,36 @@ export default function ProfileScreen() {
 
   const handleClearData = useCallback(() => {
     Alert.alert(
-      'Clear All Data',
-      "You're still building. Clearing data only removes what's stored here - it doesn't change your progress. This will permanently delete all your recovery data including pledges, journal entries, and settings. This cannot be undone.",
+      'Delete all data on this device?',
+      'There is no separate cloud account—this removes everything stored in the app on this device (profile, check-ins, journal, contacts, practice community data, subscription cache, reminders, security). You will start onboarding again. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Clear everything',
+          text: 'Continue',
           style: 'destructive',
           onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            resetAllData();
+            Alert.alert(
+              'Delete everything?',
+              'This is permanent.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete all data',
+                  style: 'destructive',
+                  onPress: async () => {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                    await resetAllData();
+                    queryClient.clear();
+                    router.replace('/onboarding' as any);
+                  },
+                },
+              ],
+            );
           },
         },
-      ]
+      ],
     );
-  }, [resetAllData]);
+  }, [resetAllData, queryClient, router]);
 
   const soberDate = new Date(profile.soberDate);
   const formattedSoberDate = soberDate.toLocaleDateString('en-US', {

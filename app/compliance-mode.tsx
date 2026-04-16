@@ -313,7 +313,7 @@ export default function ComplianceModeScreen() {
             </View>
             <Text style={styles.disabledTitle}>Compliance Mode</Text>
             <Text style={styles.disabledDesc}>
-              Optional court-ordered recovery tracking. This mode adds structured compliance logging, breath monitoring integration, location verification, and requirement tracking.
+              Optional accountability mode for people who want extra structure. It adds local compliance-style logging, wellness check reminders, optional location check-ins, and requirement tracking—all stored on this device unless you export them.
             </Text>
           </View>
 

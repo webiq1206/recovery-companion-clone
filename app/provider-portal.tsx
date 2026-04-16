@@ -377,7 +377,7 @@ export default function ProviderPortalScreen() {
             <View style={styles.privacyNote}>
               <Shield size={16} color={Colors.primary} />
               <Text style={styles.privacyNoteText}>
-                All data sharing requires explicit client consent. Clients can revoke access at any time. Data is encrypted and HIPAA-aligned.
+                All data sharing requires explicit client consent. Clients can revoke access at any time. Data stays encrypted on supported devices; this workflow is not a certified HIPAA product by itself.
               </Text>
             </View>
 
@@ -571,7 +571,7 @@ export default function ProviderPortalScreen() {
           <View style={styles.complianceNote}>
             <Shield size={14} color={Colors.textMuted} />
             <Text style={styles.complianceText}>
-              All data is shared with explicit client consent. Clients may revoke access at any time. Data handling follows HIPAA-aligned practices.
+              All data is shared with explicit client consent. Clients may revoke access at any time. Use your organization’s policies and BAAs where regulated health data applies.
             </Text>
           </View>
 

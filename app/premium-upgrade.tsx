@@ -163,12 +163,12 @@ export default function PremiumUpgradeScreen() {
   const insets = useSafeAreaInsets();
   const {
     isPremium,
-    activatePremium,
     offerings,
     offeringsLoading,
     purchaseMutation,
     restoreMutation,
     activatePremiumMutation,
+    canUseDevLocalPremium,
   } = useSubscription();
   const headerAnim = useRef(new Animated.Value(0)).current;
   const crownAnim = useRef(new Animated.Value(0)).current;
@@ -281,27 +281,34 @@ export default function PremiumUpgradeScreen() {
                 );
               },
               onError: (error) => {
-                console.log('Purchase via RC failed, activating locally:', error);
-                activatePremiumMutation.mutate(undefined, {
-                  onSuccess: () => {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    Alert.alert(
-                      'Premium Activated',
-                      'All features are now unlocked. Your recovery journey just got more powerful.',
-                      [{ text: 'Continue', onPress: () => router.back() }]
-                    );
-                  },
-                  onError: () => {
-                    Alert.alert('Error', 'Unable to activate premium. Please try again.');
-                  },
-                });
+                console.log('Purchase via RC failed:', error);
+                if (canUseDevLocalPremium) {
+                  activatePremiumMutation.mutate(undefined, {
+                    onSuccess: () => {
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      Alert.alert(
+                        'Premium Activated (dev)',
+                        'Local bypass only — not used in store builds.',
+                        [{ text: 'Continue', onPress: () => router.back() }],
+                      );
+                    },
+                    onError: () => {
+                      Alert.alert('Error', 'Unable to activate premium. Please try again.');
+                    },
+                  });
+                } else {
+                  Alert.alert(
+                    'Purchase unavailable',
+                    'We could not verify this purchase. Check your connection, confirm App Store / Play billing is set up, then try again or tap Restore.',
+                  );
+                }
               },
             });
           },
         },
       ]
     );
-  }, [selectedPlan, plans, purchaseMutation, activatePremiumMutation, router]);
+  }, [selectedPlan, plans, purchaseMutation, activatePremiumMutation, router, canUseDevLocalPremium]);
 
   const handleRestore = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -312,11 +319,11 @@ export default function PremiumUpgradeScreen() {
           Alert.alert('Restored', 'Your premium access has been restored.', [
             { text: 'Great', onPress: () => router.back() },
           ]);
-        } else {
+        } else if (canUseDevLocalPremium) {
           activatePremiumMutation.mutate(undefined, {
             onSuccess: () => {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated', 'Your premium access has been restored.', [
+              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
                 { text: 'Great', onPress: () => router.back() },
               ]);
             },
@@ -324,23 +331,35 @@ export default function PremiumUpgradeScreen() {
               Alert.alert('No Purchase Found', 'We couldn\'t find a previous purchase to restore.');
             },
           });
+        } else {
+          Alert.alert(
+            'No purchase found',
+            'We could not find an active subscription for this account. If you subscribed on another device, use Restore after signing into the same store account.',
+          );
         }
       },
       onError: () => {
-        activatePremiumMutation.mutate(undefined, {
-          onSuccess: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Premium Activated', 'Your premium access has been restored.', [
-              { text: 'Great', onPress: () => router.back() },
-            ]);
-          },
-          onError: () => {
-            Alert.alert('Error', 'Unable to restore purchases. Please try again.');
-          },
-        });
+        if (canUseDevLocalPremium) {
+          activatePremiumMutation.mutate(undefined, {
+            onSuccess: () => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
+                { text: 'Great', onPress: () => router.back() },
+              ]);
+            },
+            onError: () => {
+              Alert.alert('Error', 'Unable to restore purchases. Please try again.');
+            },
+          });
+        } else {
+          Alert.alert(
+            'Restore failed',
+            'Check your network connection and try again, or manage your subscription in the App Store / Google Play.',
+          );
+        }
       },
     });
-  }, [restoreMutation, activatePremiumMutation, router]);
+  }, [restoreMutation, activatePremiumMutation, router, canUseDevLocalPremium]);
 
   if (isPremium) {
     return (

@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, Pressable, Alert, Modal } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Shield, Lock, Fingerprint, Eye, EyeOff, FileText, BarChart3, ChevronRight, Trash2, ShieldCheck, ShieldAlert, ShieldOff, Clock, Activity, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import Colors from '../constants/colors';
 import { useSecurity } from '../providers/SecurityProvider';
 import { SecurityLevel, AuditLogEntry } from '../types';
 import LockScreen from '../components/LockScreen';
 
 export default function SecuritySettingsScreen() {
+  const router = useRouter();
   const {
     settings,
     biometricAvailable,
@@ -164,7 +166,7 @@ export default function SecuritySettingsScreen() {
           <Shield size={28} color={Colors.primary} />
         </View>
         <Text style={styles.headerTitle}>Security & Privacy</Text>
-        <Text style={styles.headerSubtitle}>HIPAA-ready privacy controls</Text>
+        <Text style={styles.headerSubtitle}>Privacy-focused security controls</Text>
 
         <View style={styles.statusRow}>
           <View style={styles.statusItem}>
@@ -317,8 +319,8 @@ export default function SecuritySettingsScreen() {
             <FileText size={18} color={Colors.accentWarm} />
           </View>
           <View>
-            <Text style={styles.rowTitle}>HIPAA Audit Logging</Text>
-            <Text style={styles.rowSubtitle}>Track all data access events</Text>
+            <Text style={styles.rowTitle}>Security audit log</Text>
+            <Text style={styles.rowSubtitle}>Track sensitive actions on this device</Text>
           </View>
         </View>
         <View style={[styles.toggle, settings.auditLoggingEnabled && styles.toggleOn]}>
@@ -388,12 +390,30 @@ export default function SecuritySettingsScreen() {
       <View style={styles.complianceCard}>
         <ShieldCheck size={20} color={Colors.primary} />
         <View style={styles.complianceTextWrap}>
-          <Text style={styles.complianceTitle}>HIPAA-Ready Compliance</Text>
+          <Text style={styles.complianceTitle}>Privacy on your device</Text>
           <Text style={styles.complianceBody}>
-            All data is encrypted at rest. Audit logging tracks every access event. No personal data leaves your device without explicit consent.
+            Recovery data stays on this device unless you choose to export or share it. Optional encryption and audit logging help you monitor access to your information. This app is not a substitute for a HIPAA-covered healthcare platform.
           </Text>
         </View>
       </View>
+
+      <Pressable
+        style={({ pressed }) => [styles.settingRow, { marginTop: 12 }, pressed && { opacity: 0.85 }]}
+        onPress={() => router.push('/settings' as any)}
+      >
+        <View style={styles.rowLeft}>
+          <View style={[styles.rowIcon, { backgroundColor: 'rgba(239,83,80,0.12)' }]}>
+            <Trash2 size={18} color={Colors.danger} />
+          </View>
+          <View>
+            <Text style={styles.rowTitle}>Remove all app data</Text>
+            <Text style={styles.rowSubtitle}>
+              Use Settings, Account — delete everything on this device (no separate cloud login).
+            </Text>
+          </View>
+        </View>
+        <ChevronRight size={18} color={Colors.textMuted} />
+      </Pressable>
 
       <Modal
         visible={showAuditLog}

@@ -19,7 +19,7 @@ export const FREEMIUM_HIGHLIGHTS: string[] = [
   'Sobriety tracking, streaks & milestones',
   'Journal entries & reflection prompts',
   'Pledges, triggers & progress views',
-  'Connection hub & peer support (core)',
+  'Connection hub & on-device practice scenarios (core)',
   'Today hub, goals & growth insights (core)',
 ];
 
@@ -72,7 +72,7 @@ export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
   {
     icon: Users,
     title: 'Recovery Rooms',
-    desc: 'Join small-group sessions with peers on similar journeys.',
+    desc: 'Practice small-group-style prompts and journaling on your device (not live telehealth or moderated therapy).',
     color: '#C07CE0',
     featureKey: 'recovery_rooms',
   },

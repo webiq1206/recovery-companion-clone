@@ -20,6 +20,18 @@ const STORAGE_KEYS = {
   SAFE_ROOMS: 'connection_safe_rooms',
   SPONSOR_PAIRING: 'connection_sponsor_pairing',
   USER_DISPLAY_NAME: 'connection_display_name',
+  BLOCKED_PEER_NAMES: 'connection_blocked_peer_names',
+  BLOCKED_ROOM_AUTHORS: 'connection_blocked_room_authors',
+  LOCAL_UGC_REPORTS: 'connection_local_ugc_reports',
+};
+
+export type ConnectionLocalUgcReport = {
+  id: string;
+  scope: 'peer' | 'connection_room';
+  contextId: string;
+  authorLabel: string;
+  contentPreview: string;
+  createdAt: string;
 };
 
 const ANONYMOUS_NAMES = [
@@ -166,6 +178,18 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     staleTime: Infinity,
   });
 
+  const blockedPeerNamesQuery = useQuery({
+    queryKey: ['connectionBlockedPeerNames'],
+    queryFn: () => loadItem<string[]>(STORAGE_KEYS.BLOCKED_PEER_NAMES, []),
+    staleTime: Infinity,
+  });
+
+  const blockedRoomAuthorsQuery = useQuery({
+    queryKey: ['connectionBlockedRoomAuthors'],
+    queryFn: () => loadItem<string[]>(STORAGE_KEYS.BLOCKED_ROOM_AUTHORS, []),
+    staleTime: Infinity,
+  });
+
   useEffect(() => { if (contactsQuery.data !== undefined) setTrustedContacts(contactsQuery.data); }, [contactsQuery.data]);
   useEffect(() => { if (chatsQuery.data) setPeerChats(chatsQuery.data); }, [chatsQuery.data]);
   useEffect(() => { if (roomsQuery.data) setSafeRooms(roomsQuery.data); }, [roomsQuery.data]);
@@ -222,6 +246,27 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     },
   });
 
+  const saveBlockedPeerNamesMutation = useMutation({
+    mutationFn: (names: string[]) => saveItem(STORAGE_KEYS.BLOCKED_PEER_NAMES, names),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['connectionBlockedPeerNames'], data);
+    },
+  });
+
+  const saveBlockedRoomAuthorsMutation = useMutation({
+    mutationFn: (names: string[]) => saveItem(STORAGE_KEYS.BLOCKED_ROOM_AUTHORS, names),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['connectionBlockedRoomAuthors'], data);
+    },
+  });
+
+  const saveLocalUgcReportsMutation = useMutation({
+    mutationFn: (reports: ConnectionLocalUgcReport[]) => saveItem(STORAGE_KEYS.LOCAL_UGC_REPORTS, reports),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['connectionLocalUgcReports'], data);
+    },
+  });
+
   const setUserDisplayName = useCallback((name: string) => {
     saveNameMutation.mutate(name);
   }, []);
@@ -249,7 +294,10 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
   }, [trustedContacts]);
 
   const startPeerChat = useCallback((topic: string) => {
-    const randomName = ANONYMOUS_NAMES[Math.floor(Math.random() * ANONYMOUS_NAMES.length)];
+    const blockedPeers = queryClient.getQueryData<string[]>(['connectionBlockedPeerNames']) ?? [];
+    const pool = ANONYMOUS_NAMES.filter(n => !blockedPeers.includes(n));
+    const pickFrom = pool.length ? pool : ANONYMOUS_NAMES;
+    const randomName = pickFrom[Math.floor(Math.random() * pickFrom.length)];
     const chatId = 'peer_' + Date.now().toString();
     const newChat: PeerChat = {
       id: chatId,
@@ -270,7 +318,7 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     const updated = [newChat, ...peerChats];
     saveChatsMutation.mutate(updated);
     return newChat.id;
-  }, [peerChats]);
+  }, [peerChats, queryClient]);
 
   const sendPeerMessage = useCallback((chatId: string, content: string) => {
     const message: PeerMessage = {
@@ -305,6 +353,11 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
         timestamp: new Date().toISOString(),
       };
       setPeerChats(prev => {
+        const blockedPeers = queryClient.getQueryData<string[]>(['connectionBlockedPeerNames']) ?? [];
+        const chat = prev.find(c => c.id === chatId);
+        if (!chat || blockedPeers.includes(chat.anonymousName)) {
+          return prev;
+        }
         const newChats = prev.map(c => {
           if (c.id !== chatId) return c;
           return { ...c, messages: [...c.messages, response] };
@@ -313,7 +366,7 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
         return newChats;
       });
     }, 2000 + Math.random() * 3000);
-  }, [peerChats]);
+  }, [peerChats, queryClient]);
 
   const endPeerChat = useCallback((chatId: string) => {
     const updated = peerChats.map(c =>
@@ -321,6 +374,43 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     );
     saveChatsMutation.mutate(updated);
   }, [peerChats]);
+
+  const blockPeerPartner = useCallback((chatId: string) => {
+    const chat = peerChats.find(c => c.id === chatId);
+    if (!chat) return;
+    const cur = queryClient.getQueryData<string[]>(['connectionBlockedPeerNames']) ?? [];
+    if (!cur.includes(chat.anonymousName)) {
+      saveBlockedPeerNamesMutation.mutate([...cur, chat.anonymousName]);
+    }
+    const ended = peerChats.map(c =>
+      c.id === chatId ? { ...c, isActive: false } : c
+    );
+    saveChatsMutation.mutate(ended);
+  }, [peerChats, queryClient, saveBlockedPeerNamesMutation, saveChatsMutation]);
+
+  const blockConnectionRoomAuthor = useCallback((authorName: string) => {
+    const t = authorName.trim();
+    if (!t) return;
+    const cur = queryClient.getQueryData<string[]>(['connectionBlockedRoomAuthors']) ?? [];
+    if (!cur.includes(t)) {
+      saveBlockedRoomAuthorsMutation.mutate([...cur, t]);
+    }
+  }, [queryClient, saveBlockedRoomAuthorsMutation]);
+
+  const recordLocalUgcReport = useCallback((input: {
+    scope: 'peer' | 'connection_room';
+    contextId: string;
+    authorLabel: string;
+    contentPreview: string;
+  }) => {
+    const existing = queryClient.getQueryData<ConnectionLocalUgcReport[]>(['connectionLocalUgcReports']) ?? [];
+    const row: ConnectionLocalUgcReport = {
+      id: 'ugc_' + Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      ...input,
+    };
+    saveLocalUgcReportsMutation.mutate([row, ...existing]);
+  }, [queryClient, saveLocalUgcReportsMutation]);
 
   const joinRoom = useCallback((roomId: string) => {
     const updated = safeRooms.map(r =>
@@ -360,7 +450,10 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
         'You are in the right place. Welcome.',
         'That really resonates with me. Thank you.',
       ];
-      const randomAuthor = ANONYMOUS_NAMES[Math.floor(Math.random() * ANONYMOUS_NAMES.length)];
+      const blockedAuthors = queryClient.getQueryData<string[]>(['connectionBlockedRoomAuthors']) ?? [];
+      const authorPool = ANONYMOUS_NAMES.filter(n => !blockedAuthors.includes(n));
+      const pickAuthors = authorPool.length ? authorPool : ANONYMOUS_NAMES;
+      const randomAuthor = pickAuthors[Math.floor(Math.random() * pickAuthors.length)];
       const response: RoomMessage = {
         id: 'rm_r_' + Date.now().toString(),
         roomId,
@@ -378,7 +471,7 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
         return newRooms;
       });
     }, 3000 + Math.random() * 4000);
-  }, [safeRooms, displayName]);
+  }, [safeRooms, displayName, queryClient]);
 
   const requestSponsorPairing = useCallback(async () => {
     let userAddictions: string[] = [];
@@ -500,12 +593,17 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
 
   const isLoading = contactsQuery.isLoading || chatsQuery.isLoading || roomsQuery.isLoading;
 
+  const blockedPeerNames = blockedPeerNamesQuery.data ?? [];
+  const blockedRoomAuthors = blockedRoomAuthorsQuery.data ?? [];
+
   return useMemo(() => ({
     trustedContacts,
     peerChats,
     safeRooms,
     sponsorPairing,
     displayName,
+    blockedPeerNames,
+    blockedRoomAuthors,
     isLoading,
     setUserDisplayName,
     addTrustedContact,
@@ -514,6 +612,9 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     startPeerChat,
     sendPeerMessage,
     endPeerChat,
+    blockPeerPartner,
+    blockConnectionRoomAuthor,
+    recordLocalUgcReport,
     joinRoom,
     leaveRoom,
     sendRoomMessage,
@@ -523,9 +624,10 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     sendSponsorMessage,
   }), [
     trustedContacts, peerChats, safeRooms, sponsorPairing,
-    displayName, isLoading, setUserDisplayName,
+    displayName, blockedPeerNames, blockedRoomAuthors, isLoading, setUserDisplayName,
     addTrustedContact, removeTrustedContact, updateContactAvailability,
-    startPeerChat, sendPeerMessage, endPeerChat,
+    startPeerChat, sendPeerMessage, endPeerChat, blockPeerPartner,
+    blockConnectionRoomAuthor, recordLocalUgcReport,
     joinRoom, leaveRoom, sendRoomMessage,
     requestSponsorPairing, acceptSponsorPairing, endSponsorPairing,
     sendSponsorMessage,

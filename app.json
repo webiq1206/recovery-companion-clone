@@ -5,7 +5,7 @@
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "recovery-companion-clone",
+    "scheme": "recovery-companion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "splash": {
@@ -37,7 +37,7 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": false
           }
         }
       ],

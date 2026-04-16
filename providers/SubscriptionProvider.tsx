@@ -66,6 +66,9 @@ const DEFAULT_STATE: SubscriptionState = {
 
 const FREE_FEATURES: Set<PremiumFeature> = new Set([]);
 
+/** Local premium bypass is a store-review risk; only development builds may use it. */
+const CAN_USE_DEV_LOCAL_PREMIUM = __DEV__;
+
 /** All premium-only keys; see `constants/subscriptionPlans.ts` for marketing copy and tier matrix. */
 const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: string }> = {
   predictive_engine: {
@@ -92,7 +95,8 @@ const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: strin
   },
   recovery_rooms: {
     title: 'Recovery Rooms',
-    description: 'Join small-group sessions with peers on similar recovery journeys.',
+    description:
+      'On-device practice scenarios inspired by group support—not a substitute for live moderated clinical groups.',
   },
   advanced_accountability: {
     title: 'Advanced Accountability',
@@ -179,6 +183,11 @@ function checkEntitlementActive(subscriberInfo: any): { isActive: boolean; expir
 }
 
 async function purchaseProduct(userId: string, productId: string): Promise<any> {
+  if (!__DEV__) {
+    throw new Error(
+      'Store purchases are not available through this test path in production. Use native App Store / Play billing (e.g. RevenueCat Purchases SDK).',
+    );
+  }
   try {
     const data = await rcFetch(`/receipts`, {
       method: 'POST',
@@ -352,7 +361,10 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const activatePremiumMutation = useMutation({
     mutationFn: async () => {
-      console.log('[Subscription] Activating premium locally');
+      if (!CAN_USE_DEV_LOCAL_PREMIUM) {
+        throw new Error('Local premium activation is disabled in production builds.');
+      }
+      console.log('[Subscription] DEV: Activating premium locally');
       const newState: SubscriptionState = {
         tier: 'premium',
         subscribedAt: new Date().toISOString(),
@@ -369,38 +381,53 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   });
 
   const activatePremium = useCallback(() => {
+    if (!CAN_USE_DEV_LOCAL_PREMIUM) {
+      console.warn('[Subscription] activatePremium is only available in __DEV__');
+      return;
+    }
     activatePremiumMutation.mutate();
-  }, []);
+  }, [activatePremiumMutation]);
 
   const upgradeToPremium = useCallback(() => {
     console.log('[Subscription] upgradeToPremium called');
     if (!rcUserId) {
-      console.log('[Subscription] No RC user ID - activating locally');
-      activatePremiumMutation.mutate();
+      if (CAN_USE_DEV_LOCAL_PREMIUM) {
+        console.warn('[Subscription] DEV: No RC user ID — using local premium bypass');
+        activatePremiumMutation.mutate();
+      } else {
+        console.log('[Subscription] No RC user ID — cannot start purchase without billing setup');
+      }
       return;
     }
     const currentOfferings = offeringsQuery.data ?? [];
     if (currentOfferings.length > 0 && currentOfferings[0].packages.length > 0) {
       const defaultProduct = currentOfferings[0].packages[0].product.identifier;
       purchaseMutation.mutate(defaultProduct);
-    } else {
-      console.log('[Subscription] No offerings available - activating locally');
+    } else if (CAN_USE_DEV_LOCAL_PREMIUM) {
+      console.warn('[Subscription] DEV: No offerings — using local premium bypass');
       activatePremiumMutation.mutate();
+    } else {
+      console.log('[Subscription] No offerings available — purchase unavailable');
     }
-  }, [rcUserId, offeringsQuery.data]);
+  }, [rcUserId, offeringsQuery.data, activatePremiumMutation, purchaseMutation]);
 
   const restorePurchase = useCallback(() => {
     restoreMutation.mutate();
   }, []);
 
+  /** Clears cached tier only; production users manage billing in the App Store / Play Console. */
   const cancelSubscription = useCallback(() => {
+    if (!CAN_USE_DEV_LOCAL_PREMIUM) {
+      console.warn('[Subscription] cancelSubscription is only for dev/test builds');
+      return;
+    }
     const newState: SubscriptionState = {
       tier: 'free',
       subscribedAt: null,
       expiresAt: null,
     };
     saveMutation.mutate(newState);
-  }, []);
+  }, [saveMutation]);
 
   const offerings = useMemo(() => offeringsQuery.data ?? [], [offeringsQuery.data]);
 
@@ -433,6 +460,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     activatePremium,
     restorePurchase,
     cancelSubscription,
+    canUseDevLocalPremium: CAN_USE_DEV_LOCAL_PREMIUM,
     isLoading: subscriptionQuery.isLoading || userIdQuery.isLoading,
     featureLabels: FEATURE_LABELS,
     offerings,

@@ -139,6 +139,19 @@ async function setupNotificationChannel(): Promise<void> {
   }
 }
 
+/** Read OS permission without prompting (store-friendly). */
+async function readNotificationPermissionGranted(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status === 'granted';
+  } catch (e) {
+    console.log('[Notifications] Permission read error:', e);
+    return false;
+  }
+}
+
+/** Call only from explicit user action (e.g. Settings toggle). */
 async function requestPermissions(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
 
@@ -187,8 +200,13 @@ async function scheduleLocalNotification(
 export const [NotificationProvider, useNotifications] = createContextHook(() => {
   const queryClient = useQueryClient();
   const [state, setState] = useState<BehavioralNotificationState>(DEFAULT_STATE);
+  const stateRef = useRef(state);
   const appStateRef = useRef(AppState.currentState);
   const evaluationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const stateQuery = useQuery({
     queryKey: ['behavioral_notifications'],
@@ -236,19 +254,38 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   }, []);
 
   useEffect(() => {
-    const init = async () => {
-      if (isExpoGo) return;
-      const granted = await requestPermissions();
+    if (!stateQuery.isSuccess || isExpoGo || Platform.OS === 'web') return;
+    const cached = stateQuery.data;
+    let cancelled = false;
+    void (async () => {
+      const granted = await readNotificationPermissionGranted();
+      if (cancelled) return;
       if (granted) {
         await setupNotificationChannel();
       }
-      if (granted !== state.isPermissionGranted) {
-        save({ ...state, isPermissionGranted: granted });
+      if (granted !== cached.isPermissionGranted) {
+        saveMutation.mutate({ ...cached, isPermissionGranted: granted });
       }
-      console.log('[Notifications] Permission:', granted ? 'granted' : 'denied');
+      console.log('[Notifications] Permission (read-only on launch):', granted ? 'granted' : 'denied');
+    })();
+    return () => {
+      cancelled = true;
     };
-    init();
-  }, []);
+  }, [stateQuery.isSuccess, stateQuery.data, isExpoGo, saveMutation]);
+
+  /** Call when the user explicitly opts in (e.g. Settings → Notifications). */
+  const promptForNotificationPermission = useCallback(async (): Promise<boolean> => {
+    if (Platform.OS === 'web' || isExpoGo) return false;
+    const granted = await requestPermissions();
+    if (granted) {
+      await setupNotificationChannel();
+    }
+    const s = stateRef.current;
+    if (granted !== s.isPermissionGranted) {
+      saveMutation.mutate({ ...s, isPermissionGranted: granted });
+    }
+    return granted;
+  }, [saveMutation]);
 
   useEffect(() => {
     if (Platform.OS === 'web' || isExpoGo) return;
@@ -261,16 +298,6 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     return () => {
       responseSubscription.remove();
     };
-  }, [state]);
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextState) => {
-      if (appStateRef.current.match(/inactive|background/) && nextState === 'active') {
-        resetTodayCountIfNeeded();
-      }
-      appStateRef.current = nextState;
-    });
-    return () => subscription.remove();
   }, [state]);
 
   const resetTodayCountIfNeeded = useCallback(() => {
@@ -287,6 +314,28 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       save(updated);
     }
   }, [state, save]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (appStateRef.current.match(/inactive|background/) && nextState === 'active') {
+        resetTodayCountIfNeeded();
+        if (!isExpoGo && Platform.OS !== 'web') {
+          void (async () => {
+            const granted = await readNotificationPermissionGranted();
+            const s = stateRef.current;
+            if (granted !== s.isPermissionGranted) {
+              saveMutation.mutate({ ...s, isPermissionGranted: granted });
+            }
+            if (granted) {
+              await setupNotificationChannel();
+            }
+          })();
+        }
+      }
+      appStateRef.current = nextState;
+    });
+    return () => subscription.remove();
+  }, [resetTodayCountIfNeeded, saveMutation]);
 
   const handleNotificationInteraction = useCallback((notifId: string, tapped: boolean) => {
     const now = new Date().toISOString();
@@ -628,12 +677,14 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     pauseNotifications,
     resumeNotifications,
     clearHistory,
+    promptForNotificationPermission,
     isLoading: stateQuery.isLoading,
   }), [
     state, isPaused, todayNotificationCount, effectiveMaxPerDay,
     recentHistory, intensityConfig, setIntensity,
     sendBehavioralNotification, evaluateBehavioralTriggers,
     pauseNotifications, resumeNotifications, clearHistory,
+    promptForNotificationPermission,
     stateQuery.isLoading,
   ]);
 });

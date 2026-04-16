@@ -12,7 +12,7 @@ import { Stack } from 'expo-router';
 import {
   Shield, Clock, Radio, X, Send, EyeOff, Eye,
   Flag, Users, Calendar, ChevronDown, AlertTriangle,
-  Info, LogOut, MessageSquare, Heart,
+  Info, LogOut, MessageSquare, Heart, BookOpen,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
@@ -34,11 +34,23 @@ export default function RoomSessionScreen() {
   const router = useRouter();
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const {
-    getRoomById, sendMessage, reportMessage, leaveRoom,
-    displayName, isAnonymousDefault, userId,
+    getRoomById,
+    sendMessage,
+    reportMessage,
+    leaveRoom,
+    displayName,
+    isAnonymousDefault,
+    userId,
+    blockAuthor,
+    blockedAuthors,
   } = useRecoveryRooms();
 
   const room = getRoomById(roomId ?? '');
+
+  const visibleMessages = useMemo(() => {
+    if (!room) return [];
+    return room.messages.filter((m) => m.isOwn || !blockedAuthors.includes(m.authorName));
+  }, [room, blockedAuthors]);
 
   const [sessionView, setSessionView] = useState<SessionView>('chat');
   const [messageText, setMessageText] = useState<string>('');
@@ -81,12 +93,39 @@ export default function RoomSessionScreen() {
     setShowReportModal(true);
   }, []);
 
+  const handleMessageActions = useCallback(
+    (message: RecoveryRoomMessage) => {
+      if (message.isOwn || message.isReported) return;
+      const author = message.isAnonymous ? 'Anonymous' : message.authorName;
+      Alert.alert('Message options', `Author: ${author}`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Report…',
+          onPress: () => handleReport(message.id),
+        },
+        {
+          text: 'Block author',
+          style: 'destructive',
+          onPress: () => {
+            blockAuthor(author);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            Alert.alert('Blocked', `You will no longer see messages from “${author}” in practice rooms on this device.`);
+          },
+        },
+      ]);
+    },
+    [handleReport, blockAuthor],
+  );
+
   const handleSubmitReport = useCallback(() => {
     if (!roomId || !reportingMessageId) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     reportMessage(roomId, reportingMessageId, reportReason, reportDescription);
     setShowReportModal(false);
-    Alert.alert('Report Submitted', 'Thank you. Your report has been recorded.');
+    Alert.alert(
+      'Report saved',
+      'Your report is stored on this device. It is not sent to a moderation team unless your organization sets up a separate reporting channel.',
+    );
   }, [roomId, reportingMessageId, reportReason, reportDescription, reportMessage]);
 
   const handleLeaveRoom = useCallback(() => {
@@ -158,7 +197,7 @@ export default function RoomSessionScreen() {
           onLongPress={() => {
             if (!isOwn && !item.isReported) {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              handleReport(item.id);
+              handleMessageActions(item);
             }
           }}
           style={[
@@ -238,9 +277,10 @@ export default function RoomSessionScreen() {
         <View style={styles.safetyCard}>
           <Shield size={20} color="#7DC9A0" />
           <View style={styles.safetyInfo}>
-            <Text style={styles.safetyTitle}>Reporting</Text>
+            <Text style={styles.safetyTitle}>Reporting & blocking</Text>
             <Text style={styles.safetyDesc}>
-              Long press any message to report content that feels unsafe or breaks group guidelines.
+              Long-press a message to report it or block that author on this device. Open Community guidelines from the
+              header for full details.
             </Text>
           </View>
         </View>
@@ -329,6 +369,18 @@ export default function RoomSessionScreen() {
           <Pressable
             onPress={() => {
               Haptics.selectionAsync();
+              router.push('/community-guidelines' as any);
+            }}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Community guidelines"
+            testID="room-guidelines-btn"
+          >
+            <BookOpen size={20} color={Colors.textSecondary} />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              Haptics.selectionAsync();
               handleLeaveRoom();
             }}
             hitSlop={10}
@@ -400,7 +452,7 @@ export default function RoomSessionScreen() {
 
           <ScreenFlatList
             ref={flatListRef}
-            data={room.messages}
+            data={visibleMessages}
             renderItem={renderMessageItem}
             keyExtractor={item => item.id}
             style={styles.messageList}
