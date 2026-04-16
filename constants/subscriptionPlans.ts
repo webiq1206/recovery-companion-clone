@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from 'lucide-react-native';
 import type { PremiumFeature } from '../types';
+import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
 
 /**
  * What every user gets on the free (Freemium) tier — aligned with features not gated by `hasFeature`.
@@ -43,22 +44,22 @@ export type PremiumMarketingCard = {
 export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
   {
     icon: Shield,
-    title: 'Predictive Relapse Engine',
-    desc: 'Early warning system that detects vulnerability patterns before they escalate.',
+    title: 'Pattern awareness',
+    desc: 'Trend views from your own check-ins and journals—not a diagnosis and not a substitute for professional care.',
     color: '#E07C7C',
     featureKey: 'predictive_engine',
   },
   {
     icon: BarChart3,
     title: 'Advanced Analytics',
-    desc: 'Deep insights into emotional growth, trigger trends, and stability trajectory.',
+    desc: 'Deeper charts from your on-device history—wellness insights, not clinical monitoring.',
     color: '#2EC4B6',
     featureKey: 'advanced_analytics',
   },
   {
     icon: Heart,
     title: 'Deep Emotional Exercises',
-    desc: 'Guided therapeutic exercises for processing emotions and building inner strength.',
+    desc: 'Guided self-reflection prompts for processing emotions—wellness support only, not therapy.',
     color: '#E0A07C',
     featureKey: 'deep_exercises',
   },
@@ -85,12 +86,18 @@ export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
   },
   {
     icon: FileText,
-    title: 'Therapist Export Tools',
-    desc: 'Generate progress reports and summaries to share with your care team.',
+    title: 'Care-circle summaries',
+    desc: 'Optional exports when the workspace is enabled—share only what you choose with people you trust. Not a medical record.',
     color: '#7CBFE0',
     featureKey: 'therapist_export',
   },
 ];
+
+/** Premium marketing cards for the active binary (consumer store builds omit care-partner export). */
+export function getPremiumFeatureMarketingCards(): PremiumMarketingCard[] {
+  if (isProviderEnterpriseSuiteInBuild()) return PREMIUM_FEATURE_CARDS;
+  return PREMIUM_FEATURE_CARDS.filter((c) => c.featureKey !== 'therapist_export');
+}
 
 /**
  * Rows for Freemium vs Premium comparison table.
@@ -131,7 +138,7 @@ export const TIER_COMPARISON_ROWS: TierComparisonRow[] = [
   },
   {
     id: 'deep_exercises',
-    label: 'Deep workbook exercises (therapeutic tracks)',
+    label: 'Deep workbook exercises (guided reflection)',
     freemium: false,
     premium: true,
   },

@@ -14,8 +14,9 @@ export const ONBOARDING_COPY = {
   valueProps: [
     {
       icon: 'shield' as const,
-      title: 'Early Warning Protection',
-      description: 'Detects rising risk before you feel it. Adaptive algorithms learn your patterns and intervene early.',
+      title: 'Early pattern awareness',
+      description:
+        'Surfaces trends from your own check-ins and journals so you can use tools sooner. Self-assessment only—not a diagnosis or medical device.',
     },
     {
       icon: 'heart' as const,

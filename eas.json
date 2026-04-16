@@ -10,18 +10,23 @@
         "developmentClient": true,
         "distribution": "internal",
         "env": {
-          "EXPO_ANDROID_ALLOW_CLEARTEXT": "1"
+          "EXPO_ANDROID_ALLOW_CLEARTEXT": "1",
+          "EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE": "1"
         }
       },
       "preview": {
         "node": "20.20.0",
-        "distribution": "internal"
+        "distribution": "internal",
+        "env": {
+          "EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE": "0"
+        }
       },
       "production": {
         "node": "20.20.0",
         "autoIncrement": true,
         "env": {
-          "EXPO_USE_FAST_RESOLVER": "1"
+          "EXPO_USE_FAST_RESOLVER": "1",
+          "EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE": "0"
         },
         "ios": {
           "resourceClass": "medium"

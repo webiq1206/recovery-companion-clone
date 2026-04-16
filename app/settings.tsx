@@ -32,7 +32,6 @@ import {
   Trash2,
   Eraser,
   FileText,
-  Scale,
   Share2,
   Users,
 } from 'lucide-react-native';

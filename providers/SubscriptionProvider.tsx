@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { SubscriptionTier, SubscriptionState, PremiumFeature } from '../types';
+import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
 
 const STORAGE_KEY = 'subscription_state';
 const RC_USER_ID_KEY = 'rc_user_id';
@@ -82,26 +83,27 @@ const CAN_USE_RC_REST_TEST_PURCHASES = __DEV__;
 /** All premium-only keys; see `constants/subscriptionPlans.ts` for marketing copy and tier matrix. */
 const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: string }> = {
   predictive_engine: {
-    title: 'Predictive Relapse Engine',
+    title: 'Pattern awareness',
     description:
-      'Full Premium early-warning engine (bundled with advanced analytics). Core charts and insights may still appear on Freemium; deep predictive modeling requires Premium.',
+      'Trend views from your own data (with Premium)—self-assessment only, not a diagnosis or medical risk score.',
   },
   advanced_analytics: {
     title: 'Advanced Analytics',
     description:
-      'Deep trajectory analytics and trend surfaces beyond core progress. Works with the predictive engine for subscribers.',
+      'Extra charts from your on-device history—wellness-oriented trends, not clinical monitoring or provider reporting.',
   },
   deep_exercises: {
     title: 'Deep Emotional Exercises',
-    description: 'Guided therapeutic exercises for processing emotions and building resilience.',
+    description: 'Guided self-reflection prompts—wellness support, not psychotherapy or clinical treatment.',
   },
   rebuild_programs: {
     title: 'Life Rebuild Programs',
     description: 'Structured programs for habit replacement, routine building, and identity reconstruction.',
   },
   therapist_export: {
-    title: 'Therapist Export Tools',
-    description: 'Generate shareable recovery reports and progress summaries for your care team.',
+    title: 'Care-circle summaries',
+    description:
+      'Optional summaries you choose to share with people you trust. Internal / workspace builds only; not a medical record.',
   },
   recovery_rooms: {
     title: 'Recovery Rooms',
@@ -366,6 +368,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const isPremium = useMemo(() => subscription.tier === 'premium', [subscription.tier]);
 
   const hasFeature = useCallback((feature: PremiumFeature): boolean => {
+    if (!isProviderEnterpriseSuiteInBuild() && feature === 'therapist_export') return false;
     if (FREE_FEATURES.has(feature)) return true;
     if (subscription.tier === 'premium') return true;
     return false;

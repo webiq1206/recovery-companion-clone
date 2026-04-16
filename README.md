@@ -47,6 +47,12 @@ Use language like the following in your **store description**, **privacy nutriti
 - **Data on your device:** Recovery information and preferences are stored on the device; deleting your “account” in Settings means **permanently erasing locally stored app data** on that device (see in-app copy for the full list).
 - **Store billing is separate:** Subscription or purchase history may still exist under your **Apple ID or Google account**; manage or cancel in App Store / Google Play settings.
 
+## Consumer vs internal builds
+
+Store-facing **production** and **preview** EAS profiles set `EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE=0`. That hides care-partner / enterprise / compliance entry points, disables related premium marketing, and keeps those flows unreachable in normal use (the app is positioned as self-help wellness, not a clinical or provider product).
+
+**Development** client builds set `EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE=1` so optional workspace screens can still be exercised. To match a consumer binary locally, run Expo without that variable (or set it to `0`).
+
 ## Deployment (EAS)
 
 Install the EAS CLI (`npm i -g eas-cli` or use `npx eas-cli`), then from the project root:

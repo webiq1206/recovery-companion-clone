@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "Recovery Companion",
+    "description": "Personal wellness and recovery support: check-ins, journaling, routines, and optional on-device community-style prompts. Not medical treatment, therapy, telehealth, or crisis care—use licensed professionals and emergency services when you need them. Subscriptions are billed through your app store.",
     "slug": "recovery-companion",
     "version": "1.0.1",
     "orientation": "portrait",

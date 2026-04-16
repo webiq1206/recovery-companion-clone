@@ -26,7 +26,8 @@ import Colors from '../constants/colors';
 import {
   FREEMIUM_HIGHLIGHTS,
   FREEMIUM_SECTION_TITLE,
-  PREMIUM_FEATURE_CARDS,
+  getPremiumFeatureMarketingCards,
+  type PremiumMarketingCard,
 } from '../constants/subscriptionPlans';
 import { useSubscription } from '../providers/SubscriptionProvider';
 
@@ -75,7 +76,7 @@ const FALLBACK_PLANS: PlanOption[] = [
   },
 ];
 
-const FeatureItem = React.memo(({ item, index }: { item: (typeof PREMIUM_FEATURE_CARDS)[number]; index: number }) => {
+const FeatureItem = React.memo(({ item, index }: { item: PremiumMarketingCard; index: number }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
@@ -518,13 +519,15 @@ export default function PremiumUpgradeScreen() {
             <Crown size={14} color="#D4A574" />
             <Text style={styles.premiumSectionTitle}>Premium Features</Text>
           </View>
-          {PREMIUM_FEATURE_CARDS.map((item, index) => (
+          {getPremiumFeatureMarketingCards().map((item, index) => (
             <FeatureItem key={index} item={item} index={index} />
           ))}
         </View>
 
         <Text style={styles.disclaimer}>
-          Downgrading preserves all your progress and journal entries. Payment will be charged at confirmation of purchase. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.
+          Recovery Companion is a wellness and self-help tool—not medical treatment, therapy, or crisis care. Downgrading
+          preserves your on-device progress and journal entries. Payment is charged at confirmation; subscriptions renew
+          unless cancelled at least 24 hours before the end of the period (manage in your store account).
         </Text>
       </ScreenScrollView>
     </View>

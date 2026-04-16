@@ -15,7 +15,7 @@ export const DELETE_ACCOUNT_DATA_BULLETS: readonly string[] = [
   'Cached subscription entitlement (you can restore purchases after reinstall)',
   'Engagement and notification preferences, scheduled local reminders, and reminder counters',
   'App PIN/biometric lock, security settings, on-device audit log, and anonymized analytics buffer',
-  'Optional therapist, enterprise, or compliance demo data saved in the app',
+  'Optional internal workspace or demo data (only if that build flavor was enabled on this device)',
 ];
 
 export function formatDeleteAccountDetailsMessage(): string {
