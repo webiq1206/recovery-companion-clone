@@ -7,6 +7,16 @@ This is a native cross-platform mobile app created with [Rork](https://rork.com)
 **Platform**: Native iOS & Android app, exportable to web
 **Framework**: Expo Router + React Native
 
+## App Store and Google Play disclosure (accounts and data)
+
+Use language like the following in your **store description**, **privacy nutrition labels**, and **privacy policy URL** so reviewers and users are not misled into thinking there is a hosted Recovery Companion login.
+
+- **No Recovery Companion cloud account:** The app does not create a separate server-side user account or hosted profile for you to sign into.
+- **Data on your device:** Recovery information and preferences are stored on the device; deleting your “account” in Settings means **permanently erasing locally stored app data** on that device (see in-app copy for the full list).
+- **Store billing is separate:** Subscription or purchase history may still exist under your **Apple ID or Google account**; manage or cancel in App Store / Google Play settings.
+
+A longer policy draft for legal review lives in [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md).
+
 ## How can I edit this code?
 
 There are several ways of editing your native mobile application.

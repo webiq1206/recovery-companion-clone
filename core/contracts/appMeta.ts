@@ -4,6 +4,7 @@ export interface AppMetaDomainState {
 
 export interface AppMetaDomainCommands {
   resetAllData: () => Promise<void>;
+  clearDiagnosticsCaches: () => Promise<void>;
 }
 
 export type AppMetaDomain = AppMetaDomainState & AppMetaDomainCommands;

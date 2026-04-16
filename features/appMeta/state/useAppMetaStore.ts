@@ -4,7 +4,10 @@ import { useEffect, useMemo } from 'react';
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 
-import { getAllAccountDeletionAsyncStorageKeys } from '../../../core/accountDeletionKeys';
+import {
+  getAllAccountDeletionAsyncStorageKeys,
+  LOCAL_DIAGNOSTICS_CACHE_ASYNC_STORAGE_KEYS,
+} from '../../../core/accountDeletionKeys';
 import { calculateStability } from '../../../utils/stabilityEngine';
 import { useRecoveryProfileStore, useHydrateRecoveryProfileStore } from '../../../stores/useRecoveryProfileStore';
 import { useCheckInsStore, useHydrateCheckInsStore } from '../../../stores/useCheckInsStore';
@@ -17,11 +20,14 @@ import { useWorkbookStore } from '../../workbook/state/useWorkbookStore';
 import { useMediaStore } from '../../media/state/useMediaStore';
 import { createSelectors } from '../../../stores/zustand/createSelectors';
 import { useAppStore } from '../../../stores/useAppStore';
+import { useWizardBehaviorStore } from '../../../stores/useWizardBehaviorStore';
 import { removePIN } from '../../../utils/secureStorage';
 
 type AppMetaState = {
   /** Full local wipe: recovery data, persisted app store, subscriptions cache, social demo state, security prefs, scheduled notifications, PIN. */
   resetAllData: () => Promise<void>;
+  /** Clears diagnostics / caches only; does not remove recovery content. */
+  clearDiagnosticsCaches: () => Promise<void>;
 };
 
 const defaultOnboarding = {
@@ -80,6 +86,11 @@ const baseUseAppMetaStore = create<AppMetaState>()(
       useSupportContactsStore.getState().reset();
       useRebuildStore.getState().reset();
       useAccountabilityStore.getState().reset();
+    },
+
+    clearDiagnosticsCaches: async () => {
+      await AsyncStorage.multiRemove([...LOCAL_DIAGNOSTICS_CACHE_ASYNC_STORAGE_KEYS]);
+      useWizardBehaviorStore.getState().reset();
     },
   }))
 );

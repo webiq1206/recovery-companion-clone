@@ -46,3 +46,17 @@ export const ACCOUNT_DELETION_EXTRA_ASYNC_STORAGE_KEYS: readonly string[] = [
 export function getAllAccountDeletionAsyncStorageKeys(): string[] {
   return [...new Set([...RECOVERY_KEYS_TO_CLEAR, ...ACCOUNT_DELETION_EXTRA_ASYNC_STORAGE_KEYS])];
 }
+
+/**
+ * Keys cleared by `clearDiagnosticsCaches` only (not profile, journal, check-ins, etc.).
+ * Wizard behavior uses `recovery:wizard_behavior` and is reset via the wizard store.
+ */
+export const LOCAL_DIAGNOSTICS_CACHE_ASYNC_STORAGE_KEYS: readonly string[] = [
+  'ro_audit_log',
+  'ro_analytics_events',
+  'ro_background_time',
+  'risk_prediction_data',
+  'retention_data',
+  'stage_detection_data',
+  'behavioral_notification_state',
+];

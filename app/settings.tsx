@@ -25,11 +25,12 @@ import {
   ChevronRight,
   Building2,
   Scale,
-  RotateCcw,
   PauseCircle,
   PlayCircle,
   Gauge,
   Crown,
+  Trash2,
+  Eraser,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
@@ -44,6 +45,10 @@ import {
   NOTIFICATION_INTENSITY_CONFIG,
   type NotificationIntensity,
 } from '../constants/notifications';
+import {
+  formatClearLocalDiagnosticsMessage,
+  formatDeleteAccountDetailsMessage,
+} from '../core/accountDeletionCopy';
 
 const ANONYMOUS_NAMES = [
   'Quiet Phoenix',
@@ -57,7 +62,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { profile, updateProfile } = useUser();
-  const { resetAllData } = useAppMeta();
+  const { resetAllData, clearDiagnosticsCaches } = useAppMeta();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
   const {
     isPremium,
@@ -102,38 +107,56 @@ export default function SettingsScreen() {
     [privacyControls, updateProfile],
   );
 
-  const handleDeleteAllDataOnDevice = useCallback(() => {
-    Alert.alert(
-      'Delete all data on this device?',
-      'Recovery Companion keeps your recovery data on this device. There is no separate cloud login to delete—this removes everything stored in the app on this phone or tablet.\n\nRemoved: profile & check-ins, journal, pledges, contacts, practice community & room data, subscription status cache, reminders, and security settings. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Continue',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Delete everything?',
-              'You will need to set up the app again from the beginning.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Delete all data',
-                  style: 'destructive',
-                  onPress: async () => {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                    await resetAllData();
-                    queryClient.clear();
-                    router.replace('/onboarding' as any);
-                  },
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert('Delete account?', formatDeleteAccountDetailsMessage(), [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Continue',
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert(
+            'Delete account permanently?',
+            'You will set up the app again from the beginning.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete account',
+                style: 'destructive',
+                onPress: async () => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  await resetAllData();
+                  queryClient.clear();
+                  router.replace('/onboarding' as any);
                 },
-              ],
-            );
-          },
+              },
+            ],
+          );
         },
-      ],
-    );
+      },
+    ]);
   }, [resetAllData, queryClient, router]);
+
+  const handleClearLocalDiagnostics = useCallback(() => {
+    Alert.alert('Reset local diagnostics?', formatClearLocalDiagnosticsMessage(), [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear diagnostics',
+        style: 'destructive',
+        onPress: async () => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          await clearDiagnosticsCaches();
+          await queryClient.invalidateQueries({ queryKey: ['audit_log'] });
+          await queryClient.invalidateQueries({ queryKey: ['analytics_events'] });
+          await queryClient.invalidateQueries({ queryKey: ['behavioral_notifications'] });
+          await queryClient.invalidateQueries({ queryKey: ['retention'] });
+          await queryClient.invalidateQueries({ queryKey: ['stageDetection'] });
+          await queryClient.invalidateQueries({ queryKey: ['riskPrediction'] });
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          Alert.alert('Diagnostics cleared', 'Caches and on-device logs were removed. Your recovery content was not deleted.');
+        },
+      },
+    ]);
+  }, [clearDiagnosticsCaches, queryClient]);
 
   const handleRestorePurchases = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -861,8 +884,8 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>ACCOUNT</Text>
         <Pressable
           style={styles.dangerRow}
-          onPress={handleDeleteAllDataOnDevice}
-          testID="settings-delete-all-data-on-device"
+          onPress={handleDeleteAccount}
+          testID="settings-delete-account"
         >
           <View style={styles.settingLeft}>
             <View
@@ -871,14 +894,40 @@ export default function SettingsScreen() {
                 { backgroundColor: 'rgba(239,83,80,0.12)' },
               ]}
             >
-              <RotateCcw size={17} color={Colors.danger} />
+              <Trash2 size={17} color={Colors.danger} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.settingLabel, { color: Colors.danger }]}>
-                Delete all data on this device
-              </Text>
+              <Text style={[styles.settingLabel, { color: Colors.danger }]}>Delete account</Text>
               <Text style={styles.settingValue}>
-                Remove every trace of this app from this device (no separate cloud account)
+                Permanently erase your on-device profile and all app data (no Recovery Companion
+                cloud account)
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.settingRow,
+            pressed && { opacity: 0.85 },
+          ]}
+          onPress={handleClearLocalDiagnostics}
+          testID="settings-clear-local-diagnostics"
+        >
+          <View style={styles.settingLeft}>
+            <View
+              style={[
+                styles.settingIcon,
+                { backgroundColor: 'rgba(90,106,122,0.12)' },
+              ]}
+            >
+              <Eraser size={17} color={Colors.textSecondary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.settingLabel}>Reset local diagnostics</Text>
+              <Text style={styles.settingValue}>
+                Clear caches, prediction buffers, and on-device logs—does not remove journal,
+                check-ins, or profile
               </Text>
             </View>
           </View>
