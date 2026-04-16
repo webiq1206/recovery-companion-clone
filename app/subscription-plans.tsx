@@ -32,17 +32,28 @@ function openSubscriptionManagement() {
 
 export default function SubscriptionPlansScreen() {
   const router = useRouter();
-  const {
-    isPremium,
-    restoreMutation,
-    activatePremiumMutation,
-    canUseDevLocalPremium,
-  } = useSubscription();
+  const { isPremium, restoreMutation, storePurchasesReady, purchasesApiKeyConfigured } = useSubscription();
 
   const isRestoring = restoreMutation.isPending;
 
   const handleRestore = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Mobile app required',
+        'Restore purchases in the Recovery Companion iOS or Android app with the same store account you used to subscribe.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+    if (!purchasesApiKeyConfigured || !storePurchasesReady) {
+      Alert.alert(
+        'Please wait',
+        'Store billing is still starting up, or billing is not configured in this build. Try again shortly.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
     restoreMutation.mutate(undefined, {
       onSuccess: (result) => {
         if (result.restored) {
@@ -50,18 +61,6 @@ export default function SubscriptionPlansScreen() {
           Alert.alert('Restored', 'Your premium access has been restored.', [
             { text: 'OK', onPress: () => router.back() },
           ]);
-        } else if (canUseDevLocalPremium) {
-          activatePremiumMutation.mutate(undefined, {
-            onSuccess: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
-                { text: 'OK', onPress: () => router.back() },
-              ]);
-            },
-            onError: () => {
-              Alert.alert('No Purchase Found', 'We couldn\'t find a previous purchase to restore.');
-            },
-          });
         } else {
           Alert.alert(
             'No purchase found',
@@ -70,27 +69,13 @@ export default function SubscriptionPlansScreen() {
         }
       },
       onError: () => {
-        if (canUseDevLocalPremium) {
-          activatePremiumMutation.mutate(undefined, {
-            onSuccess: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
-                { text: 'OK', onPress: () => router.back() },
-              ]);
-            },
-            onError: () => {
-              Alert.alert('Error', 'Unable to restore purchases. Please try again.');
-            },
-          });
-        } else {
-          Alert.alert(
-            'Restore failed',
-            'Check your connection and try again, or open subscription management in the store.',
-          );
-        }
+        Alert.alert(
+          'Restore failed',
+          'Check your connection and try again, or open subscription management in the store.',
+        );
       },
     });
-  }, [restoreMutation, activatePremiumMutation, router, canUseDevLocalPremium]);
+  }, [restoreMutation, router, storePurchasesReady, purchasesApiKeyConfigured]);
 
   const handleUpgrade = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

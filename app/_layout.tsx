@@ -11,7 +11,6 @@ import { EngagementProvider } from "../providers/EngagementProvider";
 import { RiskPredictionProvider } from "../providers/RiskPredictionProvider";
 import { CommunityProvider } from "../providers/CommunityProvider";
 import { TherapistProvider } from "../providers/TherapistProvider";
-import { ComplianceProvider } from "../providers/ComplianceProvider";
 import { SecurityProvider, useSecurity } from "../providers/SecurityProvider";
 import { StageDetectionProvider } from "../providers/StageDetectionProvider";
 import { ProviderModeProvider } from "../providers/ProviderModeProvider";
@@ -96,7 +95,6 @@ function RootLayoutNav() {
         <Stack.Screen name="relapse-detection" options={{ title: 'Risk Warning', animation: defaultAnimation }} />
         <Stack.Screen name="provider-portal" options={{ title: 'Care partner workspace', animation: defaultAnimation }} />
         <Stack.Screen name="client-detail" options={{ title: 'Client Detail', animation: defaultAnimation }} />
-        <Stack.Screen name="compliance-mode" options={{ title: 'Structured routines', animation: defaultAnimation }} />
         <Stack.Screen name="security-settings" options={{ title: 'Security & Privacy', animation: defaultAnimation }} />
         <Stack.Screen name="retention-insights" options={{ title: 'Your Recovery Journey', animation: defaultAnimation }} />
         <Stack.Screen name="advanced-analytics" options={{ title: 'Advanced Analytics', animation: defaultAnimation }} />
@@ -150,15 +148,13 @@ function SecuredApp() {
                 <RecoveryRoomsProvider>
                   <CommunityProvider>
                     <TherapistProvider>
-                      <ComplianceProvider>
-                        <RetentionProvider>
-                          <NotificationProvider>
-                            <EnterpriseProvider>
-                              <RootLayoutNav />
-                            </EnterpriseProvider>
-                          </NotificationProvider>
-                        </RetentionProvider>
-                      </ComplianceProvider>
+                      <RetentionProvider>
+                        <NotificationProvider>
+                          <EnterpriseProvider>
+                            <RootLayoutNav />
+                          </EnterpriseProvider>
+                        </NotificationProvider>
+                      </RetentionProvider>
                     </TherapistProvider>
                   </CommunityProvider>
                 </RecoveryRoomsProvider>

@@ -94,10 +94,10 @@ From product links / menus, verify screens that use `href: null` still open:
 
 ---
 
-## 11. Security, settings, compliance (if used)
+## 11. Security, settings, optional workspace (if used)
 
 - [ ] [`/security-settings`](../app/security-settings.tsx): toggles persist; lock screen behavior if enabled ([`LockScreen`](../components/LockScreen.tsx) in root layout).
-- [ ] [`/compliance-mode`](../app/compliance-mode.tsx), provider/enterprise screens: only if you ship those flavors—smoke test login/navigation.
+- [ ] Provider / enterprise screens: only when `EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE=1`—smoke test login/navigation.
 
 ---
 

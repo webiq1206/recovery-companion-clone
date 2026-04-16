@@ -7,6 +7,7 @@ import {
   Animated,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useRouter } from 'expo-router';
@@ -169,9 +170,8 @@ export default function PremiumUpgradeScreen() {
     offeringsLoading,
     purchaseMutation,
     restoreMutation,
-    activatePremiumMutation,
-    canUseDevLocalPremium,
-    canUseRcRestTestPurchases,
+    storePurchasesReady,
+    purchasesApiKeyConfigured,
   } = useSubscription();
   const headerAnim = useRef(new Animated.Value(0)).current;
   const crownAnim = useRef(new Animated.Value(0)).current;
@@ -234,7 +234,6 @@ export default function PremiumUpgradeScreen() {
         icon = Clock;
         period = '/month';
         id = 'monthly';
-        if (!price || price === '$0') price = '$9.99';
       } else if (isYearly) {
         label = 'Yearly';
         icon = Star;
@@ -242,13 +241,11 @@ export default function PremiumUpgradeScreen() {
         savings = 'Save 75%';
         period = '/year';
         id = 'yearly';
-        if (!price || price === '$0') price = '$29.99';
       } else if (isLifetime) {
         label = 'Lifetime';
         icon = InfinityIcon;
         period = 'one-time';
         id = 'lifetime';
-        if (!price || price === '$0') price = '$79.99';
       }
 
       return {
@@ -267,10 +264,18 @@ export default function PremiumUpgradeScreen() {
 
   const handlePurchase = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!canUseRcRestTestPurchases) {
+    if (Platform.OS === 'web') {
       Alert.alert(
-        'Subscribe in the store',
-        'In-app checkout on this screen is only enabled in development. In release builds, complete purchase through the App Store or Google Play once native billing is integrated, then use Restore if needed.',
+        'Mobile app required',
+        'Subscriptions are purchased through the App Store or Google Play in the Recovery Companion mobile app.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+    if (!storePurchasesReady) {
+      Alert.alert(
+        'Please wait',
+        'Connecting to the App Store. Try again in a moment.',
         [{ text: 'OK' }],
       );
       return;
@@ -296,27 +301,15 @@ export default function PremiumUpgradeScreen() {
                 );
               },
               onError: (error) => {
-                console.log('Purchase via RC failed:', error);
-                if (canUseDevLocalPremium) {
-                  activatePremiumMutation.mutate(undefined, {
-                    onSuccess: () => {
-                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                      Alert.alert(
-                        'Premium Activated (dev)',
-                        'Local bypass only — not used in store builds.',
-                        [{ text: 'Continue', onPress: () => router.back() }],
-                      );
-                    },
-                    onError: () => {
-                      Alert.alert('Error', 'Unable to activate premium. Please try again.');
-                    },
-                  });
-                } else {
-                  Alert.alert(
-                    'Purchase unavailable',
-                    'We could not verify this purchase. Check your connection, confirm App Store / Play billing is set up, then try again or tap Restore.',
-                  );
+                const msg = error instanceof Error ? error.message : String(error);
+                if (msg === 'PURCHASE_CANCELLED') {
+                  return;
                 }
+                console.log('Store purchase failed:', error);
+                Alert.alert(
+                  'Purchase unavailable',
+                  'We could not complete this purchase. Check your connection, confirm the product is available in your store account, then try again or use Restore.',
+                );
               },
             });
           },
@@ -327,14 +320,28 @@ export default function PremiumUpgradeScreen() {
     selectedPlan,
     plans,
     purchaseMutation,
-    activatePremiumMutation,
     router,
-    canUseDevLocalPremium,
-    canUseRcRestTestPurchases,
+    storePurchasesReady,
   ]);
 
   const handleRestore = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Mobile app required',
+        'Restore purchases in the Recovery Companion iOS or Android app, signed into the same App Store or Google Play account you used to subscribe.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+    if (!storePurchasesReady) {
+      Alert.alert(
+        'Please wait',
+        'Connecting to the App Store. Try again in a moment.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
     restoreMutation.mutate(undefined, {
       onSuccess: (result) => {
         if (result.restored) {
@@ -342,18 +349,6 @@ export default function PremiumUpgradeScreen() {
           Alert.alert('Restored', 'Your premium access has been restored.', [
             { text: 'Great', onPress: () => router.back() },
           ]);
-        } else if (canUseDevLocalPremium) {
-          activatePremiumMutation.mutate(undefined, {
-            onSuccess: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
-                { text: 'Great', onPress: () => router.back() },
-              ]);
-            },
-            onError: () => {
-              Alert.alert('No Purchase Found', 'We couldn\'t find a previous purchase to restore.');
-            },
-          });
         } else {
           Alert.alert(
             'No purchase found',
@@ -362,27 +357,13 @@ export default function PremiumUpgradeScreen() {
         }
       },
       onError: () => {
-        if (canUseDevLocalPremium) {
-          activatePremiumMutation.mutate(undefined, {
-            onSuccess: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.', [
-                { text: 'Great', onPress: () => router.back() },
-              ]);
-            },
-            onError: () => {
-              Alert.alert('Error', 'Unable to restore purchases. Please try again.');
-            },
-          });
-        } else {
-          Alert.alert(
-            'Restore failed',
-            'Check your network connection and try again, or manage your subscription in the App Store / Google Play.',
-          );
-        }
+        Alert.alert(
+          'Restore failed',
+          'Check your network connection and try again, or manage your subscription in the App Store / Google Play.',
+        );
       },
     });
-  }, [restoreMutation, activatePremiumMutation, router, canUseDevLocalPremium]);
+  }, [restoreMutation, router, storePurchasesReady]);
 
   if (isPremium) {
     return (
@@ -411,7 +392,12 @@ export default function PremiumUpgradeScreen() {
     );
   }
 
-  const isPurchasing = purchaseMutation.isPending || activatePremiumMutation.isPending;
+  const isPurchasing = purchaseMutation.isPending;
+  const canStartCheckout =
+    Platform.OS !== 'web' &&
+    purchasesApiKeyConfigured &&
+    storePurchasesReady &&
+    plans.length > 0;
   const isRestoring = restoreMutation.isPending;
 
   return (
@@ -453,9 +439,13 @@ export default function PremiumUpgradeScreen() {
             <View style={styles.releaseBillingNotice}>
               <Text style={styles.releaseBillingNoticeTitle}>Subscriptions</Text>
               <Text style={styles.releaseBillingNoticeBody}>
-                No store plans are available in this build yet. Premium unlocks only through a real App Store or
-                Google Play purchase once native billing is connected. You can still use Restore if you already
-                subscribed with the same store account.
+                {Platform.OS === 'web'
+                  ? 'Subscriptions are available in the Recovery Companion mobile app through the App Store or Google Play.'
+                  : !purchasesApiKeyConfigured
+                    ? 'Subscription billing is not configured in this build. Ensure RevenueCat SDK keys are set for the target platform.'
+                    : !storePurchasesReady
+                      ? 'Connecting to the store… If this lasts more than a minute, check your network and that RevenueCat is linked to App Store Connect products.'
+                      : 'No subscription plans were returned. In RevenueCat, attach products to your current offering and ensure they match App Store Connect / Play Console.'}
               </Text>
             </View>
           ) : (
@@ -474,10 +464,10 @@ export default function PremiumUpgradeScreen() {
           style={({ pressed }) => [
             styles.upgradeBtn,
             pressed && styles.upgradeBtnPressed,
-            (isPurchasing || plans.length === 0 || !canUseRcRestTestPurchases) && styles.upgradeBtnDisabled,
+            (isPurchasing || !canStartCheckout) && styles.upgradeBtnDisabled,
           ]}
           onPress={handlePurchase}
-          disabled={isPurchasing || plans.length === 0 || !canUseRcRestTestPurchases}
+          disabled={isPurchasing || !canStartCheckout}
           testID="upgrade-button"
         >
           {isPurchasing ? (
@@ -489,13 +479,6 @@ export default function PremiumUpgradeScreen() {
             </>
           )}
         </Pressable>
-
-        {!canUseRcRestTestPurchases && plans.length > 0 ? (
-          <Text style={styles.releaseCheckoutHint}>
-            App Store / Google Play checkout will replace this button once native in-app purchases are enabled in
-            a release build.
-          </Text>
-        ) : null}
 
         <Text style={styles.termsText}>
           Cancel anytime. Your recovery data is always yours.
@@ -744,14 +727,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700' as const,
     color: Colors.background,
-  },
-  releaseCheckoutHint: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 17,
-    marginHorizontal: 28,
-    marginBottom: 8,
   },
   termsText: {
     fontSize: 12,

@@ -49,7 +49,7 @@ Use language like the following in your **store description**, **privacy nutriti
 
 ## Consumer vs internal builds
 
-Store-facing **production** and **preview** EAS profiles set `EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE=0`. That hides care-partner / enterprise / compliance entry points, disables related premium marketing, and keeps those flows unreachable in normal use (the app is positioned as self-help wellness, not a clinical or provider product).
+Store-facing **production** and **preview** EAS profiles set `EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE=0`. That hides care-partner / enterprise entry points, disables related premium marketing, and keeps those flows unreachable in normal use (the app is positioned as self-help wellness, not a clinical or provider product).
 
 **Development** client builds set `EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE=1` so optional workspace screens can still be exercised. To match a consumer binary locally, run Expo without that variable (or set it to `0`).
 

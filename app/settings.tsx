@@ -67,12 +67,7 @@ export default function SettingsScreen() {
   const { profile, updateProfile } = useUser();
   const { resetAllData, clearDiagnosticsCaches } = useAppMeta();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
-  const {
-    isPremium,
-    restoreMutation,
-    activatePremiumMutation,
-    canUseDevLocalPremium,
-  } = useSubscription();
+  const { isPremium, restoreMutation, storePurchasesReady, purchasesApiKeyConfigured } = useSubscription();
   const {
     intensity,
     setIntensity,
@@ -163,21 +158,27 @@ export default function SettingsScreen() {
 
   const handleRestorePurchases = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Mobile app required',
+        'Restore purchases in the Recovery Companion iOS or Android app with the same store account you used to subscribe.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+    if (!purchasesApiKeyConfigured || !storePurchasesReady) {
+      Alert.alert(
+        'Please wait',
+        'Store billing is still starting up, or billing is not configured in this build. Try again shortly.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
     restoreMutation.mutate(undefined, {
       onSuccess: (result) => {
         if (result.restored) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           Alert.alert('Restored', 'Your premium access has been restored.');
-        } else if (canUseDevLocalPremium) {
-          activatePremiumMutation.mutate(undefined, {
-            onSuccess: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.');
-            },
-            onError: () => {
-              Alert.alert('No Purchase Found', 'We couldn\'t find a previous purchase to restore.');
-            },
-          });
         } else {
           Alert.alert(
             'No purchase found',
@@ -186,25 +187,13 @@ export default function SettingsScreen() {
         }
       },
       onError: () => {
-        if (canUseDevLocalPremium) {
-          activatePremiumMutation.mutate(undefined, {
-            onSuccess: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('Premium Activated (dev)', 'Local bypass only — not used in store builds.');
-            },
-            onError: () => {
-              Alert.alert('Error', 'Unable to restore purchases. Please try again.');
-            },
-          });
-        } else {
-          Alert.alert(
-            'Restore failed',
-            'Check your connection and try again, or manage your subscription in the App Store / Google Play.',
-          );
-        }
+        Alert.alert(
+          'Restore failed',
+          'Check your connection and try again, or manage your subscription in the App Store / Google Play.',
+        );
       },
     });
-  }, [restoreMutation, activatePremiumMutation, canUseDevLocalPremium]);
+  }, [restoreMutation, storePurchasesReady, purchasesApiKeyConfigured]);
 
   const openManageSubscription = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -932,35 +921,6 @@ export default function SettingsScreen() {
                   <Text style={styles.settingLabel}>Care partner workspace</Text>
                   <Text style={styles.settingValue}>
                     Optional summaries someone you trust can view with your consent
-                  </Text>
-                </View>
-              </View>
-              <ChevronRight size={16} color={Colors.textMuted} />
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && { opacity: 0.85 },
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/compliance-mode' as any);
-              }}
-              testID="compliance-mode-link"
-            >
-              <View style={styles.settingLeft}>
-                <View
-                  style={[
-                    styles.settingIcon,
-                    { backgroundColor: 'rgba(90,106,122,0.12)' },
-                  ]}
-                >
-                  <Scale size={17} color={Colors.textSecondary} />
-                </View>
-                <View>
-                  <Text style={styles.settingLabel}>Structured routines</Text>
-                  <Text style={styles.settingValue}>
-                    Personal checklists and reminders (not legal or medical monitoring)
                   </Text>
                 </View>
               </View>

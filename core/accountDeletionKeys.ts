@@ -36,7 +36,6 @@ export const ACCOUNT_DELETION_EXTRA_ASYNC_STORAGE_KEYS: readonly string[] = [
   'engagement_data',
   'therapist_portal_data',
   'enterprise_data',
-  'compliance_data',
   'stage_detection_data',
   'retention_data',
   'ro_provider_mode_enabled',
