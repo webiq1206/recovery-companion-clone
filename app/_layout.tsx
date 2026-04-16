@@ -94,9 +94,9 @@ function RootLayoutNav() {
         <Stack.Screen name="relapse-plan" options={{ title: 'Relapse Plan', animation: defaultAnimation }} />
         <Stack.Screen name="relapse-recovery" options={{ title: 'Log a Setback', animation: defaultAnimation }} />
         <Stack.Screen name="relapse-detection" options={{ title: 'Risk Warning', animation: defaultAnimation }} />
-        <Stack.Screen name="provider-portal" options={{ title: 'Provider Portal', animation: defaultAnimation }} />
+        <Stack.Screen name="provider-portal" options={{ title: 'Care partner workspace', animation: defaultAnimation }} />
         <Stack.Screen name="client-detail" options={{ title: 'Client Detail', animation: defaultAnimation }} />
-        <Stack.Screen name="compliance-mode" options={{ title: 'Compliance Mode', animation: defaultAnimation }} />
+        <Stack.Screen name="compliance-mode" options={{ title: 'Structured routines', animation: defaultAnimation }} />
         <Stack.Screen name="security-settings" options={{ title: 'Security & Privacy', animation: defaultAnimation }} />
         <Stack.Screen name="retention-insights" options={{ title: 'Your Recovery Journey', animation: defaultAnimation }} />
         <Stack.Screen name="advanced-analytics" options={{ title: 'Advanced Analytics', animation: defaultAnimation }} />

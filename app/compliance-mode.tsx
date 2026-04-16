@@ -27,7 +27,6 @@ import {
   FileText,
   Calendar,
   CircleCheck as CircleCheckIcon,
-  CircleX,
   Info,
   Lock,
   Eye,
@@ -81,7 +80,7 @@ function ComplianceRateRing({ rate }: { rate: number }) {
         <View style={[rateStyles.ringFill, { borderColor: rateColor }]} />
         <View style={rateStyles.innerCircle}>
           <Text style={[rateStyles.rateText, { color: rateColor }]}>{rate}%</Text>
-          <Text style={rateStyles.rateLabel}>Compliance</Text>
+          <Text style={rateStyles.rateLabel}>On track</Text>
         </View>
       </View>
     </View>
@@ -150,38 +149,33 @@ export default function ComplianceModeScreen() {
 
   const [showSetup, setShowSetup] = useState<boolean>(false);
   const [showLogDetail, setShowLogDetail] = useState<boolean>(false);
-  const [caseId, setCaseId] = useState<string>('');
-  const [officerName, setOfficerName] = useState<string>('');
-  const [officerPhone, setOfficerPhone] = useState<string>('');
-  const [courtName, setCourtName] = useState<string>('');
+  /** Display name for this routine set (stored in legacy `caseId` field). */
+  const [planName, setPlanName] = useState<string>('');
   const [showSensitive, setShowSensitive] = useState<boolean>(false);
   const [showExcuseModal, setShowExcuseModal] = useState<boolean>(false);
   const [excuseNote, setExcuseNote] = useState<string>('');
   const [excuseReqId, setExcuseReqId] = useState<string>('');
   const handleEnableCompliance = useCallback(() => {
-    if (!caseId.trim() || !officerName.trim()) {
-      Alert.alert('Required Fields', 'Please provide your case ID and officer name to continue.');
-      return;
-    }
+    const label = planName.trim() || 'My routines';
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const now = new Date();
     const endDate = new Date(now);
     endDate.setMonth(endDate.getMonth() + 6);
     enableCompliance({
-      caseId: caseId.trim(),
-      officerName: officerName.trim(),
-      officerPhone: officerPhone.trim(),
-      courtName: courtName.trim(),
+      caseId: label,
+      officerName: '',
+      officerPhone: '',
+      courtName: '',
       startDate: now.toISOString(),
       endDate: endDate.toISOString(),
     });
     setShowSetup(false);
-  }, [caseId, officerName, officerPhone, courtName, enableCompliance]);
+  }, [planName, enableCompliance]);
 
   const handleDisableCompliance = useCallback(() => {
     Alert.alert(
-      'Disable Compliance Mode',
-      'This will remove all compliance tracking data. Only do this if your court order has been completed or modified. This cannot be undone.',
+      'Turn off structured routines',
+      'This removes your local routine checklist and history from the app. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -207,26 +201,25 @@ export default function ComplianceModeScreen() {
     }
 
     let verificationMsg = '';
-    if (req.type === 'breath_test') {
-      verificationMsg = '\n\nA simulated breath reading will be recorded.';
-    } else if (req.type === 'location_verify') {
-      verificationMsg = '\n\nYour current location will be verified.';
+    if (req.type === 'breath_test' || req.type === 'location_verify') {
+      verificationMsg = '\n\nThis saves a personal note on your device only. It is not a verified medical or legal record.';
     }
 
     Alert.alert(
-      `Complete: ${req.title}`,
-      `Confirm you are completing this requirement.${verificationMsg}`,
+      `Mark done: ${req.title}`,
+      `Log that you completed this step for yourself.${verificationMsg}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Confirm',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            const t = new Date().toLocaleTimeString();
             let verification = '';
             if (req.type === 'breath_test') {
-              verification = `BAC: 0.000 | Device: SoberLink-Sim | Time: ${new Date().toLocaleTimeString()}`;
+              verification = `Personal sobriety check-in logged at ${t} (not a device reading).`;
             } else if (req.type === 'location_verify') {
-              verification = `Location verified | Time: ${new Date().toLocaleTimeString()} | Status: Within zone`;
+              verification = `Personal "safe here" check-in logged at ${t} (not GPS verification).`;
             }
             completeRequirement(req.id, verification);
           },
@@ -239,14 +232,14 @@ export default function ComplianceModeScreen() {
     if (Platform.OS === 'ios' && Alert.prompt) {
       Alert.prompt(
         'Excuse Note',
-        'Provide a reason for excusing this requirement (e.g., approved by officer):',
+        'Add a short note (for example, travel day or agreed change):',
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Submit',
             onPress: (note: string | undefined) => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              excuseRequirement(req.id, note ?? 'Approved by officer');
+              excuseRequirement(req.id, note ?? 'Skipped with note');
             },
           },
         ]
@@ -260,7 +253,7 @@ export default function ComplianceModeScreen() {
 
   const handleSubmitExcuse = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    excuseRequirement(excuseReqId, excuseNote.trim() || 'Approved by officer');
+    excuseRequirement(excuseReqId, excuseNote.trim() || 'Skipped with note');
     setShowExcuseModal(false);
     setExcuseNote('');
     setExcuseReqId('');
@@ -305,35 +298,35 @@ export default function ComplianceModeScreen() {
   if (!isEnabled) {
     return (
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-        <Stack.Screen options={{ title: 'Compliance Mode' }} />
+        <Stack.Screen options={{ title: 'Structured routines' }} />
         <ScreenScrollView contentContainerStyle={styles.disabledContent} showsVerticalScrollIndicator={false}>
           <View style={styles.disabledHero}>
             <View style={styles.shieldCircle}>
               <Shield size={40} color={Colors.textMuted} />
             </View>
-            <Text style={styles.disabledTitle}>Compliance Mode</Text>
+            <Text style={styles.disabledTitle}>Structured routines</Text>
             <Text style={styles.disabledDesc}>
-              Optional accountability mode for people who want extra structure. It adds local compliance-style logging, wellness check reminders, optional location check-ins, and requirement tracking—all stored on this device unless you export them.
+              Optional reminders and a simple checklist for people who want extra structure. Everything is a personal wellness log on this device—not supervision, not a court or medical record, and not proof for third parties.
             </Text>
           </View>
 
           <View style={styles.privacyCard}>
             <View style={styles.privacyHeader}>
               <Lock size={16} color={Colors.primary} />
-              <Text style={styles.privacyTitle}>Your Privacy Matters</Text>
+              <Text style={styles.privacyTitle}>Private to this device</Text>
             </View>
             <Text style={styles.privacyText}>
-              Compliance mode is completely optional and separated from your standard recovery experience. Non-court users will never see compliance features. All data is stored locally on your device.
+              You can turn this on or off anytime. It stays separate from the rest of the app experience. Nothing here is sent to Recovery Companion servers unless you explicitly export or share it yourself.
             </Text>
           </View>
 
           <View style={styles.featureList}>
             {[
-              { icon: CheckCircle, label: 'Check-in compliance logging', color: Colors.primary },
-              { icon: Wind, label: 'Breath monitoring integration', color: '#5B9BD5' },
-              { icon: MapPin, label: 'Location verification', color: '#E8A838' },
-              { icon: Users, label: 'Meeting attendance tracking', color: '#7B68EE' },
-              { icon: AlertTriangle, label: 'Missed requirement alerts', color: Colors.warning },
+              { icon: CheckCircle, label: 'Daily wellness check-in', color: Colors.primary },
+              { icon: Wind, label: 'Sobriety self-check reminder', color: '#5B9BD5' },
+              { icon: MapPin, label: 'Optional "safe here" note', color: '#E8A838' },
+              { icon: Users, label: 'Support meeting reminder', color: '#7B68EE' },
+              { icon: AlertTriangle, label: 'Gentle nudges if a step slips', color: Colors.warning },
             ].map((item, idx) => (
               <View key={idx} style={styles.featureRow}>
                 <View style={[styles.featureIcon, { backgroundColor: item.color + '18' }]}>
@@ -353,11 +346,11 @@ export default function ComplianceModeScreen() {
             testID="enable-compliance-btn"
           >
             <Shield size={18} color={Colors.white} />
-            <Text style={styles.enableBtnText}>Enable Compliance Mode</Text>
+            <Text style={styles.enableBtnText}>Set up structured routines</Text>
           </Pressable>
 
           <Text style={styles.footerNote}>
-            You can disable this at any time from settings.
+            You can turn this off anytime in this screen or Settings.
           </Text>
         </ScreenScrollView>
 
@@ -365,65 +358,33 @@ export default function ComplianceModeScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Setup Compliance</Text>
+                <Text style={styles.modalTitle}>Name your routine plan</Text>
                 <Pressable onPress={() => setShowSetup(false)} hitSlop={12}>
                   <X size={22} color={Colors.textSecondary} />
                 </Pressable>
               </View>
-              <Text style={styles.modalSubtitle}>Enter your court order details</Text>
+              <Text style={styles.modalSubtitle}>
+                Optional label for your checklist. Leave blank to use “My routines.” This is not a case file, officer record, or verified report.
+              </Text>
 
               <ScreenScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <Text style={styles.inputLabel}>Case ID *</Text>
+                <Text style={styles.inputLabel}>Plan name (optional)</Text>
                 <TextInput
                   style={styles.input}
-                  value={caseId}
-                  onChangeText={setCaseId}
-                  placeholder="e.g., CR-2026-00123"
+                  value={planName}
+                  onChangeText={setPlanName}
+                  placeholder="e.g., Morning focus, 90-day plan"
                   placeholderTextColor={Colors.textMuted}
-                  autoCapitalize="characters"
-                  testID="case-id-input"
-                />
-
-                <Text style={styles.inputLabel}>Officer / Case Manager Name *</Text>
-                <TextInput
-                  style={styles.input}
-                  value={officerName}
-                  onChangeText={setOfficerName}
-                  placeholder="Full name"
-                  placeholderTextColor={Colors.textMuted}
-                  testID="officer-name-input"
-                />
-
-                <Text style={styles.inputLabel}>Officer Phone</Text>
-                <TextInput
-                  style={styles.input}
-                  value={officerPhone}
-                  onChangeText={setOfficerPhone}
-                  placeholder="(555) 123-4567"
-                  placeholderTextColor={Colors.textMuted}
-                  keyboardType="phone-pad"
-                />
-
-                <Text style={styles.inputLabel}>Court Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={courtName}
-                  onChangeText={setCourtName}
-                  placeholder="e.g., District Court of..."
-                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="sentences"
+                  testID="routine-plan-name-input"
                 />
 
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.setupBtn,
-                    pressed && { opacity: 0.85 },
-                    (!caseId.trim() || !officerName.trim()) && styles.setupBtnDisabled,
-                  ]}
+                  style={({ pressed }) => [styles.setupBtn, pressed && { opacity: 0.85 }]}
                   onPress={handleEnableCompliance}
-                  disabled={!caseId.trim() || !officerName.trim()}
                   testID="confirm-setup-btn"
                 >
-                  <Text style={styles.setupBtnText}>Activate Compliance Mode</Text>
+                  <Text style={styles.setupBtnText}>Start routines</Text>
                 </Pressable>
               </ScreenScrollView>
             </View>
@@ -435,7 +396,7 @@ export default function ComplianceModeScreen() {
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      <Stack.Screen options={{ title: 'Compliance Mode' }} />
+      <Stack.Screen options={{ title: 'Structured routines' }} />
       <ScreenScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.statusHeader}>
           <View style={styles.statusBadge}>
@@ -509,7 +470,7 @@ export default function ComplianceModeScreen() {
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>TODAY'S REQUIREMENTS</Text>
+        <Text style={styles.sectionTitle}>TODAY'S STEPS</Text>
         {requirements.filter(r => r.isActive).map((req) => {
           const Icon = REQUIREMENT_ICONS[req.type];
           const color = REQUIREMENT_COLORS[req.type];
@@ -562,19 +523,23 @@ export default function ComplianceModeScreen() {
 
         {showSensitive && (
           <>
-            <Text style={[styles.sectionTitle, { marginTop: 28 }]}>CASE DETAILS</Text>
+            <Text style={[styles.sectionTitle, { marginTop: 28 }]}>PLAN DETAILS</Text>
             <View style={styles.detailCard}>
               <View style={styles.detailRow}>
                 <FileText size={14} color={Colors.textMuted} />
-                <Text style={styles.detailLabel}>Case ID</Text>
-                <Text style={styles.detailValue}>{data.caseId}</Text>
+                <Text style={styles.detailLabel}>Name</Text>
+                <Text style={styles.detailValue}>{data.caseId || 'My routines'}</Text>
               </View>
-              <View style={styles.detailDividerLine} />
-              <View style={styles.detailRow}>
-                <Users size={14} color={Colors.textMuted} />
-                <Text style={styles.detailLabel}>Officer</Text>
-                <Text style={styles.detailValue}>{data.officerName}</Text>
-              </View>
+              {data.officerName ? (
+                <>
+                  <View style={styles.detailDividerLine} />
+                  <View style={styles.detailRow}>
+                    <Users size={14} color={Colors.textMuted} />
+                    <Text style={styles.detailLabel}>Note</Text>
+                    <Text style={styles.detailValue}>{data.officerName}</Text>
+                  </View>
+                </>
+              ) : null}
               {data.officerPhone ? (
                 <>
                   <View style={styles.detailDividerLine} />
@@ -590,7 +555,7 @@ export default function ComplianceModeScreen() {
                   <View style={styles.detailDividerLine} />
                   <View style={styles.detailRow}>
                     <Shield size={14} color={Colors.textMuted} />
-                    <Text style={styles.detailLabel}>Court</Text>
+                    <Text style={styles.detailLabel}>Extra</Text>
                     <Text style={styles.detailValue}>{data.courtName}</Text>
                   </View>
                 </>
@@ -605,7 +570,7 @@ export default function ComplianceModeScreen() {
           </>
         )}
 
-        <Text style={[styles.sectionTitle, { marginTop: 28 }]}>MANAGE REQUIREMENTS</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 28 }]}>MANAGE REMINDERS</Text>
         {requirements.map((req) => {
           const Icon = REQUIREMENT_ICONS[req.type];
           const color = REQUIREMENT_COLORS[req.type];
@@ -651,13 +616,13 @@ export default function ComplianceModeScreen() {
           onPress={handleDisableCompliance}
           testID="disable-compliance-btn"
         >
-          <Text style={styles.disableBtnText}>Disable Compliance Mode</Text>
+          <Text style={styles.disableBtnText}>Turn off structured routines</Text>
         </Pressable>
 
         <View style={styles.bottomNote}>
           <Info size={14} color={Colors.textMuted} />
           <Text style={styles.bottomNoteText}>
-            Compliance data is stored only on this device. Share reports with your officer as needed.
+            Routine logs stay on this device. They are for your own reflection and planning—not legal evidence, medical records, or official reporting.
           </Text>
         </View>
       </ScreenScrollView>
@@ -676,7 +641,7 @@ export default function ComplianceModeScreen() {
               style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
               value={excuseNote}
               onChangeText={setExcuseNote}
-              placeholder="e.g., Approved by officer"
+              placeholder="e.g., Travel day"
               placeholderTextColor={Colors.textMuted}
               multiline
               autoFocus
@@ -697,7 +662,7 @@ export default function ComplianceModeScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { maxHeight: '85%' }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Compliance Log</Text>
+              <Text style={styles.modalTitle}>Routine log</Text>
               <Pressable onPress={() => setShowLogDetail(false)} hitSlop={12}>
                 <X size={22} color={Colors.textSecondary} />
               </Pressable>

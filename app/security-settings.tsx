@@ -392,7 +392,7 @@ export default function SecuritySettingsScreen() {
         <View style={styles.complianceTextWrap}>
           <Text style={styles.complianceTitle}>Privacy on your device</Text>
           <Text style={styles.complianceBody}>
-            Recovery data stays on this device unless you choose to export or share it. Optional encryption and audit logging help you monitor access to your information. This app is not a substitute for a HIPAA-covered healthcare platform.
+            Recovery Companion is a wellness and self-help tool. It is not medical advice, a treatment service, or a substitute for care from licensed professionals. Your information stays on this device unless you export or share it; optional encryption and activity logging are for your own awareness only.
           </Text>
         </View>
       </View>

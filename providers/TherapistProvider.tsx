@@ -179,8 +179,8 @@ function generateReport(client: ConnectedClient): ClientReport {
   if (client.engagementScore < 40) concerns.push('Low engagement with app features');
   if (client.moodAverage < 40) concerns.push('Persistently low mood patterns');
 
-  recommendations.push('Continue current treatment approach');
-  if (client.riskLevel > 40) recommendations.push('Consider increasing session frequency');
+  recommendations.push('Continue supportive check-ins they find helpful');
+  if (client.riskLevel > 40) recommendations.push('Consider more frequent supportive touchpoints');
   if (client.engagementScore < 50) recommendations.push('Discuss barriers to app engagement');
   if (client.moodAverage < 50) recommendations.push('Explore mood management techniques');
 

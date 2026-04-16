@@ -140,7 +140,7 @@ export default function ProviderPortalScreen() {
 
   const handleInviteClient = useCallback(() => {
     if (!inviteName.trim() || !inviteEmail.trim()) {
-      Alert.alert('Required Fields', 'Please enter client name and email.');
+      Alert.alert('Required Fields', 'Please enter their name and email.');
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -156,13 +156,13 @@ export default function ProviderPortalScreen() {
     setInviteName('');
     setInviteEmail('');
     setShowInvite(false);
-    Alert.alert('Invitation Sent', `An invitation has been sent to ${inviteName.trim()}.`);
+    Alert.alert('Invitation saved', `An invitation for ${inviteName.trim()} was saved on this device.`);
   }, [inviteName, inviteEmail, inviteClient]);
 
   const handleDisablePortal = useCallback(() => {
     Alert.alert(
-      'Disable Provider Portal',
-      'This will remove all provider data. Client recovery data is not affected.',
+      'Disable care partner workspace',
+      'This removes workspace data from this device for this role. The other person’s app data is not deleted.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -233,7 +233,7 @@ export default function ProviderPortalScreen() {
           </View>
 
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel}>Risk</Text>
+            <Text style={styles.metricLabel}>Concern</Text>
             <View style={styles.metricValueRow}>
               <Text style={[styles.metricValue, { color: risk.color }]}>
                 {client.riskLevel}
@@ -272,7 +272,7 @@ export default function ProviderPortalScreen() {
           <View style={styles.riskBanner}>
             <AlertTriangle size={12} color={Colors.accent} />
             <Text style={styles.riskBannerText}>
-              {client.riskTrend === 'rising' ? 'Risk trending upward' : 'Elevated risk level'}
+              {client.riskTrend === 'rising' ? 'Concern trending up' : 'Higher concern score'}
             </Text>
           </View>
         )}
@@ -299,12 +299,12 @@ export default function ProviderPortalScreen() {
   if (!hasFeature('therapist_export')) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Provider Portal', headerShown: true }} />
+        <Stack.Screen options={{ title: 'Care partner workspace', headerShown: true }} />
         <View style={styles.portalGateContainer}>
           <PremiumSectionOverlay
             feature="therapist_export"
-            title="Provider Companion Portal"
-            description="Unlock the therapist portal to monitor client progress, receive risk alerts, generate reports, and export treatment insights."
+            title="Care partner workspace"
+            description="Optional tools for coaches, sponsors, or clinicians you work with: high-level wellness summaries, gentle nudges, and exports—only with your consent and outside this app’s medical scope."
           />
         </View>
       </View>
@@ -314,15 +314,15 @@ export default function ProviderPortalScreen() {
   if (showSetup) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Provider Portal', headerShown: true }} />
+        <Stack.Screen options={{ title: 'Care partner workspace', headerShown: true }} />
         <ScreenScrollView contentContainerStyle={styles.setupContent} showsVerticalScrollIndicator={false}>
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             <View style={styles.setupIcon}>
               <Shield size={40} color={Colors.primary} />
             </View>
-            <Text style={styles.setupTitle}>Provider Companion Portal</Text>
+            <Text style={styles.setupTitle}>Care partner workspace</Text>
             <Text style={styles.setupSubtitle}>
-              Set up your secure portal to monitor client progress, receive risk alerts, and generate treatment insights - all with consent-based data sharing.
+              A simple, consent-based way to share high-level wellness summaries with someone who supports you. It does not diagnose, treat, or replace care from licensed professionals.
             </Text>
 
             <View style={styles.setupCard}>
@@ -377,7 +377,7 @@ export default function ProviderPortalScreen() {
             <View style={styles.privacyNote}>
               <Shield size={16} color={Colors.primary} />
               <Text style={styles.privacyNoteText}>
-                All data sharing requires explicit client consent. Clients can revoke access at any time. Data stays encrypted on supported devices; this workflow is not a certified HIPAA product by itself.
+                Sharing only happens when the person using the app agrees. They can stop sharing anytime. On-device protection varies by device settings—do not rely on this app alone for regulated health information.
               </Text>
             </View>
 
@@ -386,7 +386,7 @@ export default function ProviderPortalScreen() {
               onPress={handleSetup}
               testID="setup-portal-btn"
             >
-              <Text style={styles.setupBtnText}>Enable Provider Portal</Text>
+              <Text style={styles.setupBtnText}>Enable workspace</Text>
             </Pressable>
 
             <Pressable
@@ -403,7 +403,7 @@ export default function ProviderPortalScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Provider Portal', headerShown: true }} />
+      <Stack.Screen options={{ title: 'Care partner workspace', headerShown: true }} />
       <ScreenScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
           <View style={styles.portalHeader}>
@@ -433,7 +433,7 @@ export default function ProviderPortalScreen() {
                 <Users size={18} color={Colors.primary} />
               </View>
               <Text style={styles.overviewValue}>{activeClients.length}</Text>
-              <Text style={styles.overviewLabel}>Active Clients</Text>
+              <Text style={styles.overviewLabel}>Active</Text>
             </View>
 
             <View style={styles.overviewCard}>
@@ -443,7 +443,7 @@ export default function ProviderPortalScreen() {
               <Text style={[styles.overviewValue, atRiskClients.length > 0 && { color: Colors.accent }]}>
                 {atRiskClients.length}
               </Text>
-              <Text style={styles.overviewLabel}>At Risk</Text>
+              <Text style={styles.overviewLabel}>Check in</Text>
             </View>
 
             <View style={styles.overviewCard}>
@@ -467,7 +467,7 @@ export default function ProviderPortalScreen() {
             <View style={styles.alertSection}>
               <View style={styles.alertHeader}>
                 <AlertTriangle size={16} color={Colors.accent} />
-                <Text style={styles.alertTitle}>Clients Needing Attention</Text>
+                <Text style={styles.alertTitle}>People to check in with</Text>
               </View>
               {atRiskClients.map((client) => {
                 const risk = getRiskLabel(client.riskLevel);
@@ -482,7 +482,7 @@ export default function ProviderPortalScreen() {
                       <View>
                         <Text style={styles.alertName}>{client.name}</Text>
                         <Text style={styles.alertDetail}>
-                          Risk: {client.riskLevel} ({risk.label}) · {client.riskTrend === 'rising' ? 'Trending up' : 'Elevated'}
+                          Concern: {client.riskLevel} ({risk.label}) · {client.riskTrend === 'rising' ? 'Trending up' : 'Elevated'}
                         </Text>
                       </View>
                     </View>
@@ -495,7 +495,7 @@ export default function ProviderPortalScreen() {
 
           <View style={styles.clientsSection}>
             <View style={styles.clientsSectionHeader}>
-              <Text style={styles.sectionTitle}>CLIENTS</Text>
+              <Text style={styles.sectionTitle}>PEOPLE YOU SUPPORT</Text>
               <Pressable
                 style={styles.inviteBtn}
                 onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowInvite(true); }}
@@ -512,7 +512,7 @@ export default function ProviderPortalScreen() {
                   style={styles.searchInput}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  placeholder="Search clients..."
+                  placeholder="Search..."
                   placeholderTextColor={Colors.textMuted}
                 />
                 {searchQuery.length > 0 && (
@@ -540,9 +540,9 @@ export default function ProviderPortalScreen() {
             {filteredClients.length === 0 ? (
               <View style={styles.emptyState}>
                 <Users size={32} color={Colors.textMuted} />
-                <Text style={styles.emptyText}>No clients found</Text>
+                <Text style={styles.emptyText}>No one listed yet</Text>
                 <Text style={styles.emptySubtext}>
-                  {searchQuery ? 'Try adjusting your search' : 'Invite your first client to get started'}
+                  {searchQuery ? 'Try adjusting your search' : 'Invite someone who agreed to share summaries'}
                 </Text>
               </View>
             ) : (
@@ -571,7 +571,7 @@ export default function ProviderPortalScreen() {
           <View style={styles.complianceNote}>
             <Shield size={14} color={Colors.textMuted} />
             <Text style={styles.complianceText}>
-              All data is shared with explicit client consent. Clients may revoke access at any time. Use your organization’s policies and BAAs where regulated health data applies.
+              Only share what your organization is allowed to see. This workspace is for wellness context, not legal custody, court reporting, or certified medical records.
             </Text>
           </View>
 
@@ -594,20 +594,20 @@ export default function ProviderPortalScreen() {
               </Pressable>
             </View>
             <Text style={styles.modalSubtitle}>
-              Client will receive an invitation to share their recovery data with you.
+              They choose what high-level summaries to share. Nothing here is a medical chart or legal attestation.
             </Text>
 
-            <Text style={styles.modalFieldLabel}>Client Name</Text>
+            <Text style={styles.modalFieldLabel}>Their name</Text>
             <TextInput
               style={styles.modalInput}
               value={inviteName}
               onChangeText={setInviteName}
-              placeholder="Client's name"
+              placeholder="First name or nickname"
               placeholderTextColor={Colors.textMuted}
               maxLength={50}
             />
 
-            <Text style={styles.modalFieldLabel}>Client Email</Text>
+            <Text style={styles.modalFieldLabel}>Email</Text>
             <TextInput
               style={styles.modalInput}
               value={inviteEmail}
@@ -622,7 +622,7 @@ export default function ProviderPortalScreen() {
             <View style={styles.consentInfo}>
               <Eye size={14} color={Colors.primary} />
               <Text style={styles.consentInfoText}>
-                Default shared data: progress, mood trends, risk alerts, engagement, and check-ins. Journal summaries require additional consent.
+                Default shared summaries: general progress, mood trends, optional “reach out” flags, engagement, and check-ins. Journal text stays off unless they opt in separately.
               </Text>
             </View>
 

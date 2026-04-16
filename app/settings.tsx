@@ -791,7 +791,7 @@ export default function SettingsScreen() {
         {providerModeEnabled && (
           <>
             <Text style={[styles.sectionLabel, { marginTop: 28 }]}>
-              PROFESSIONAL TOOLS
+              OPTIONAL WORKSPACE
             </Text>
             <Pressable
               style={({ pressed }) => [
@@ -813,9 +813,9 @@ export default function SettingsScreen() {
                   <Building2 size={17} color={Colors.textSecondary} />
                 </View>
                 <View>
-                  <Text style={styles.settingLabel}>Provider Portal</Text>
+                  <Text style={styles.settingLabel}>Care partner workspace</Text>
                   <Text style={styles.settingValue}>
-                    Provider tools and shared progress (with consent)
+                    Optional summaries someone you trust can view with your consent
                   </Text>
                 </View>
               </View>
@@ -842,9 +842,9 @@ export default function SettingsScreen() {
                   <Scale size={17} color={Colors.textSecondary} />
                 </View>
                 <View>
-                  <Text style={styles.settingLabel}>Compliance Mode</Text>
+                  <Text style={styles.settingLabel}>Structured routines</Text>
                   <Text style={styles.settingValue}>
-                    Optional structured accountability tools
+                    Personal checklists and reminders (not legal or medical monitoring)
                   </Text>
                 </View>
               </View>
