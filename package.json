@@ -18,6 +18,7 @@
     "lint": "expo lint",
     "test": "bun test utils/mergeProfile.test.ts",
     "qa:ia-strict": "node scripts/qa-ia-strict.mjs",
+    "audit:nav": "node scripts/audit-navigation-routes.mjs",
     "android": "expo run:android",
     "android:open-dev-url": "node ./scripts/adb-open-dev-client-url.mjs",
     "prebuild:android": "expo prebuild --platform android",
