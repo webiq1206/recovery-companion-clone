@@ -33,14 +33,7 @@
     "plugins": [
       "expo-router",
       "expo-dev-client",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": false
-          }
-        }
-      ],
+      ["expo-build-properties", {}],
       [
         "expo-notifications",
         {

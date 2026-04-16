@@ -29,6 +29,12 @@ Defaults to port **3847**. Set `SOCIAL_ADMIN_SECRET` to enable:
 EXPO_PUBLIC_LIVE_SOCIAL_API_URL=http://192.168.x.x:3847
 ```
 
+For **Android** with an `http://` URL, the native app must allow cleartext traffic at **build** time. Release and preview builds keep cleartext **off** by default (`app.config.js`). Only enable it when you truly need HTTP:
+
+- **EAS `development` profile** sets `EXPO_ANDROID_ALLOW_CLEARTEXT=1` in `eas.json` (internal dev client + LAN servers).
+- **Local `expo run:android`:** set `EXPO_ANDROID_ALLOW_CLEARTEXT=1` in your shell or `.env` for that build.
+- **Production / Play:** use **`https://`** for `EXPO_PUBLIC_LIVE_SOCIAL_API_URL` and do **not** set `EXPO_ANDROID_ALLOW_CLEARTEXT`.
+
 3. Rebuild the dev client or release binary so the env var is embedded.
 
 ### What the MVP server provides
