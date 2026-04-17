@@ -21,7 +21,13 @@ import { useMediaStore } from '../../media/state/useMediaStore';
 import { createSelectors } from '../../../stores/zustand/createSelectors';
 import { useAppStore } from '../../../stores/useAppStore';
 import { useWizardBehaviorStore } from '../../../stores/useWizardBehaviorStore';
-import { removePIN } from '../../../utils/secureStorage';
+import { DEFAULT_PROFILE } from '../../../core/persistence';
+import { removePIN, secureDelete } from '../../../utils/secureStorage';
+
+/** Keys passed to `secureSet` / `secureSetJSON` (data lives under `secure_` + key in AsyncStorage). */
+const SECURE_ACCOUNT_DATA_KEYS = ['ro_security_settings', 'ro_audit_log', 'ro_analytics_events'] as const;
+
+const SECURE_DIAGNOSTICS_KEYS = ['ro_audit_log', 'ro_analytics_events'] as const;
 
 type AppMetaState = {
   /** Full local wipe: recovery data, persisted app store, subscriptions cache, social demo state, security prefs, scheduled notifications, PIN. */
@@ -49,6 +55,7 @@ const baseUseAppMetaStore = create<AppMetaState>()(
     resetAllData: async () => {
       const keys = getAllAccountDeletionAsyncStorageKeys();
       await AsyncStorage.multiRemove(keys);
+      await Promise.all(SECURE_ACCOUNT_DATA_KEYS.map((k) => secureDelete(k)));
       try {
         await removePIN();
       } catch (e) {
@@ -68,10 +75,9 @@ const baseUseAppMetaStore = create<AppMetaState>()(
         progress: defaultProgress,
       });
 
-      // Reset each store slice to defaults in-memory.
-      useRecoveryProfileStore.getState().hydrate?.();
+      // Reset each store slice to defaults in-memory (hydrate() is a no-op when already hydrated).
       useRecoveryProfileStore.setState({
-        profile: useRecoveryProfileStore.getState().profile,
+        profile: DEFAULT_PROFILE,
         timelineEvents: [],
         relapsePlan: null,
         isLoading: false,
@@ -86,10 +92,15 @@ const baseUseAppMetaStore = create<AppMetaState>()(
       useSupportContactsStore.getState().reset();
       useRebuildStore.getState().reset();
       useAccountabilityStore.getState().reset();
+      useWizardBehaviorStore.getState().reset();
     },
 
     clearDiagnosticsCaches: async () => {
-      await AsyncStorage.multiRemove([...LOCAL_DIAGNOSTICS_CACHE_ASYNC_STORAGE_KEYS]);
+      const asyncOnly = LOCAL_DIAGNOSTICS_CACHE_ASYNC_STORAGE_KEYS.filter(
+        (k) => !SECURE_DIAGNOSTICS_KEYS.includes(k as (typeof SECURE_DIAGNOSTICS_KEYS)[number]),
+      );
+      await AsyncStorage.multiRemove([...asyncOnly]);
+      await Promise.all(SECURE_DIAGNOSTICS_KEYS.map((k) => secureDelete(k)));
       useWizardBehaviorStore.getState().reset();
     },
   }))
