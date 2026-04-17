@@ -15,7 +15,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
-import { arePeerPracticeFeaturesEnabled } from '../../../core/socialLiveConfig';
+import { arePeerPracticeFeaturesEnabled, isLiveSocialMode } from '../../../core/socialLiveConfig';
 import { useConnection } from '../../../providers/ConnectionProvider';
 import { TrustedContact, PeerChat, SafeRoom, PeerMessage, RoomMessage } from '../../../types';
 import { useHydrateToolUsageStore, useToolUsageStore } from '../../../features/tools/state/useToolUsageStore';
@@ -59,6 +59,7 @@ export default function ConnectionScreen() {
   );
 
   const peerPracticeEnabled = arePeerPracticeFeaturesEnabled();
+  const liveRecoveryRooms = isLiveSocialMode();
   const [activeTab, setActiveTab] = useState<ConnectionTab>('circle');
 
   React.useEffect(() => {
@@ -535,9 +536,13 @@ export default function ConnectionScreen() {
           <Radio size={20} color="#FF6B6B" />
         </View>
         <View style={styles.recoveryRoomsBannerInfo}>
-          <Text style={styles.recoveryRoomsBannerTitle}>Recovery Rooms (practice)</Text>
+          <Text style={styles.recoveryRoomsBannerTitle}>
+            {liveRecoveryRooms ? 'Recovery Rooms' : 'Recovery Rooms (practice)'}
+          </Text>
           <Text style={styles.recoveryRoomsBannerDesc}>
-            On-device prompts and sample threads for reflection—not real-time moderated therapy or guaranteed live peers
+            {liveRecoveryRooms
+              ? 'Join scheduled small-group sessions. Use Report for safety issues. This is not crisis care and who is online varies.'
+              : 'On-device prompts and sample threads for reflection—not real-time moderated therapy or guaranteed live peers.'}
           </Text>
         </View>
         <ChevronRight size={18} color={Colors.textMuted} />

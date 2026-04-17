@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { ScreenFlatList } from '../components/ScreenFlatList';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import {
   Users, Shield, Clock, Radio, ChevronRight, Lock,
   Eye, EyeOff, Search, X, Calendar, Zap, Heart,
@@ -429,7 +429,9 @@ export default function RecoveryRoomsScreen() {
             <View style={styles.emptyState}>
               <Calendar size={36} color={Colors.textMuted} />
               <Text style={styles.emptyTitle}>No Upcoming Sessions</Text>
-              <Text style={styles.emptyText}>Check back soon. Sessions are added regularly.</Text>
+              <Text style={styles.emptyText}>
+                When facilitators schedule sessions for these rooms, they will show up here.
+              </Text>
             </View>
           }
         />
@@ -464,30 +466,7 @@ export default function RecoveryRoomsScreen() {
   };
 
   if (!arePeerPracticeFeaturesEnabled()) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.premiumGate}>
-          <View style={styles.premiumGateIcon}>
-            <Users size={32} color={Colors.textMuted} />
-          </View>
-          <Text style={styles.premiumGateTitle}>Recovery Rooms</Text>
-          <Text style={styles.premiumGateDesc}>
-            Group recovery rooms are not enabled in this app build. Use Connect for your trusted circle and crisis
-            resources.
-          </Text>
-          <Pressable
-            style={({ pressed }) => [styles.premiumGateBtn, pressed && { opacity: 0.8 }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              if (router.canGoBack()) router.back();
-              else router.replace('/connection' as never);
-            }}
-          >
-            <Text style={styles.premiumGateBtnText}>Go back</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
+    return <Redirect href={'/(tabs)/connection' as any} />;
   }
 
   if (!hasFeature('recovery_rooms')) {

@@ -146,7 +146,7 @@ function LoopCard({ loop, index }: { loop: RetentionLoop; index: number }) {
             Last: {new Date(loop.lastTriggeredAt).toLocaleDateString()}
           </Text>
         ) : (
-          <Text style={loopStyles.metaText}>Not yet activated</Text>
+          <Text style={loopStyles.metaText}>No activations recorded yet</Text>
         )}
       </View>
     </Animated.View>

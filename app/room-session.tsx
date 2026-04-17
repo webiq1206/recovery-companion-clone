@@ -7,8 +7,7 @@ import type { FlatList } from 'react-native';
 import { ScreenFlatList } from '../components/ScreenFlatList';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Stack } from 'expo-router';
+import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Shield, Clock, Radio, X, Send, EyeOff, Eye,
   Flag, Users, Calendar, ChevronDown, ChevronRight, AlertTriangle,
@@ -234,15 +233,7 @@ export default function RoomSessionScreen() {
   }, [room]);
 
   if (!arePeerPracticeFeaturesEnabled()) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Stack.Screen options={{ headerShown: false }} />
-        <Text style={styles.errorText}>Recovery rooms are not available in this app build.</Text>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Go Back</Text>
-        </Pressable>
-      </View>
-    );
+    return <Redirect href={'/(tabs)/connection' as any} />;
   }
 
   if (!room) {
