@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import {
   Home,
   TrendingUp,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react-native";
 import React, { useCallback } from "react";
 import Colors from "../../constants/colors";
+import { hairline, shadows, spacing } from "../../constants/theme";
 
 type IconType = typeof Home;
 import { useAppMeta } from "../../core/domains/useAppMeta";
@@ -115,16 +116,21 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: Colors.primary,
-          tabBarInactiveTintColor: Colors.textMuted,
+          tabBarInactiveTintColor: Colors.textSecondary,
           tabBarShowLabel: true,
           tabBarStyle: {
             backgroundColor: Colors.tabBar,
-            borderTopColor: Colors.border,
-            borderTopWidth: 0.5,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: hairline,
+            paddingTop: spacing.xxs,
+            paddingBottom: spacing.xxs,
+            ...shadows.tabBar,
           },
           tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: "600" as const,
+            fontWeight: "700" as const,
+            letterSpacing: 0.2,
+            marginBottom: spacing.xxs,
           },
           lazy: true,
         }}

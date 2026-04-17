@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { User, EyeOff, Crown } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { hairline, radius, shadows, spacing } from '../constants/theme';
 import { useUser } from '../core/domains/useUser';
 import { usePledges } from '../core/domains/usePledges';
 import { useJournal } from '../core/domains/useJournal';
@@ -136,11 +137,12 @@ export function ProfileHeaderSummaryCard({
 const styles = StyleSheet.create({
   headerCard: {
     backgroundColor: Colors.cardBackground,
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
+    borderRadius: radius.lg,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: hairline,
+    ...shadows.card,
   },
   headlineCenteredWrap: {
     width: '100%',

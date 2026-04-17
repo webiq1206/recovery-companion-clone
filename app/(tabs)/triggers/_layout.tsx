@@ -1,5 +1,5 @@
 import { Redirect, Stack } from "expo-router";
-import Colors from "../../../constants/colors";
+import { defaultStackScreenOptions } from "../../../constants/theme";
 import { getStrictRedirectTarget } from "../../../utils/legacyRoutes";
 
 export default function TriggersLayout() {
@@ -11,16 +11,7 @@ export default function TriggersLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: {
-          backgroundColor: Colors.background,
-        },
-        headerTintColor: Colors.text,
-        headerTitleStyle: {
-          fontWeight: '700',
-        },
-        contentStyle: {
-          backgroundColor: Colors.background,
-        },
+        ...defaultStackScreenOptions,
       }}
     />
   );

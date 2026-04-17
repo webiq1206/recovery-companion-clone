@@ -1,5 +1,5 @@
 import { Redirect, Stack } from "expo-router";
-import Colors from "../../../constants/colors";
+import { defaultStackScreenOptions } from "../../../constants/theme";
 import { TabHeaderActions } from "../../../components/TabHeaderActions";
 import { getStrictRedirectTarget } from "../../../utils/legacyRoutes";
 
@@ -12,10 +12,7 @@ export default function ProgressLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.background },
-        headerTintColor: Colors.text,
-        headerTitleStyle: { fontWeight: "600" as const },
-        contentStyle: { backgroundColor: Colors.background },
+        ...defaultStackScreenOptions,
       }}
     >
       <Stack.Screen

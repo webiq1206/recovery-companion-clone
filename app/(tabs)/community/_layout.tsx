@@ -1,4 +1,4 @@
-import Colors from "../../../constants/colors";
+import { defaultStackScreenOptions } from "../../../constants/theme";
 import { Redirect, Stack } from "expo-router";
 import { getStrictRedirectTarget } from "../../../utils/legacyRoutes";
 
@@ -11,9 +11,7 @@ export default function CommunityLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.background },
-        headerTintColor: Colors.text,
-        headerTitleStyle: { fontWeight: "600" },
+        ...defaultStackScreenOptions,
       }}
     >
       <Stack.Screen name="index" options={{ title: "Connection" }} />

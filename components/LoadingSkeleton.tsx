@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import Colors from '../constants/colors';
+import { radius, spacing } from '../constants/theme';
 
 const SkeletonPulse = React.memo(({ width, height, borderRadius = 8, style }: {
   width: number | string;
@@ -42,13 +43,13 @@ export function HomeLoadingSkeleton() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <View>
-          <SkeletonPulse width={160} height={24} borderRadius={6} />
-          <SkeletonPulse width={100} height={14} borderRadius={4} style={{ marginTop: 6 }} />
+          <SkeletonPulse width={160} height={24} borderRadius={radius.sm} />
+          <SkeletonPulse width={100} height={14} borderRadius={radius.sm} style={{ marginTop: spacing.xxs + 2 }} />
         </View>
         <SkeletonPulse width={80} height={36} borderRadius={18} />
       </View>
 
-      <SkeletonPulse width="100%" height={44} borderRadius={14} style={{ marginTop: 14 }} />
+      <SkeletonPulse width="100%" height={44} borderRadius={radius.md} style={{ marginTop: spacing.sm - 2 }} />
 
       <View style={styles.heroSkeleton}>
         <View style={styles.heroLeft}>
@@ -61,15 +62,15 @@ export function HomeLoadingSkeleton() {
         </View>
       </View>
 
-      <SkeletonPulse width="100%" height={120} borderRadius={20} style={{ marginTop: 16 }} />
+      <SkeletonPulse width="100%" height={120} borderRadius={radius.xl} style={{ marginTop: spacing.sm }} />
 
-      <SkeletonPulse width="100%" height={50} borderRadius={14} style={{ marginTop: 14 }} />
+      <SkeletonPulse width="100%" height={50} borderRadius={radius.md} style={{ marginTop: spacing.sm - 2 }} />
 
-      <SkeletonPulse width="100%" height={70} borderRadius={16} style={{ marginTop: 14 }} />
+      <SkeletonPulse width="100%" height={70} borderRadius={radius.lg} style={{ marginTop: spacing.sm - 2 }} />
 
-      <SkeletonPulse width="100%" height={70} borderRadius={16} style={{ marginTop: 12 }} />
+      <SkeletonPulse width="100%" height={70} borderRadius={radius.lg} style={{ marginTop: spacing.sm - 4 }} />
 
-      <SkeletonPulse width="100%" height={60} borderRadius={16} style={{ marginTop: 12 }} />
+      <SkeletonPulse width="100%" height={60} borderRadius={radius.lg} style={{ marginTop: spacing.sm - 4 }} />
     </View>
   );
 }
@@ -77,15 +78,15 @@ export function HomeLoadingSkeleton() {
 export function GenericLoadingSkeleton({ lines = 5 }: { lines?: number }) {
   return (
     <View style={styles.genericContainer}>
-      <SkeletonPulse width="70%" height={22} borderRadius={6} />
-      <SkeletonPulse width="45%" height={14} borderRadius={4} style={{ marginTop: 8 }} />
+      <SkeletonPulse width="70%" height={22} borderRadius={radius.sm} />
+      <SkeletonPulse width="45%" height={14} borderRadius={radius.sm} style={{ marginTop: spacing.xs }} />
       {Array.from({ length: lines }, (_, i) => (
         <SkeletonPulse
           key={i}
           width="100%"
           height={60 + (i % 2) * 20}
-          borderRadius={14}
-          style={{ marginTop: 14 }}
+          borderRadius={radius.md}
+          style={{ marginTop: spacing.sm - 2 }}
         />
       ))}
     </View>
@@ -96,8 +97,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.xxl + spacing.sm,
   },
   headerRow: {
     flexDirection: 'row',
@@ -108,10 +109,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.cardBackground,
-    borderRadius: 24,
-    padding: 24,
-    marginTop: 20,
-    gap: 20,
+    borderRadius: radius.xxl,
+    padding: spacing.md,
+    marginTop: spacing.sm + 4,
+    gap: spacing.md,
   },
   heroLeft: {},
   heroRight: {
@@ -120,8 +121,8 @@ const styles = StyleSheet.create({
   genericContainer: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm + 4,
   },
 });
 

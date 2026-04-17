@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import Colors from '../constants/colors';
+import { hairline, radius, shadows, spacing } from '../constants/theme';
 
 interface Props {
   children: ReactNode;
@@ -68,27 +69,28 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 28,
+    padding: spacing.lg,
   },
   card: {
     backgroundColor: Colors.cardBackground,
-    borderRadius: 20,
-    padding: 32,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
     alignItems: 'center',
     width: '100%',
     maxWidth: 340,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: hairline,
+    ...shadows.card,
   },
   emoji: {
     fontSize: 40,
-    marginBottom: 16,
+    marginBottom: spacing.sm,
   },
   title: {
     fontSize: 20,
     fontWeight: '700' as const,
     color: Colors.text,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
     textAlign: 'center',
   },
   message: {
@@ -96,17 +98,17 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 21,
-    marginBottom: 24,
+    marginBottom: spacing.md,
   },
   retryBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 36,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm - 2,
+    paddingHorizontal: spacing.lg + 8,
   },
   retryText: {
     fontSize: 16,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     color: Colors.white,
   },
 });

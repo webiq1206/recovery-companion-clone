@@ -26,5 +26,18 @@ export const ScreenScrollView = forwardRef<ScrollView, ScreenScrollViewProps>(fu
     [ref],
   );
 
-  return <ScrollView ref={setRef} {...props} />;
+  const {
+    showsVerticalScrollIndicator,
+    keyboardShouldPersistTaps,
+    ...rest
+  } = props;
+
+  return (
+    <ScrollView
+      ref={setRef}
+      showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? false}
+      keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? 'handled'}
+      {...rest}
+    />
+  );
 });

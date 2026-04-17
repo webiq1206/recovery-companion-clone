@@ -20,6 +20,19 @@ export const ScreenFlatList = forwardRef<FlatList<any>, FlatListProps<any>>(
       [ref],
     );
 
-    return <FlatList ref={setRef} {...props} />;
+    const {
+      showsVerticalScrollIndicator,
+      keyboardShouldPersistTaps,
+      ...rest
+    } = props;
+
+    return (
+      <FlatList
+        ref={setRef}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? false}
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? 'handled'}
+        {...rest}
+      />
+    );
   },
 );
