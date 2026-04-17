@@ -4,6 +4,7 @@ import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { Info, AlertTriangle, Activity, Crosshair, Shield, ArrowRight, Zap, BarChart3 } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 
 interface CharacteristicCardProps {
   icon: React.ReactNode;
@@ -57,12 +58,14 @@ export default function EarlyWarningExplainedScreen() {
       showsVerticalScrollIndicator={false}
       testID="early-warning-explained-screen"
     >
-      <Stack.Screen options={{ title: 'Risk Warning Explained' }} />
+      <Stack.Screen options={{ title: 'Wellness signals explained' }} />
 
       <View style={styles.introCard}>
         <Info size={20} color={Colors.primary} />
         <Text style={styles.introText}>
-          The Risk Warning system continuously monitors patterns in your check-ins to detect signs of increased risk before a crisis develops. It watches four key characteristics - Emotional, Behavioral, Triggers, and Stability - and combines them into an overall risk level so the app can respond with the right support at the right time.
+          Wellness signals look at patterns you already logged in check-ins—mood, habits, triggers, and steadiness—and
+          combine them into a simple on-device summary so the app can suggest tools and reminders. They do not diagnose,
+          treat, monitor you clinically, or predict medical outcomes.
         </Text>
       </View>
 
@@ -70,52 +73,57 @@ export default function EarlyWarningExplainedScreen() {
 
       <CharacteristicCard
         icon={<BarChart3 size={18} color={Colors.primary} />}
-        title="Overall Risk Calculation"
+        title="How the summary is built"
         accentColor={Colors.primary}
       >
         <Text style={styles.bodyText}>
-          Each of the four characteristics produces a risk score from 0 to 100. These scores are combined using adaptive weights that learn from your personal patterns over time, giving more importance to the factors that matter most for your recovery.
+          Each area produces a 0–100 reflection score from your own entries. Scores are blended with simple adaptive
+          weights so reminders can match how you tend to feel over time—self-help math only, not a medical algorithm.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>Default weights</Text>
         <SignalRow
           label="Emotional (25%)"
-          description="How much your emotional state contributes to your overall risk level."
+          description="How much your logged emotional state contributes to the blended reflection score."
         />
         <SignalRow
           label="Behavioral (25%)"
-          description="How much craving intensity, stress, and sleep quality affect your risk."
+          description="How much craving intensity, stress, and sleep quality you reported affect the blend."
         />
         <SignalRow
           label="Triggers (20%)"
-          description="How much your environment and exposure to triggering situations factor in."
+          description="How much your environment and triggering situations you noted factor in."
         />
         <SignalRow
           label="Stability (15%)"
-          description="How much your overall Comprehensive Stability and consistency contribute."
+          description="How much your overall Comprehensive Stability and consistency contribute to the blend."
         />
         <View style={styles.spacer} />
         <Text style={styles.bodyText}>
-          As you use the app, these weights adjust automatically. If emotional dips tend to precede your hardest moments, the system learns to weigh Emotional more heavily for you - making predictions more personal and accurate over time.
+          As you keep checking in, these weights adjust gently. If emotional dips often line up with harder days for you,
+          Emotional may weigh a bit more—so reminders feel closer to your real life. That personalization is not a medical
+          forecast.
         </Text>
         <View style={styles.spacer} />
         <View style={styles.rangeCard}>
-          <Text style={styles.rangeTitle}>Overall risk levels</Text>
-          <RiskLevelRow color="#43A047" label="Low - Your patterns look strong and stable" range="0–24" />
-          <RiskLevelRow color="#FDD835" label="Guarded - Some signals worth monitoring" range="25–44" />
-          <RiskLevelRow color="#FB8C00" label="Elevated - Multiple signals need attention" range="45–64" />
-          <RiskLevelRow color="#E53935" label="High - Immediate support recommended" range="65–100" />
+          <Text style={styles.rangeTitle}>Support bands (from your entries)</Text>
+          <RiskLevelRow color="#43A047" label="Steady — patterns look calm in what you logged" range="0–24" />
+          <RiskLevelRow color="#FDD835" label="Mindful — a few signals to notice, not judge" range="25–44" />
+          <RiskLevelRow color="#FB8C00" label="Extra support — several signals suggest leaning on tools" range="45–64" />
+          <RiskLevelRow color="#E53935" label="Priority support — reach for tools and people you trust" range="65–100" />
         </View>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          The system also tracks your risk trend - whether your overall risk is rising, stable, or falling. A rising trend at an elevated level triggers stronger support than a stable one at the same score.
+          The app also tracks whether your blended score is rising, steady, or easing. A rising trend may surface stronger
+          self-help suggestions—not a medical escalation.
         </Text>
       </CharacteristicCard>
 
       <View style={styles.transitionNote}>
         <ArrowRight size={16} color={Colors.accentWarm} />
         <Text style={styles.transitionNoteText}>
-          Predictions run automatically after each check-in and at least every hour when you're active. The more consistently you check in, the higher the system's confidence in its predictions.
+          Summaries refresh after check-ins and periodically while you use the app. More consistent check-ins mean the
+          on-device view reflects your recent life more clearly—not higher medical certainty.
         </Text>
       </View>
 
@@ -127,21 +135,21 @@ export default function EarlyWarningExplainedScreen() {
         accentColor="#CE93D8"
       >
         <Text style={styles.bodyText}>
-          The Emotional characteristic measures the state of your inner world - how you're feeling day to day and whether your emotional patterns suggest increasing vulnerability.
+          The Emotional area reflects how you said you feel day to day—useful for noticing trends, not for labeling you.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What it tracks</Text>
         <SignalRow
           label="Mood Level"
-          description="Your average mood over the last 7 check-ins. Lower mood increases emotional risk."
+          description="Your average mood over the last 7 check-ins. Lower mood increases this reflection score."
         />
         <SignalRow
           label="Emotional State"
-          description="Your self-reported emotional wellbeing score. Lower emotional state contributes to higher risk."
+          description="Your self-reported emotional wellbeing score. Lower scores add more weight here."
         />
         <SignalRow
           label="Mood Decline"
-          description="Whether your mood is trending downward over recent days. A declining pattern adds significant risk."
+          description="Whether your mood is trending downward over recent days. A declining pattern adds more weight."
         />
         <SignalRow
           label="Mood Volatility"
@@ -150,11 +158,13 @@ export default function EarlyWarningExplainedScreen() {
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What affects it</Text>
         <Text style={styles.bodyText}>
-          Consistently reporting low mood or emotional state will raise this score. Sudden drops are weighted more heavily than gradually low mood. High mood variance (big swings between days) also contributes, because emotional instability can be a precursor to relapse even when some days feel fine.
+          Consistently reporting low mood or emotional state will raise this score. Sudden drops weigh more than a steady
+          low mood. Big day-to-day swings add weight because rapid change can feel harder to navigate—not because the app
+          predicts a specific outcome.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          Journaling about what you're feeling - even briefly - can help process emotions and often improves this score over time. The app may suggest journaling when emotional risk rises.
+          Journaling about what you are feeling—even briefly—can help you process emotions. The app may suggest journaling when this area looks heavy in your entries.
         </Text>
       </CharacteristicCard>
 
@@ -164,7 +174,8 @@ export default function EarlyWarningExplainedScreen() {
         accentColor="#FF6B35"
       >
         <Text style={styles.bodyText}>
-          The Behavioral characteristic captures the physical and habitual signals that often precede a relapse - cravings, stress, sleep disruption, and how early you are in recovery.
+          The Behavioral area captures habits you log—cravings, stress, sleep, and how early you are in sobriety—as
+          wellness context, not a medical readout.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What it tracks</Text>
@@ -174,7 +185,7 @@ export default function EarlyWarningExplainedScreen() {
         />
         <SignalRow
           label="Stress Level"
-          description="Your average stress from check-ins. Chronic stress erodes coping ability and raises risk."
+          description="Your average stress from check-ins. Chronic stress tends to weigh more heavily in this blend."
         />
         <SignalRow
           label="Sleep Quality"
@@ -182,20 +193,23 @@ export default function EarlyWarningExplainedScreen() {
         />
         <SignalRow
           label="Days Sober"
-          description="Earlier recovery carries inherently higher behavioral risk. The first 7 days add the most, tapering as sobriety grows."
+          description="Earlier sobriety carries more weight in this blend. The first 7 days add the most, tapering as sober days grow."
         />
         <SignalRow
           label="Craving Spikes"
-          description="A sudden jump of 20+ points in craving level from one day to the next triggers an additional risk boost."
+          description="A sudden jump of 20+ points in craving level from one day to the next adds extra weight."
         />
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What affects it</Text>
         <Text style={styles.bodyText}>
-          High cravings are the primary driver. Reporting craving levels above 70 for multiple days will significantly raise behavioral risk. Combined with poor sleep and high stress, this creates a compounding effect. As your sober days increase, the baseline behavioral risk naturally decreases - your body and mind are adapting.
+          High cravings are the primary driver. Reporting craving levels above 70 for multiple days will raise this
+          behavioral score. Combined with poor sleep and high stress, the blend weighs more heavily. As sober days
+          increase, the baseline weight eases—reflecting the timeline you shared, not a medical prognosis.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          When behavioral risk spikes, the app may activate grounding exercises or crisis tools. Even 60 seconds of focused breathing can help ride out a craving wave.
+          When this score spikes, the app may suggest grounding exercises or crisis tools. Even 60 seconds of focused
+          breathing can help ride out a craving wave.
         </Text>
       </CharacteristicCard>
 
@@ -205,7 +219,7 @@ export default function EarlyWarningExplainedScreen() {
         accentColor="#FFC107"
       >
         <Text style={styles.bodyText}>
-          The Triggers characteristic evaluates how safe your environment feels and whether you're being exposed to situations that historically increase your vulnerability.
+          The Triggers area reflects how safe your environment felt in check-ins and situations you marked as stressful.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What it tracks</Text>
@@ -219,16 +233,19 @@ export default function EarlyWarningExplainedScreen() {
         />
         <SignalRow
           label="High-Craving Days"
-          description="The number of days in the past week with craving levels above 70. Three or more such days add a significant risk boost."
+          description="The number of days in the past week with craving levels above 70. Three or more such days add significant weight."
         />
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What affects it</Text>
         <Text style={styles.bodyText}>
-          Environment safety is the biggest factor here - it accounts for 50% of trigger risk. If you consistently report low environment scores (below 30), this characteristic will be elevated. The combination of unsafe environments with high cravings is especially significant, as it suggests active trigger exposure rather than just general discomfort.
+          Environment safety is the biggest factor here—it accounts for about half of this trigger score. If you
+          consistently report low environment scores (below 30), this area looks heavier. Unsafe-feeling environments plus
+          high cravings weigh more together because both show up in what you logged.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          Reviewing your trigger map and planning safer alternatives for high-risk situations can make a real difference. Awareness is your first line of defense.
+          Reviewing your trigger map and planning gentler alternatives for tough situations can make a real difference.
+          Awareness is a practical self-help step.
         </Text>
       </CharacteristicCard>
 
@@ -238,7 +255,8 @@ export default function EarlyWarningExplainedScreen() {
         accentColor="#2EC4B6"
       >
         <Text style={styles.bodyText}>
-          The Stability characteristic measures the overall steadiness of your recovery - whether your foundation is holding firm or starting to show cracks.
+          The Stability area summarizes how steady your logged days feel—helpful context for self-help planning, not a
+          clinical stability test.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What it tracks</Text>
@@ -248,29 +266,37 @@ export default function EarlyWarningExplainedScreen() {
         />
         <SignalRow
           label="Stability Trend"
-          description="Whether your stability is declining over recent days. A drop of more than 10 points between your oldest and newest check-in adds extra risk."
+          description="Whether your stability is declining over recent days. A drop of more than 10 points between your oldest and newest check-in adds extra weight."
         />
         <SignalRow
           label="Check-in Consistency"
-          description="Missing check-ins for 3 or more days adds risk, as gaps in engagement often correlate with declining stability."
+          description="Missing check-ins for 3 or more days adds weight, because gaps mean less recent context."
         />
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What affects it</Text>
         <Text style={styles.bodyText}>
-          Your per-day stability values feed Comprehensive Stability. It's essentially the inverse — Comprehensive Stability of 80 means only 20 points of stability risk. What makes this characteristic important is the trend detection: if stability is dropping even from a high baseline, the system picks up on it early. Missing check-ins can amplify the signal because disengagement reduces your available day data.
+          Your per-day stability values feed Comprehensive Stability. It is essentially the inverse—Comprehensive Stability
+          of 80 means about 20 points in this stability slice. Trends matter: if stability is dropping even from a high
+          baseline, the blend responds sooner. Missing check-ins can make the picture sparser because there is less recent
+          data—not because the app is surveilling you.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          Consistent daily check-ins are the single best way to keep stability risk low. Even on good days, checking in reinforces your foundation and gives the system confidence in its predictions.
+          Consistent daily check-ins keep this reflection grounded in real life. Even on good days, a quick check-in
+          reinforces the habit and keeps summaries closer to how you are doing.
         </Text>
       </CharacteristicCard>
 
       <View style={styles.footerCard}>
         <Zap size={16} color={Colors.accentWarm} />
         <Text style={styles.footerText}>
-          The Early Warning system is designed to catch problems before they become crises. It's not a judgment - it's a safety net. When risk rises, the app adjusts its tone, frequency, and tools to match what you need. Every check-in you complete makes these predictions more accurate and personal to your journey.
+          Wellness signals are a self-help nudge based on your own words and taps. They are not a crisis service. When
+          scores rise, the app may suggest gentler pacing and tools—use licensed professionals and emergency resources
+          when you need them.
         </Text>
       </View>
+
+      <WellnessDisclaimerFooter style={{ marginTop: 16 }} />
 
       <View style={styles.bottomSpacer} />
     </ScreenScrollView>

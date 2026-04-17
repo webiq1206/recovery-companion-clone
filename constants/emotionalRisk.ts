@@ -28,8 +28,8 @@ export function getCravingsPhrase(avgCraving: number): string {
 /** For high/crisis risk: headline + reassuring follow-up. */
 export function getCrisisRiskCopy(): { title: string; description: string; action: string } {
   return {
-    title: 'Your system noticed you\'re carrying a lot',
-    description: 'Your safety tools are here for exactly this moment. You\'re not alone - breathing, grounding, and connection are one tap away.',
+    title: 'Your recent check-ins look heavy',
+    description: 'Safety tools are here for tough moments. You are not alone—breathing, grounding, and connection are one tap away.',
     action: 'Open Safety Tools',
   };
 }
@@ -37,8 +37,8 @@ export function getCrisisRiskCopy(): { title: string; description: string; actio
 /** For elevated (not crisis) risk: tension + reassurance. */
 export function getElevatedRiskCopy(): { title: string; description: string; action: string } {
   return {
-    title: 'Your system noticed some tension',
-    description: 'A brief grounding exercise can help calm your nervous system. Your tools are ready whenever you are.',
+    title: 'Your check-ins show extra tension',
+    description: 'A brief grounding exercise can help you settle. Tools are here whenever you want them.',
     action: 'Start Grounding',
   };
 }
@@ -48,18 +48,18 @@ export function getOverallRiskPhrase(overallRiskPercent: number, hasData: boolea
   if (!hasData) {
     return {
       headline: 'Your patterns will appear as you check in.',
-      reassurance: 'Every check-in helps your protection system understand how to support you.',
+      reassurance: 'Every check-in helps this app suggest gentler reminders and tools that fit you.',
     };
   }
   if (overallRiskPercent > 65) {
     return {
-      headline: 'Your system noticed some extra weight today.',
+      headline: 'Your check-ins look like you are carrying extra weight today.',
       reassurance: 'Stay connected to your support tools - they\'re designed for moments like this. You\'ve got this.',
     };
   }
   if (overallRiskPercent > 40) {
     return {
-      headline: 'Your system noticed some tension.',
+      headline: 'Your check-ins show some tension.',
       reassurance: 'Awareness is your strength right now. Small, steady steps keep you moving forward.',
     };
   }
@@ -73,7 +73,7 @@ export function getOverallRiskPhrase(overallRiskPercent: number, hasData: boolea
 export function getProtectionReadingSummary(stabilityScore: number, hasCheckIns: boolean): { line: string; reassurance: string } {
   if (!hasCheckIns) {
     return {
-      line: 'Complete check-ins to see how your protection system reads your patterns.',
+      line: 'Complete check-ins to see simple summaries from your own patterns.',
       reassurance: 'Your data stays private and is only used to offer better support.',
     };
   }

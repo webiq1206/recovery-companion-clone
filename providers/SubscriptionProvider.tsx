@@ -119,7 +119,8 @@ const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: strin
   },
   advanced_accountability: {
     title: 'Advanced Accountability',
-    description: 'Behavioral drift alerts, partner connections, and commitment contract analytics.',
+    description:
+      'Optional reminders, partner check-ins, and simple commitment tracking—wellness support, not clinical monitoring.',
   },
 };
 

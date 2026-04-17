@@ -1137,7 +1137,7 @@ function StabilityTimelineScreen() {
             <Eye size={16} color={Colors.primary} />
           </View>
           <View>
-            <Text style={styles.detectionLinkTitle}>View Risk Warning</Text>
+            <Text style={styles.detectionLinkTitle}>View wellness signals</Text>
             <Text style={styles.detectionLinkSub}>Patterns and early support</Text>
           </View>
         </View>

@@ -754,7 +754,7 @@ function buildRiskWarnings(input: WizardEngineInput): string[] {
 
   if (input.relapseRisk === 'high' || input.relapseRisk === 'elevated') {
     warnings.push(
-      'Your relapse risk is elevated. Today is a good day to lean on support and crisis tools sooner rather than later.',
+      'Your answers suggest a rough patch. Today is a good day to lean on support people and crisis tools a little earlier.',
     );
   }
   if (input.missedEngagementScore >= 50) {
@@ -764,12 +764,12 @@ function buildRiskWarnings(input: WizardEngineInput): string[] {
   }
   if (input.triggerRiskScore >= 60) {
     warnings.push(
-      'Recent patterns suggest higher trigger exposure. Planning around one situation today can lower risk.',
+      'Recent patterns in your logs look triggering. Planning around one situation today can make space feel safer.',
     );
   }
   if (input.highUrge) {
     warnings.push(
-      'Your urge level is elevated. Using crisis tools and reaching out sooner can prevent escalation.',
+      'Your urge level looks elevated in what you logged. Grounding tools and reaching out sooner can help you ride the wave.',
     );
   }
 

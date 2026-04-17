@@ -5,6 +5,7 @@ import { Shield, Lock, Fingerprint, Eye, EyeOff, FileText, BarChart3, ChevronRig
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import Colors from '../constants/colors';
+import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { useSecurity } from '../providers/SecurityProvider';
 import { SecurityLevel, AuditLogEntry } from '../types';
 import LockScreen from '../components/LockScreen';
@@ -394,7 +395,8 @@ export default function SecuritySettingsScreen() {
         <View style={styles.complianceTextWrap}>
           <Text style={styles.complianceTitle}>Privacy on your device</Text>
           <Text style={styles.complianceBody}>
-            Recovery Companion is a wellness and self-help tool. It is not medical advice, a treatment service, or a substitute for care from licensed professionals. Your information stays on this device unless you export or share it; optional encryption and activity logging are for your own awareness only.
+            {WELLNESS_APP_DISCLAIMER} Your information stays on this device unless you export or share it; optional
+            encryption and activity logging are for your own awareness only.
           </Text>
         </View>
       </View>

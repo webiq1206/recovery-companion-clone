@@ -124,8 +124,8 @@ function applyStageProgramActions(
 
     addActionIfMissing(optionalActions, {
       id: 'maintain-program-scan',
-      title: 'Quick early-warning scan',
-      subtitle: 'Check stress, sleep, and isolation so you catch small shifts early.',
+      title: 'Quick wellness check',
+      subtitle: 'Glance at stress, sleep, and connection habits you logged—patterns only, not a diagnosis.',
       route: '/recovery-snapshot',
       kind: 'awareness',
     });
@@ -314,21 +314,21 @@ export function generateTodayPlan(input: TodayPlanInput): TodayPlan {
     if (!priorityActions.find(a => a.id === 'trigger-planning')) {
       priorityActions.push({
         id: 'trigger-planning',
-        title: 'High-risk trigger planning',
-        subtitle: 'Choose one trigger and put a safer plan in place.',
+        title: 'Trigger planning',
+        subtitle: 'Choose one tough situation and jot a gentler plan you can try.',
         route: '/triggers',
         kind: 'awareness',
       });
     }
     riskWarnings.push(
-      'Your recent environment and cravings suggest higher trigger exposure. Planning around one situation today can lower risk.',
+      'Your recent environment and cravings look intense in your logs. Planning around one situation today can make the day feel more manageable.',
     );
   }
 
-  // Relapse risk warnings
+  // Support nudges from logged patterns (wellness/self-help only)
   if (hasHighRelapseRisk) {
     riskWarnings.push(
-      'Your relapse risk is running hot. Today is a good day to lean on support and crisis tools sooner rather than later.',
+      'Your check-ins look like a heavy stretch. Today is a good day to lean on support people and crisis tools a little earlier.',
     );
   }
 
@@ -350,7 +350,7 @@ export function generateTodayPlan(input: TodayPlanInput): TodayPlan {
     priorityActions.unshift(crisisAction);
 
     riskWarnings.push(
-      'Your urge level looks elevated. Using crisis tools and reaching out sooner can prevent escalation.',
+      'Your urge level looks elevated in what you logged. Grounding tools and reaching out sooner can help you ride the wave.',
     );
   }
 

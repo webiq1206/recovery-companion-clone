@@ -304,10 +304,10 @@ function categorizeRisk(overallRisk: number): RiskCategory {
 
 function getRiskCategoryLabel(category: RiskCategory): string {
   switch (category) {
-    case 'high': return 'High';
-    case 'elevated': return 'Elevated';
-    case 'guarded': return 'Guarded';
-    case 'low': return 'Low';
+    case 'high': return 'Priority support';
+    case 'elevated': return 'Extra support';
+    case 'guarded': return 'Mindful';
+    case 'low': return 'Steady';
   }
 }
 
@@ -852,7 +852,7 @@ export const [RiskPredictionProvider, useRiskPrediction] = createContextHook(() 
   }, [currentPrediction]);
 
   const reassuringMessage = useMemo((): string => {
-    if (!currentPrediction) return 'Complete a check-in to start your personalized early warning system.';
+    if (!currentPrediction) return 'Complete a check-in to see a simple wellness summary from your own entries.';
     switch (riskCategory) {
       case 'high':
         return "You're carrying a lot right now, and that takes real courage. Your tools and your people are right here - lean on them.";

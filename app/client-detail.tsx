@@ -263,7 +263,9 @@ export default function ClientDetailScreen() {
               <View style={styles.riskAlert}>
                 <AlertTriangle size={14} color={Colors.accent} />
                 <Text style={styles.riskAlertText}>
-                  {client.riskTrend === 'rising' ? 'Risk level is trending upward - consider increasing session frequency' : 'Elevated risk level - monitor closely'}
+                  {client.riskTrend === 'rising'
+                    ? 'Wellness summary is trending up—consider checking in with them soon'
+                    : 'Wellness summary looks elevated—extra encouragement may help'}
                 </Text>
               </View>
             )}
@@ -309,7 +311,7 @@ export default function ClientDetailScreen() {
                      client.riskTrend === 'falling' ? <TrendingDown size={14} color="#4CAF50" /> :
                      <Minus size={14} color={Colors.textMuted} />}
                   </View>
-                  <Text style={styles.metricCardLabel}>Risk Level</Text>
+                  <Text style={styles.metricCardLabel}>Support signal</Text>
                   <View style={styles.metricBarTrack}>
                     <View style={[styles.metricBarFill, { width: `${client.riskLevel}%`, backgroundColor: riskColor }]} />
                   </View>
@@ -410,7 +412,7 @@ export default function ClientDetailScreen() {
                     onPress={() => handleStatusChange('paused')}
                   >
                     <Clock size={16} color={Colors.accentWarm} />
-                    <Text style={styles.actionBtnText}>Pause Monitoring</Text>
+                    <Text style={styles.actionBtnText}>Pause shared updates</Text>
                     <ChevronRight size={14} color={Colors.textMuted} />
                   </Pressable>
                 )}

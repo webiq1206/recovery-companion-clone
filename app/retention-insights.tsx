@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 import { Stack, useRouter } from 'expo-router';
 import {
   Leaf,
@@ -393,6 +394,8 @@ export default function RetentionInsightsScreen() {
               </View>
             </Animated.View>
           </View>
+
+          <WellnessDisclaimerFooter style={{ marginTop: 20 }} />
         </ScreenScrollView>
       </>
     );
@@ -517,7 +520,9 @@ export default function RetentionInsightsScreen() {
           </>
         )}
 
-        <View style={{ height: 50 }} />
+        <WellnessDisclaimerFooter style={{ marginTop: 20 }} />
+
+        <View style={{ height: 24 }} />
       </ScreenScrollView>
     </>
   );

@@ -101,7 +101,7 @@ export default function ProtectionProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Your Protection Profile</Text>
+        <Text style={styles.title}>Your wellness snapshot</Text>
         <Text style={styles.subtitle}>
           Based on what you shared. Revisit anytime from Profile.
         </Text>
@@ -177,7 +177,7 @@ export default function ProtectionProfileScreen() {
 
       <View style={styles.bottomRow}>
         <Pressable style={styles.primaryCta} onPress={handleStartPlan} testID="start-protection-plan">
-          <Text style={styles.primaryCtaText}>Start Today’s Protection Plan</Text>
+          <Text style={styles.primaryCtaText}>Start today&apos;s wellness plan</Text>
           <ChevronRight size={18} color={Colors.white} />
         </Pressable>
       </View>

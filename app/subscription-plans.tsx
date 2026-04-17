@@ -15,6 +15,7 @@ import { Check, X, Crown, Sparkles, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
 import { getTierComparisonRows } from '../constants/subscriptionPlans';
+import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { useSubscription } from '../providers/SubscriptionProvider';
 
 function openSubscriptionManagement() {
@@ -172,7 +173,9 @@ export default function SubscriptionPlansScreen() {
         </Pressable>
 
         <Text style={styles.footerNote}>
-          Prices and renewal terms are shown on the next screen. You can cancel anytime; your recovery data stays on your device.
+          Prices and renewal terms are shown on the next screen. You can cancel anytime; your recovery data stays on your
+          device.{'\n\n'}
+          {WELLNESS_APP_DISCLAIMER}
         </Text>
       </ScreenScrollView>
     </View>

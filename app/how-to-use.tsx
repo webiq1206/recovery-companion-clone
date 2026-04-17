@@ -31,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 
 interface ExpandableSectionProps {
   title: string;
@@ -211,11 +212,11 @@ export default function HowToUseScreen() {
           </View>
           <Text style={styles.heroTitle}>How to Use{'\n'}Recovery Companion</Text>
           <Text style={styles.heroSubtitle}>
-            Use it regularly and let Today be your home base. The bottom tabs support the rest of your week.
-            This is a recovery protection system—not just a tracker.
+            Use it regularly and let Today be your home base. The bottom tabs support the rest of your week. This is a
+            wellness and self-help companion—not medical care or crisis services.
           </Text>
           <Text style={styles.heroNote}>
-            The flow below is a rhythm you can adapt. Small, honest check-ins and actions build a shield around your day.
+            The flow below is a rhythm you can adapt. Small, honest check-ins and actions add structure to your day.
           </Text>
         </View>
 
@@ -433,6 +434,8 @@ export default function HowToUseScreen() {
             You're doing something brave. This app is here to walk beside you, every step of the way.
           </Text>
         </View>
+
+        <WellnessDisclaimerFooter style={{ marginTop: 16 }} />
 
         <View style={styles.bottomSpacer} />
       </ScreenScrollView>

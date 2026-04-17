@@ -31,6 +31,7 @@ import {
   getPremiumFeatureMarketingCards,
   type PremiumMarketingCard,
 } from '../constants/subscriptionPlans';
+import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { useSubscription } from '../providers/SubscriptionProvider';
 
 /** App Store–style auto-renewal summary; shown on the paywall before purchase. */
@@ -513,8 +514,8 @@ export default function PremiumUpgradeScreen() {
           </Animated.View>
           <Text style={styles.heroTitle}>Unlock Your Full{'\n'}Recovery Potential</Text>
           <Text style={styles.heroSubtitle}>
-            Premium adds structured programs, deeper analytics from your own entries, and practice tools—wellness support
-            only, not medical care or therapy.
+            Premium adds structured programs, optional charts from your own entries, and practice tools—for wellness and
+            self-help only.
           </Text>
         </Animated.View>
 
@@ -630,8 +631,8 @@ export default function PremiumUpgradeScreen() {
         </View>
 
         <Text style={styles.disclaimer}>
-          Recovery Companion is a wellness and self-help tool—not medical treatment, therapy, or crisis care. If Premium
-          ends, your on-device progress and journal entries stay on this device unless you delete them.
+          {WELLNESS_APP_DISCLAIMER} If Premium ends, your on-device progress and journal entries stay on this device unless
+          you delete them.
         </Text>
       </ScreenScrollView>
     </View>

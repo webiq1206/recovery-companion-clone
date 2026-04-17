@@ -662,7 +662,7 @@ export default function MilestonesScreen() {
             <Text style={styles.growthScoreLabel}>Growth</Text>
           </View>
           <View style={styles.growthSummary}>
-            <Text style={styles.growthSummaryTitle}>Recovery Protection Score</Text>
+            <Text style={styles.growthSummaryTitle}>Wellness momentum</Text>
             <Text style={styles.growthSummaryDesc}>
               {overallGrowthScore < 20
                 ? "You're just getting started. Every step forward matters."
@@ -691,7 +691,7 @@ export default function MilestonesScreen() {
         <View style={styles.quickStatDivider} />
         <View style={styles.quickStat}>
           <Text style={styles.quickStatValue}>{daysSoberCalc}</Text>
-          <Text style={styles.quickStatLabel}>Protected</Text>
+          <Text style={styles.quickStatLabel}>Streak</Text>
         </View>
       </View>
 

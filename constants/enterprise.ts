@@ -427,7 +427,7 @@ export const DEFAULT_WHITE_LABEL: WhiteLabelConfig = {
   orgId: 'org_demo',
   isEnabled: false,
   appName: 'Guardian',
-  tagline: 'Recovery Protection & Life Rebuild System',
+  tagline: 'Wellness support for recovery and life goals',
   logoUrl: '',
   primaryColor: '#2EC4B6',
   accentColor: '#FF6B35',

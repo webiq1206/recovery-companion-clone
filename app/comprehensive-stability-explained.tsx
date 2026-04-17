@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { Info } from 'lucide-react-native';
 import Colors from '../constants/colors';
 import { ComprehensiveStabilityExplainerContent } from '../components/insights/ComprehensiveStabilityExplainerContent';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 
 export default function ComprehensiveStabilityExplainedScreen() {
   return (
@@ -24,6 +25,8 @@ export default function ComprehensiveStabilityExplainedScreen() {
       </View>
 
       <ComprehensiveStabilityExplainerContent />
+
+      <WellnessDisclaimerFooter style={{ marginTop: 20 }} />
 
       <View style={{ height: 20 }} />
     </ScreenScrollView>

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react-native';
 import Colors from '../constants/colors';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 
 interface ExplainerCardProps {
   icon: React.ReactNode;
@@ -346,6 +347,8 @@ export default function RecoveryInsightsExplainedScreen() {
           Your reinforcement loops update automatically as you use the app. There's no "right" balance between the four loops - what matters is that you're actively engaging with the aspects of recovery that resonate with you. Over time, strong loops make recovery feel less like effort and more like who you are.
         </Text>
       </View>
+
+      <WellnessDisclaimerFooter style={{ marginTop: 16 }} />
 
       <View style={styles.bottomSpacer} />
     </ScreenScrollView>

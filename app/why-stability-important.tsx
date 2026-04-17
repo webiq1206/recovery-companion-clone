@@ -4,6 +4,7 @@ import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { Info, Activity, Heart, Moon, Zap, Target } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 
 function Paragraph({ children }: { children: React.ReactNode }) {
   return <Text style={styles.body}>{children}</Text>;
@@ -97,6 +98,8 @@ export default function WhyStabilityImportantScreen() {
           If you are in crisis, use Crisis Mode or emergency resources. This screen is education only—not medical advice.
         </Text>
       </View>
+
+      <WellnessDisclaimerFooter style={{ marginTop: 16 }} />
     </ScreenScrollView>
   );
 }

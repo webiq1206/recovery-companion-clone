@@ -84,9 +84,9 @@ export default function AdvancedAnalyticsScreen() {
             <Activity size={18} color={Colors.accent} />
           </View>
           <View style={styles.cardBody}>
-            <Text style={styles.cardTitle}>Risk Warning</Text>
+            <Text style={styles.cardTitle}>Wellness signals</Text>
             <Text style={styles.cardSubtitle}>
-              Real-time risk scoring, trends, and early warning signals.
+              Optional summaries and trends from your check-ins—for self-reflection, not diagnosis or monitoring.
             </Text>
           </View>
         </Pressable>

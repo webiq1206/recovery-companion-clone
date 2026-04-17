@@ -801,6 +801,7 @@ export default function OnboardingScreen() {
           <Text style={styles.legalHint}>
             Tap to read how we handle data, terms for use of the app, and community rules before you continue.
           </Text>
+          <Text style={styles.wellnessDisclaimer}>{ONBOARDING_COPY.wellnessDisclaimer}</Text>
         </ScreenScrollView>
 
         <View style={[styles.bottomRow, { justifyContent: 'center' }]}>
@@ -985,6 +986,15 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 10,
     paddingHorizontal: 12,
+  },
+  wellnessDisclaimer: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center' as const,
+    lineHeight: 16,
+    marginTop: 14,
+    paddingHorizontal: 16,
+    opacity: 0.92,
   },
   stepLabel: {
     fontSize: 11,

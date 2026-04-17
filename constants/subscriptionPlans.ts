@@ -91,7 +91,7 @@ export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
   {
     icon: ShieldCheck,
     title: 'Advanced Accountability',
-    desc: 'Drift alerts, partner connections, and commitment contract analytics.',
+    desc: 'Optional reminders, partner check-ins, and simple commitment tracking—wellness support, not clinical monitoring.',
     color: '#E0D47C',
     featureKey: 'advanced_accountability',
   },

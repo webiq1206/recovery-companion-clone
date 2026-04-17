@@ -4,6 +4,7 @@ import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { ShieldAlert, Anchor, Hammer, Trophy, Info, ArrowRight, Zap, BarChart3, Brain, Heart, Clock, TrendingUp } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 
 interface StageCardProps {
@@ -143,7 +144,8 @@ export default function RecoveryStagesExplainedScreen() {
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What it means</Text>
         <Text style={styles.bodyText}>
-          You may be experiencing high cravings, low mood, elevated stress, or early days of sobriety. The app recognizes this and adjusts everything to keep you safe.
+          You may be experiencing high cravings, low mood, elevated stress, or early days of sobriety. The app uses your
+          answers to surface gentler prompts and safety tools—not medical supervision.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>How the app adapts</Text>
@@ -156,8 +158,8 @@ export default function RecoveryStagesExplainedScreen() {
           description="Check-in reminders and supportive messages come more frequently to keep you connected."
         />
         <SignalRow
-          label="Immediate interventions"
-          description="Crisis tools are front and center - breathing exercises, emergency contacts, and grounding techniques."
+          label="Immediate support tools"
+          description="Crisis tools stay front and center—breathing exercises, emergency contacts, and grounding techniques you can use anytime."
         />
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
@@ -189,8 +191,8 @@ export default function RecoveryStagesExplainedScreen() {
           description="Reminders remain regular but less intense. The focus shifts to building consistency."
         />
         <SignalRow
-          label="Proactive interventions"
-          description="The app anticipates challenging moments and reaches out before things escalate."
+          label="Proactive reminders"
+          description="The app may nudge you before tough moments you have flagged—optional prompts, not predictions."
         />
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
@@ -222,8 +224,8 @@ export default function RecoveryStagesExplainedScreen() {
           description="Check-ins feel more like growth tracking than crisis management."
         />
         <SignalRow
-          label="Scheduled interventions"
-          description="Support is structured around your routine rather than reactive to danger signals."
+          label="Scheduled check-ins"
+          description="Support is structured around your routine instead of reacting to single scores."
         />
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
@@ -261,8 +263,8 @@ export default function RecoveryStagesExplainedScreen() {
           description="The app steps back respectfully, checking in periodically rather than constantly."
         />
         <SignalRow
-          label="On-demand interventions"
-          description="Tools are always available but only activated when you choose. You're in control."
+          label="On-demand tools"
+          description="Tools stay available and only open when you choose. You stay in control."
         />
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
@@ -276,6 +278,8 @@ export default function RecoveryStagesExplainedScreen() {
           Your stage updates automatically as you use the app. There's no "right" pace through the stages - what matters is that you keep showing up. Every check-in, every journal entry, every pledge honored moves you forward.
         </Text>
       </View>
+
+      <WellnessDisclaimerFooter style={{ marginTop: 16 }} />
 
       <View style={styles.bottomSpacer} />
     </ScreenScrollView>

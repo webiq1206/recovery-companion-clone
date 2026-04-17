@@ -14,14 +14,14 @@ function mapRiskLevelLabel(
 ): string {
   switch (relapseRiskLevel) {
     case 'critical':
-      return 'Critical risk';
+      return 'Extra support suggested';
     case 'high':
-      return 'High risk';
+      return 'Higher support focus';
     case 'moderate':
-      return 'Moderate risk';
+      return 'Moderate support focus';
     case 'low':
     default:
-      return 'Lower risk';
+      return 'Steady support focus';
   }
 }
 
@@ -30,7 +30,7 @@ function buildFocusRecommendation(
   relapseRiskLevel?: 'low' | 'moderate' | 'high' | 'critical',
 ): string {
   if (relapseRiskLevel === 'critical' || relapseRiskLevel === 'high') {
-    return 'Prioritize safety, crisis tools, and daily grounding check-ins.';
+    return 'Lean on safety tools, grounding check-ins, and people you trust when things feel intense.';
   }
   if (stage === 'crisis' || stage === 'stabilize') {
     return 'Focus on stabilizing routines, sleep, and asking for support when urges rise.';
@@ -82,19 +82,19 @@ export default function RecoverySnapshotScreen() {
             <Text style={styles.primaryValue}>{rp.recoveryStage}</Text>
           </View>
           <Text style={styles.helperText}>
-            This helps tailor how intensive your support and check-ins should be.
+            This only adjusts in-app prompts and suggestions—not medical care.
           </Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>Risk level</Text>
+          <Text style={styles.sectionLabel}>Support focus</Text>
           <View style={styles.row}>
             <AlertTriangle size={20} color={Colors.danger} />
             <Text style={styles.primaryValue}>{relapseRiskLabel}</Text>
           </View>
           <Text style={styles.helperText}>
-            Based on your current stability, sleep, support, and triggers we estimate your baseline
-            relapse risk and adjust interventions accordingly.
+            A simple label from your onboarding answers—wellness self-help only, not a clinical risk score or treatment
+            plan.
           </Text>
         </View>
 

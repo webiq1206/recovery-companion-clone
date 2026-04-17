@@ -91,7 +91,7 @@ function RootLayoutNav() {
         <Stack.Screen name="why-stability-important" options={{ title: 'Why is Stability Important?', animation: modalAnimation }} />
         <Stack.Screen name="relapse-plan" options={{ title: 'Relapse Plan', animation: defaultAnimation }} />
         <Stack.Screen name="relapse-recovery" options={{ title: 'Log a Setback', animation: defaultAnimation }} />
-        <Stack.Screen name="relapse-detection" options={{ title: 'Risk Warning', animation: defaultAnimation }} />
+        <Stack.Screen name="relapse-detection" options={{ title: 'Wellness signals', animation: defaultAnimation }} />
         <Stack.Screen name="provider-portal" options={{ title: 'Care partner workspace', animation: defaultAnimation }} />
         <Stack.Screen name="client-detail" options={{ title: 'Client Detail', animation: defaultAnimation }} />
         <Stack.Screen name="security-settings" options={{ title: 'Security & Privacy', animation: defaultAnimation }} />
@@ -101,9 +101,9 @@ function RootLayoutNav() {
         <Stack.Screen name="enterprise-layout" options={{ headerShown: false, animation: defaultAnimation }} />
         <Stack.Screen name="insights-explained" options={{ title: 'Growth Insights Explained', animation: defaultAnimation }} />
         <Stack.Screen name="recovery-stages-explained" options={{ title: 'Recovery Stages Explained', animation: defaultAnimation }} />
-        <Stack.Screen name="early-warning-explained" options={{ title: 'Risk Warning Explained', animation: defaultAnimation }} />
+        <Stack.Screen name="early-warning-explained" options={{ title: 'Wellness signals explained', animation: defaultAnimation }} />
         <Stack.Screen name="recovery-insights-explained" options={{ title: 'Your Recovery Journey Explained', animation: defaultAnimation }} />
-        <Stack.Screen name="protection-profile" options={{ title: 'Protection Profile', animation: defaultAnimation }} />
+        <Stack.Screen name="protection-profile" options={{ title: 'Wellness snapshot', animation: defaultAnimation }} />
         <Stack.Screen name="first-day" options={{ title: 'Your First Day', headerShown: false, animation: defaultAnimation }} />
         <Stack.Screen name="daily-guidance" options={{ title: 'Your Day', animation: defaultAnimation }} />
         <Stack.Screen name="wizard" options={{ title: 'Guided Wizard', animation: defaultAnimation }} />

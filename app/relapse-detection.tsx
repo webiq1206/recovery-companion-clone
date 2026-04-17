@@ -42,6 +42,7 @@ import { RiskAlert, RiskCategory } from '../types';
 import { useUser } from '../core/domains/useUser';
 import { useCheckin } from '../core/domains/useCheckin';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { resolveCanonicalRoute } from '../utils/legacyRoutes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -51,10 +52,10 @@ const HISTORY_BAR_WIDTH = Math.floor((SCREEN_WIDTH - 80) / 7);
 
 function CategoryBadge({ category }: { category: RiskCategory }) {
   const configs: Record<RiskCategory, { bg: string; fg: string; label: string }> = {
-    low: { bg: '#43A04718', fg: '#43A047', label: 'LOW' },
-    guarded: { bg: '#FDD83518', fg: '#F9A825', label: 'GUARDED' },
-    elevated: { bg: '#FB8C0018', fg: '#FB8C00', label: 'ELEVATED' },
-    high: { bg: '#E5393518', fg: '#E53935', label: 'HIGH' },
+    low: { bg: '#43A04718', fg: '#43A047', label: 'STEADY' },
+    guarded: { bg: '#FDD83518', fg: '#F9A825', label: 'MINDFUL' },
+    elevated: { bg: '#FB8C0018', fg: '#FB8C00', label: 'EXTRA' },
+    high: { bg: '#E5393518', fg: '#E53935', label: 'PRIORITY' },
   };
   const cfg = configs[category];
   return (
@@ -182,9 +183,9 @@ function TimeOfDayCard({ riskByPeriod, highRiskPeriod }: { riskByPeriod: Record<
     <View style={cardStyles.card}>
       <View style={cardStyles.cardHeader}>
         <Clock size={16} color="#7C8CF8" />
-        <Text style={cardStyles.cardTitle}>Risk by Time of Day</Text>
+        <Text style={cardStyles.cardTitle}>Cravings by time of day</Text>
       </View>
-      <Text style={cardStyles.cardSubtitle}>Based on when cravings tend to spike</Text>
+      <Text style={cardStyles.cardSubtitle}>From your recent check-ins—patterns only, not a forecast</Text>
       <View style={todStyles.grid}>
         {periods.map((p) => {
           const risk = riskByPeriod[p.key] ?? 0;
@@ -240,7 +241,7 @@ function SleepCard({ score, trend }: { score: number; trend: 'improving' | 'decl
               ? 'Your sleep patterns are supporting your recovery well. Good rest builds resilience.'
               : score <= 60
               ? 'Sleep quality has room for improvement. Better rest can strengthen your defenses.'
-              : 'Sleep disruption is elevated. Poor sleep increases vulnerability - prioritize rest tonight.'}
+              : 'Sleep disruption looks high in your entries. Rest makes coping easier—be gentle with yourself tonight.'}
           </Text>
         </View>
       </View>
@@ -423,7 +424,7 @@ function IntensityIndicator({ level }: { level: string }) {
         <Shield size={16} color={levelColors[activeIndex] ?? Colors.primary} />
         <Text style={cardStyles.cardTitle}>Support Intensity</Text>
       </View>
-      <Text style={cardStyles.cardSubtitle}>Automatically adjusts based on your risk level</Text>
+      <Text style={cardStyles.cardSubtitle}>Adjusts reminders and prompts from your recent check-ins—not clinical care</Text>
       <View style={intensityStyles.track}>
         {levels.map((l, i) => (
           <View key={l} style={intensityStyles.step}>
@@ -452,8 +453,8 @@ function IntensityIndicator({ level }: { level: string }) {
         <Text style={[intensityStyles.infoText, { color: levelColors[activeIndex] ?? Colors.primary }]}>
           {level === 'baseline' && 'Standard support level. You are doing well.'}
           {level === 'elevated' && 'Extra check-ins and proactive alerts are enabled.'}
-          {level === 'high' && 'Increased monitoring with crisis tools readily available.'}
-          {level === 'maximum' && 'All protective measures active. Crisis support is one tap away.'}
+          {level === 'high' && 'More frequent check-in nudges and crisis tools are easy to reach.'}
+          {level === 'maximum' && 'Safety and grounding tools stay front and center—use them whenever you need.'}
         </Text>
       </View>
     </View>
@@ -517,7 +518,7 @@ export default function RelapseDetectionScreen() {
       <>
         <Stack.Screen
           options={{
-            title: 'Risk Warning',
+            title: 'Wellness signals',
             headerStyle: { backgroundColor: Colors.background },
             headerTintColor: Colors.text,
           }}
@@ -559,7 +560,7 @@ export default function RelapseDetectionScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Risk Warning',
+          title: 'Wellness signals',
           headerStyle: { backgroundColor: Colors.background },
           headerTintColor: Colors.text,
         }}
@@ -594,7 +595,7 @@ export default function RelapseDetectionScreen() {
                 </View>
               </View>
               <View style={styles.gaugeMeta}>
-                <Text style={styles.gaugeMetaLabel}>Confidence</Text>
+                <Text style={styles.gaugeMetaLabel}>Data coverage</Text>
                 <Text style={styles.gaugeMetaValue}>{currentPrediction?.confidence ?? 0}%</Text>
               </View>
               <View style={styles.gaugeMeta}>
@@ -604,7 +605,7 @@ export default function RelapseDetectionScreen() {
             </View>
             <Pressable style={styles.refreshBtn} onPress={handleRefresh} testID="refresh-prediction">
               <RefreshCw size={14} color={Colors.primary} />
-              <Text style={styles.refreshText}>Refresh Analysis</Text>
+              <Text style={styles.refreshText}>Refresh summary</Text>
             </Pressable>
           </View>
 
@@ -634,9 +635,9 @@ export default function RelapseDetectionScreen() {
                   <Shield size={18} color="#E53935" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
+                  <Text style={styles.relapsePlanTitle}>Open your coping plan</Text>
                   <Text style={styles.relapsePlanSubtitle}>
-                    Review your warning signs, triggers, and coping tools before taking any action.
+                    Review reminders, triggers, and tools you chose—self-help only, not a treatment plan.
                   </Text>
                 </View>
               </View>
@@ -662,7 +663,7 @@ export default function RelapseDetectionScreen() {
             const uniqueAlerts = Array.from(byTitle.values()).slice(0, 3);
             return (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Active Alerts</Text>
+                <Text style={styles.sectionTitle}>Support nudges</Text>
                 {uniqueAlerts.map((alert) => (
                   <AlertCard
                     key={alert.id}
@@ -676,13 +677,13 @@ export default function RelapseDetectionScreen() {
           })()}
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Risk Factors</Text>
+            <Text style={styles.sectionTitle}>What your check-ins highlight</Text>
             <View style={cardStyles.card}>
               <View style={cardStyles.cardHeader}>
                 <Brain size={16} color={Colors.primary} />
-                <Text style={cardStyles.cardTitle}>Factor Breakdown</Text>
+                <Text style={cardStyles.cardTitle}>Factor snapshot</Text>
               </View>
-              <Text style={cardStyles.cardSubtitle}>What's contributing to your current score</Text>
+              <Text style={cardStyles.cardSubtitle}>Weighted view of your own entries—not a medical assessment</Text>
               <View style={{ marginTop: 12 }}>
                 {riskFactors.map((f) => (
                   <FactorBar key={f.label} label={f.label} value={f.value} color={f.color} />
@@ -711,7 +712,7 @@ export default function RelapseDetectionScreen() {
             <View style={styles.adaptiveNote}>
               <Brain size={13} color={Colors.primary} />
               <Text style={styles.adaptiveNoteText}>
-                Your risk weights have been personalized {adaptiveWeights.adaptationCount} time{adaptiveWeights.adaptationCount !== 1 ? 's' : ''} based on your unique patterns.
+                Reminder weights were adjusted {adaptiveWeights.adaptationCount} time{adaptiveWeights.adaptationCount !== 1 ? 's' : ''} from your check-in patterns—for self-reflection only.
               </Text>
             </View>
           )}
@@ -719,8 +720,8 @@ export default function RelapseDetectionScreen() {
           <View style={styles.footerNote}>
             <Info size={13} color={Colors.textMuted} />
             <Text style={styles.footerText}>
-              This system learns from your check-ins to spot patterns early. It's here to support you, not to define you. 
-              Trust yourself - and reach out whenever you need a hand.
+              {WELLNESS_APP_DISCLAIMER} Views here are built only from what you log; they are not medical assessments. Trust
+              yourself, and reach out to people you trust when life feels heavy.
             </Text>
           </View>
 

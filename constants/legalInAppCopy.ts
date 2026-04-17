@@ -14,7 +14,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
   {
     heading: 'Wellness tool; not medical or crisis care',
     body:
-      'Recovery Companion is a self-help and wellness support tool. It is not a medical device, clinical service, therapist, or crisis response service. Nothing in this Policy changes that.\n\n' +
+      'Recovery Companion is a self-help and wellness support app. It is not medical advice, diagnosis, treatment, a medical device, clinical service, therapist, telehealth, or crisis response service. Nothing in this Policy changes that.\n\n' +
       'Do not use the App as a substitute for professional care or emergency services.',
   },
   {
@@ -139,7 +139,7 @@ export const TERMS_OF_SERVICE_SECTIONS: LegalSection[] = [
   {
     heading: 'Not medical or crisis care',
     body:
-      'The app is a self-help and planning tool, not a medical service, therapist, or 24/7 crisis line. For emergencies, contact local emergency services or a crisis hotline in your country.',
+      'The app is a wellness and self-help tool. It is not medical advice, diagnosis, treatment, therapy, telehealth, a medical device, or a 24/7 crisis line. For emergencies, contact local emergency services or a crisis hotline in your country.',
   },
   {
     heading: 'Your responsibilities',

@@ -18,9 +18,9 @@ export default function RelapsePreventionTabScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Relapse Prevention</Text>
+          <Text style={styles.title}>Coping & triggers</Text>
           <Text style={styles.subtitle}>
-            Keep your warning signs, triggers, and safety plans one tap away.
+            Keep reminders, triggers, and safety plans you wrote yourself one tap away.
           </Text>
         </View>
 
@@ -33,15 +33,15 @@ export default function RelapsePreventionTabScreen() {
             <ShieldAlert size={22} color={Colors.danger} />
           </View>
           <View style={styles.cardTextWrap}>
-            <Text style={styles.cardTitle}>Relapse Plan</Text>
+            <Text style={styles.cardTitle}>Coping plan</Text>
             <Text style={styles.cardSubtitle}>
-              Review warning signs, triggers, and coping actions before urges spike.
+              Review reminders, triggers, and coping actions you chose—self-help only.
             </Text>
           </View>
         </Pressable>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionLabel}>Risk & Triggers</Text>
+          <Text style={styles.sectionLabel}>Patterns & triggers</Text>
         </View>
 
         <Pressable
@@ -53,9 +53,9 @@ export default function RelapsePreventionTabScreen() {
             <Activity size={18} color={Colors.primary} />
           </View>
           <View style={styles.cardTextWrap}>
-            <Text style={styles.cardTitle}>Relapse Detection</Text>
+            <Text style={styles.cardTitle}>Wellness signals</Text>
             <Text style={styles.cardSubtitle}>
-              See your current risk level, patterns, and early warning signals.
+              Optional summaries from your check-ins—not diagnosis, treatment, or monitoring.
             </Text>
           </View>
         </Pressable>
@@ -71,7 +71,7 @@ export default function RelapsePreventionTabScreen() {
           <View style={styles.cardTextWrap}>
             <Text style={styles.cardTitle}>Trigger Map</Text>
             <Text style={styles.cardSubtitle}>
-              Track situations, places, and emotions that increase vulnerability.
+              Track situations, places, and emotions that tend to make days harder for you.
             </Text>
           </View>
         </Pressable>

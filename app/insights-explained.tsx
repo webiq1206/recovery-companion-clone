@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { Brain, Shield, Heart, Users, TrendingUp, BarChart3, Info, Zap, Moon, Compass } from 'lucide-react-native';
 import Colors from '../constants/colors';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
+import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 
 interface ExplainerCardProps {
   icon: React.ReactNode;
@@ -226,6 +227,8 @@ export default function InsightsExplainedScreen() {
           All scores update automatically as you use the app. There's no "right" pace - what matters is that you keep showing up.
         </Text>
       </View>
+
+      <WellnessDisclaimerFooter style={{ marginTop: 16 }} />
 
       <View style={styles.bottomSpacer} />
     </ScreenScrollView>

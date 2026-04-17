@@ -93,7 +93,7 @@ export default function EnterpriseWhiteLabel() {
 
   const handleReset = useCallback(() => {
     setAppName('Guardian');
-    setTagline('Recovery Protection & Life Rebuild System');
+    setTagline('Wellness support for recovery and life goals');
     setPrimaryColor('#2EC4B6');
     setAccentColor('#FF6B35');
     setBgColor('#0D1B2A');
