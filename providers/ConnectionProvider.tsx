@@ -350,60 +350,94 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     return newChat.id;
   }, [peerChats, queryClient]);
 
-  const sendPeerMessage = useCallback((chatId: string, content: string) => {
-    if (!allowInSlidingWindow(peerMessageTimesRef, PRACTICE_MSG_BURST)) {
-      Alert.alert(
-        'Slow down a moment',
-        'Too many practice messages in a short time. Pause briefly before sending more.',
-      );
-      return;
-    }
-    const message: PeerMessage = {
-      id: 'pm_' + Date.now().toString(),
-      chatId,
-      content,
-      isOwn: true,
-      timestamp: new Date().toISOString(),
-    };
-    const updated = peerChats.map(c => {
-      if (c.id !== chatId) return c;
-      return { ...c, messages: [...c.messages, message] };
-    });
-    saveChatsMutation.mutate(updated);
-
-    setTimeout(() => {
-      const supportResponses = [
-        'Thank you for sharing that. You are being really brave.',
-        'I hear you. It is okay to feel that way.',
-        'You are not alone in this. I am here.',
-        'That sounds really hard. How can I support you right now?',
-        'Take your time. There is no rush here.',
-        'You are doing better than you think. Seriously.',
-        'I understand. One moment at a time.',
-        'That takes courage to say out loud. I am proud of you.',
-      ];
-      const response: PeerMessage = {
-        id: 'pm_r_' + Date.now().toString(),
+  const sendPeerMessage = useCallback(
+    (chatId: string, content: string, meta?: { replyToMessageId?: string }) => {
+      if (!allowInSlidingWindow(peerMessageTimesRef, PRACTICE_MSG_BURST)) {
+        Alert.alert(
+          'Slow down a moment',
+          'Too many practice messages in a short time. Pause briefly before sending more.',
+        );
+        return;
+      }
+      const message: PeerMessage = {
+        id: 'pm_' + Date.now().toString(),
         chatId,
-        content: supportResponses[Math.floor(Math.random() * supportResponses.length)],
-        isOwn: false,
+        content,
+        isOwn: true,
         timestamp: new Date().toISOString(),
+        ...(meta?.replyToMessageId ? { replyToMessageId: meta.replyToMessageId } : {}),
       };
-      setPeerChats(prev => {
-        const blockedPeers = queryClient.getQueryData<string[]>(['connectionBlockedPeerNames']) ?? [];
-        const chat = prev.find(c => c.id === chatId);
-        if (!chat || blockedPeers.includes(chat.anonymousName)) {
-          return prev;
-        }
-        const newChats = prev.map(c => {
-          if (c.id !== chatId) return c;
-          return { ...c, messages: [...c.messages, response] };
-        });
-        saveChatsMutation.mutate(newChats);
-        return newChats;
+      const updated = peerChats.map(c => {
+        if (c.id !== chatId) return c;
+        return { ...c, messages: [...c.messages, message] };
       });
-    }, 2000 + Math.random() * 3000);
-  }, [peerChats, queryClient]);
+      saveChatsMutation.mutate(updated);
+
+      setTimeout(() => {
+        const supportResponses = [
+          'Thank you for sharing that. You are being really brave.',
+          'I hear you. It is okay to feel that way.',
+          'You are not alone in this. I am here.',
+          'That sounds really hard. How can I support you right now?',
+          'Take your time. There is no rush here.',
+          'You are doing better than you think. Seriously.',
+          'I understand. One moment at a time.',
+          'That takes courage to say out loud. I am proud of you.',
+        ];
+        const response: PeerMessage = {
+          id: 'pm_r_' + Date.now().toString(),
+          chatId,
+          content: supportResponses[Math.floor(Math.random() * supportResponses.length)],
+          isOwn: false,
+          timestamp: new Date().toISOString(),
+        };
+        setPeerChats(prev => {
+          const blockedPeers = queryClient.getQueryData<string[]>(['connectionBlockedPeerNames']) ?? [];
+          const chat = prev.find(c => c.id === chatId);
+          if (!chat || blockedPeers.includes(chat.anonymousName)) {
+            return prev;
+          }
+          const newChats = prev.map(c => {
+            if (c.id !== chatId) return c;
+            return { ...c, messages: [...c.messages, response] };
+          });
+          saveChatsMutation.mutate(newChats);
+          return newChats;
+        });
+      }, 2000 + Math.random() * 3000);
+    },
+    [peerChats, queryClient],
+  );
+
+  const togglePeerMessageReaction = useCallback(
+    (chatId: string, messageId: string, emoji: string) => {
+      const updated = peerChats.map(c => {
+        if (c.id !== chatId) return c;
+        const messages = c.messages.map(m => {
+          if (m.id !== messageId) return m;
+          const reactions = { ...(m.reactions ?? {}) };
+          const prevMy = m.myReaction;
+          if (prevMy === emoji) {
+            const next = (reactions[emoji] ?? 1) - 1;
+            if (next <= 0) delete reactions[emoji];
+            else reactions[emoji] = next;
+            const cleaned = Object.keys(reactions).length ? reactions : undefined;
+            return { ...m, reactions: cleaned, myReaction: undefined };
+          }
+          if (prevMy) {
+            const oldCount = (reactions[prevMy] ?? 1) - 1;
+            if (oldCount <= 0) delete reactions[prevMy];
+            else reactions[prevMy] = oldCount;
+          }
+          reactions[emoji] = (reactions[emoji] ?? 0) + 1;
+          return { ...m, reactions, myReaction: emoji };
+        });
+        return { ...c, messages };
+      });
+      saveChatsMutation.mutate(updated);
+    },
+    [peerChats, saveChatsMutation],
+  );
 
   const endPeerChat = useCallback((chatId: string) => {
     const updated = peerChats.map(c =>
@@ -662,6 +696,7 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     updateContactAvailability,
     startPeerChat,
     sendPeerMessage,
+    togglePeerMessageReaction,
     endPeerChat,
     blockPeerPartner,
     blockConnectionRoomAuthor,
@@ -677,7 +712,7 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     trustedContacts, peerChats, safeRooms, sponsorPairing,
     displayName, blockedPeerNames, blockedRoomAuthors, isLoading, setUserDisplayName,
     addTrustedContact, removeTrustedContact, updateContactAvailability,
-    startPeerChat, sendPeerMessage, endPeerChat, blockPeerPartner,
+    startPeerChat, sendPeerMessage, togglePeerMessageReaction, endPeerChat, blockPeerPartner,
     blockConnectionRoomAuthor, recordLocalUgcReport,
     joinRoom, leaveRoom, sendRoomMessage,
     requestSponsorPairing, acceptSponsorPairing, endSponsorPairing,

@@ -33,6 +33,12 @@ export default function ConnectionLayout() {
         }}
       />
       <Stack.Screen
+        name="peer-chat/[chatId]"
+        options={{
+          title: "Peer chat",
+        }}
+      />
+      <Stack.Screen
         name="room-session"
         options={{
           // The existing `/room-session` route hides the header.

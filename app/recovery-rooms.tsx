@@ -7,7 +7,7 @@ import { ScreenFlatList } from '../components/ScreenFlatList';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
 import {
-  Users, Shield, Clock, Radio, ChevronRight, Lock,
+  Users, Shield, Radio, ChevronRight, Lock,
   Eye, EyeOff, Search, X, Calendar, Zap, Heart,
   MessageSquare, Star, Filter, LogOut, BookOpen, Flag, MessageCircle,
 } from 'lucide-react-native';
@@ -17,9 +17,9 @@ import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { getSupportEmail, getSupportUrl, hasConfiguredSupportContact } from '../core/supportContact';
 import { useRecoveryRooms, TOPIC_LABELS } from '../providers/RecoveryRoomsProvider';
 import { useSubscription } from '../providers/SubscriptionProvider';
-import { RecoveryRoom, RecoveryRoomTopic, ScheduledSession } from '../types';
+import { RecoveryRoom, RecoveryRoomTopic } from '../types';
 
-type ViewMode = 'rooms' | 'sessions' | 'my_rooms';
+type ViewMode = 'rooms' | 'my_rooms';
 
 const TOPIC_ICONS: Record<RecoveryRoomTopic, typeof Heart> = {
   general: Heart,
@@ -55,7 +55,7 @@ export default function RecoveryRoomsScreen() {
     rooms, joinedRooms, availableRooms, liveRooms,
     displayName, isAnonymousDefault,
     setRoomDisplayName, setAnonymousDefault,
-    joinRoom, leaveRoom, getUpcomingSessions, topicLabels,
+    joinRoom, leaveRoom, topicLabels,
     socialMode,
     refetchRooms,
   } = useRecoveryRooms();
@@ -76,8 +76,6 @@ export default function RecoveryRoomsScreen() {
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
     ]).start();
   }, []);
-
-  const upcomingSessions = useMemo(() => getUpcomingSessions(), [getUpcomingSessions]);
 
   const filteredRooms = useMemo(() => {
     let list = viewMode === 'my_rooms' ? joinedRooms : rooms;
@@ -157,25 +155,6 @@ export default function RecoveryRoomsScreen() {
       setPendingRoomId(null);
     }
   }, [nameInput, isAnonymousDefault, setRoomDisplayName, pendingRoomId, joinRoom, router]);
-
-  const formatSessionTime = useCallback((dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffHrs = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffHrs / 24);
-
-    if (diffMs < 0) return 'Now';
-    if (diffHrs < 1) return `In ${Math.max(1, Math.floor(diffMs / 60000))}m`;
-    if (diffHrs < 24) return `In ${diffHrs}h`;
-    if (diffDays === 1) return 'Tomorrow';
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  }, []);
-
-  const formatSessionDate = useCallback((dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  }, []);
 
   const renderSocialModeBanner = () => {
     if (socialMode === 'live') {
@@ -374,90 +353,34 @@ export default function RecoveryRoomsScreen() {
     );
   }, [handleEnterRoom, handleLeaveRoomFromList, topicLabels]);
 
-  const renderSessionCard = useCallback(({ item }: { item: ScheduledSession & { roomName: string } }) => {
-    return (
-      <View style={styles.sessionCard} testID={`session-${item.id}`}>
-        <View style={styles.sessionTimeCol}>
-          <Text style={styles.sessionTimeMain}>{formatSessionDate(item.scheduledAt)}</Text>
-          <Text style={styles.sessionTimeSub}>{formatSessionTime(item.scheduledAt)}</Text>
-          {item.isActive && (
-            <View style={styles.sessionLiveDot}>
-              <Radio size={10} color="#FF4D4D" />
-            </View>
-          )}
-        </View>
-        <View style={styles.sessionInfoCol}>
-          <Text style={styles.sessionTitle}>{item.title}</Text>
-          <Text style={styles.sessionRoom}>{item.roomName}</Text>
-          <Text style={styles.sessionDesc} numberOfLines={2}>{item.description}</Text>
-          <View style={styles.sessionMeta}>
-            <Clock size={12} color={Colors.textMuted} />
-            <Text style={styles.sessionMetaText}>{item.durationMinutes} min</Text>
-            {item.attendeeCount > 0 ? (
-              <>
-                <Users size={12} color={Colors.textMuted} />
-                <Text style={styles.sessionMetaText}>{item.attendeeCount} attending</Text>
-              </>
-            ) : null}
-          </View>
-        </View>
-      </View>
-    );
-  }, [formatSessionDate, formatSessionTime]);
-
   const listContentStyle = useMemo(
     () => [styles.listContent, { paddingBottom: 100 + insets.bottom }],
     [insets.bottom],
   );
 
-  const renderContent = () => {
-    if (viewMode === 'sessions') {
-      return (
-        <ScreenFlatList
-          data={upcomingSessions}
-          renderItem={renderSessionCard}
-          keyExtractor={item => item.id}
-          contentContainerStyle={listContentStyle}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Calendar size={36} color={Colors.textMuted} />
-              <Text style={styles.emptyTitle}>No Upcoming Sessions</Text>
-              <Text style={styles.emptyText}>
-                When facilitators schedule sessions for these rooms, they will show up here.
-              </Text>
-            </View>
-          }
-        />
-      );
-    }
-
-    return (
-      <ScreenFlatList
-        data={filteredRooms}
-        renderItem={renderRoomCard}
-        keyExtractor={item => item.id}
-        contentContainerStyle={listContentStyle}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          viewMode === 'rooms' ? renderTopicFilter() : null
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Users size={36} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>
-              {viewMode === 'my_rooms' ? 'No Rooms Joined Yet' : 'No Rooms Found'}
-            </Text>
-            <Text style={styles.emptyText}>
-              {viewMode === 'my_rooms'
-                ? 'Join a recovery room to start connecting with others.'
-                : 'Try adjusting your search or filters.'}
-            </Text>
-          </View>
-        }
-      />
-    );
-  };
+  const renderContent = () => (
+    <ScreenFlatList
+      data={filteredRooms}
+      renderItem={renderRoomCard}
+      keyExtractor={item => item.id}
+      contentContainerStyle={listContentStyle}
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={viewMode === 'rooms' ? renderTopicFilter() : null}
+      ListEmptyComponent={
+        <View style={styles.emptyState}>
+          <Users size={36} color={Colors.textMuted} />
+          <Text style={styles.emptyTitle}>
+            {viewMode === 'my_rooms' ? 'No Rooms Joined Yet' : 'No Rooms Found'}
+          </Text>
+          <Text style={styles.emptyText}>
+            {viewMode === 'my_rooms'
+              ? 'Join a recovery room to start connecting with others.'
+              : 'Try adjusting your search or filters.'}
+          </Text>
+        </View>
+      }
+    />
+  );
 
   if (!arePeerPracticeFeaturesEnabled()) {
     return <Redirect href={'/(tabs)/connection' as any} />;
@@ -516,7 +439,6 @@ export default function RecoveryRoomsScreen() {
         {([
           { key: 'rooms' as const, label: 'All Rooms' },
           { key: 'my_rooms' as const, label: 'My Rooms' },
-          { key: 'sessions' as const, label: 'Sessions' },
         ]).map(mode => {
           const isActive = viewMode === mode.key;
           return (
@@ -1050,65 +972,6 @@ const styles = StyleSheet.create({
     color: Colors.warning,
     fontWeight: '500' as const,
     textAlign: 'center',
-  },
-  sessionCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.cardBackground,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-    gap: 14,
-  },
-  sessionTimeCol: {
-    alignItems: 'center',
-    minWidth: 60,
-  },
-  sessionTimeMain: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: Colors.text,
-  },
-  sessionTimeSub: {
-    fontSize: 11,
-    color: Colors.primary,
-    fontWeight: '600' as const,
-    marginTop: 2,
-  },
-  sessionLiveDot: {
-    marginTop: 6,
-  },
-  sessionInfoCol: {
-    flex: 1,
-  },
-  sessionTitle: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.text,
-    marginBottom: 2,
-  },
-  sessionRoom: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '500' as const,
-    marginBottom: 4,
-  },
-  sessionDesc: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 6,
-  },
-  sessionMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  sessionMetaText: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    marginRight: 8,
   },
   emptyState: {
     alignItems: 'center',

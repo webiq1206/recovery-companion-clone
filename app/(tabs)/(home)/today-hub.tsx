@@ -154,7 +154,7 @@ export default function TodayHubScreen() {
     const pulse = RNAnimated.loop(
       RNAnimated.sequence([
         RNAnimated.timing(guidanceHeadingScale, {
-          toValue: 1.06,
+          toValue: 1.14,
           duration: 900,
           useNativeDriver: true,
         }),

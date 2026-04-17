@@ -1,8 +1,18 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, TextInput,
-  Modal, Alert, Animated, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  Modal,
+  Alert,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
   Linking,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 import { ScreenFlatList } from '../../../components/ScreenFlatList';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
@@ -16,9 +26,8 @@ import {
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
 import { arePeerPracticeFeaturesEnabled, isCommunityEnabled } from '../../../core/socialLiveConfig';
-import { getSupportEmail, getSupportUrl, hasConfiguredSupportContact } from '../../../core/supportContact';
 import { useConnection } from '../../../providers/ConnectionProvider';
-import { TrustedContact, PeerChat, SafeRoom, PeerMessage, RoomMessage } from '../../../types';
+import { TrustedContact, PeerChat, SafeRoom, RoomMessage } from '../../../types';
 import { useHydrateToolUsageStore, useToolUsageStore } from '../../../features/tools/state/useToolUsageStore';
 
 type ConnectionTab = 'circle' | 'peers' | 'rooms';
@@ -49,8 +58,8 @@ export default function ConnectionScreen() {
     blockedPeerNames, blockedRoomAuthors,
     isLoading, setUserDisplayName,
     addTrustedContact, removeTrustedContact, updateContactAvailability,
-    startPeerChat, sendPeerMessage, endPeerChat,
-    blockPeerPartner, blockConnectionRoomAuthor, recordLocalUgcReport,
+    startPeerChat,
+    blockConnectionRoomAuthor, recordLocalUgcReport,
     joinRoom, leaveRoom, sendRoomMessage,
   } = useConnection();
 
@@ -72,7 +81,6 @@ export default function ConnectionScreen() {
   const [contactName, setContactName] = useState<string>('');
   const [contactPhone, setContactPhone] = useState<string>('');
   const [contactRole, setContactRole] = useState<TrustedContact['role']>('friend');
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState<string>('');
   const [showNamePrompt, setShowNamePrompt] = useState<boolean>(false);
@@ -164,20 +172,18 @@ export default function ConnectionScreen() {
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const chatId = startPeerChat('general');
-    setActiveChatId(chatId);
-  }, [displayName, startPeerChat]);
+    const newChatId = startPeerChat('general');
+    router.push(`/(tabs)/connection/peer-chat/${newChatId}` as never);
+  }, [displayName, startPeerChat, router]);
 
   const handleSendMessage = useCallback(() => {
     if (!messageText.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (activeChatId) {
-      sendPeerMessage(activeChatId, messageText.trim());
-    } else if (activeRoomId) {
+    if (activeRoomId) {
       sendRoomMessage(activeRoomId, messageText.trim());
     }
     setMessageText('');
-  }, [messageText, activeChatId, activeRoomId, sendPeerMessage, sendRoomMessage]);
+  }, [messageText, activeRoomId, sendRoomMessage]);
 
   const handleSetName = useCallback(() => {
     if (!nameInput.trim()) return;
@@ -187,84 +193,39 @@ export default function ConnectionScreen() {
   }, [nameInput, setUserDisplayName]);
 
   const renderUgcSafetyStrip = useCallback(
-    () => (
-      <Pressable
-        style={({ pressed }) => [styles.ugcSafetyStrip, pressed && { opacity: 0.9 }]}
-        onPress={() => {
-          Haptics.selectionAsync();
-          router.push('/community-guidelines' as any);
-        }}
-        testID="connection-ugc-safety-strip"
-      >
-        <Flag size={16} color={Colors.danger} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.ugcSafetyStripTitle}>Report abuse · Block users · Guidelines</Text>
-          <Text style={styles.ugcSafetyStripSub} numberOfLines={2}>
-            Tap for Connect safety guidelines, enforcement, escalation, and how moderation review works.
-          </Text>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
-    ),
+    (opts?: { title?: string; stripStyle?: StyleProp<ViewStyle> }) => {
+      const title = opts?.title ?? 'Report abuse · Block users · Guidelines';
+      return (
+        <Pressable
+          style={({ pressed }) => [
+            styles.ugcSafetyStrip,
+            opts?.stripStyle,
+            pressed && { opacity: 0.9 },
+          ]}
+          onPress={() => {
+            Haptics.selectionAsync();
+            router.push('/community-guidelines' as any);
+          }}
+          testID="connection-ugc-safety-strip"
+        >
+          <Flag size={16} color={Colors.danger} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.ugcSafetyStripTitle}>{title}</Text>
+            <Text style={styles.ugcSafetyStripSub} numberOfLines={2}>
+              Tap for Connect safety guidelines, enforcement, escalation, and how moderation review works.
+            </Text>
+          </View>
+          <ChevronRight size={16} color={Colors.textMuted} />
+        </Pressable>
+      );
+    },
     [router],
   );
-
-  const renderSupportContactStrip = useCallback(
-    () => (
-      <Pressable
-        style={({ pressed }) => [styles.ugcSafetyStrip, { marginTop: 8 }, pressed && { opacity: 0.9 }]}
-        onPress={() => {
-          Haptics.selectionAsync();
-          const email = getSupportEmail();
-          const url = getSupportUrl();
-          if (email) {
-            void Linking.openURL(
-              `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Recovery Companion — Connect')}`,
-            );
-            return;
-          }
-          if (/^https?:\/\//i.test(url)) {
-            void Linking.openURL(url);
-            return;
-          }
-          Alert.alert(
-            'Contact support',
-            'Configure EXPO_PUBLIC_SUPPORT_EMAIL or EXPO_PUBLIC_SUPPORT_URL for this build. Emergencies: local emergency services or 988 in the U.S.',
-          );
-        }}
-        testID="connection-contact-support-strip"
-      >
-        <MessageCircle size={16} color={Colors.primary} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.ugcSafetyStripTitle}>Report a problem / Contact support</Text>
-          <Text style={styles.ugcSafetyStripSub} numberOfLines={2}>
-            {hasConfiguredSupportContact() ? 'Opens your team’s email or web page' : 'Not yet configured for this build'}
-          </Text>
-        </View>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
-    ),
-    [],
-  );
-
-  const activeChat = useMemo(() => {
-    if (!activeChatId) return null;
-    return peerChats.find(c => c.id === activeChatId) ?? null;
-  }, [activeChatId, peerChats]);
 
   const activeRoom = useMemo(() => {
     if (!activeRoomId) return null;
     return safeRooms.find(r => r.id === activeRoomId) ?? null;
   }, [activeRoomId, safeRooms]);
-
-  React.useEffect(() => {
-    if (!activeChatId) return;
-    const c = peerChats.find(x => x.id === activeChatId);
-    if (c && blockedPeerNames.includes(c.anonymousName)) {
-      setActiveChatId(null);
-      setMessageText('');
-    }
-  }, [activeChatId, peerChats, blockedPeerNames]);
 
   const availableContacts = useMemo(() => {
     return trustedContacts.filter(c => c.isAvailable);
@@ -426,7 +387,7 @@ export default function ConnectionScreen() {
         style={({ pressed }) => [styles.chatCard, pressed && { opacity: 0.9 }]}
         onPress={() => {
           Haptics.selectionAsync();
-          setActiveChatId(item.id);
+          router.push(`/(tabs)/connection/peer-chat/${item.id}` as never);
         }}
         testID={`chat-${item.id}`}
       >
@@ -450,31 +411,14 @@ export default function ConnectionScreen() {
         </View>
       </Pressable>
     );
-  }, [formatTime]);
+  }, [formatTime, router]);
 
   const renderPeersTab = () => (
     <View style={styles.tabContent}>
-      {renderUgcSafetyStrip()}
-      {renderSupportContactStrip()}
-      <View style={styles.peerHeader}>
-        <View style={styles.peerSafeNotice}>
-          <Shield size={16} color="#7DC9A0" />
-          <Text style={styles.peerSafeText}>
-            Practice peer chat on this device only — not a live crisis service
-          </Text>
-        </View>
-      </View>
-      <Pressable
-        style={({ pressed }) => [styles.guidelinesLink, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          Haptics.selectionAsync();
-          router.push('/community-guidelines' as any);
-        }}
-      >
-        <BookOpen size={16} color={Colors.primary} />
-        <Text style={styles.guidelinesLinkText}>Guidelines & report / block</Text>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
+      {renderUgcSafetyStrip({
+        title: 'Report abuse - Block Users - Guidelines',
+        stripStyle: { marginTop: 0 },
+      })}
       <ScreenFlatList
         data={visiblePeerChats}
         renderItem={renderPeerChatItem}
@@ -558,13 +502,6 @@ export default function ConnectionScreen() {
   const renderRoomsTab = () => (
     <View style={styles.tabContent}>
       {renderUgcSafetyStrip()}
-      {renderSupportContactStrip()}
-      <View style={styles.peerHeader}>
-        <View style={styles.peerSafeNotice}>
-          <Heart size={16} color="#E8917A" />
-          <Text style={styles.peerSafeText}>Small, safe spaces.</Text>
-        </View>
-      </View>
       <Pressable
         style={({ pressed }) => [styles.recoveryRoomsBanner, pressed && { opacity: 0.9 }]}
         onPress={() => {
@@ -587,17 +524,6 @@ export default function ConnectionScreen() {
           </Text>
         </View>
         <ChevronRight size={18} color={Colors.textMuted} />
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [styles.guidelinesLink, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          Haptics.selectionAsync();
-          router.push('/community-guidelines' as any);
-        }}
-      >
-        <BookOpen size={16} color={Colors.primary} />
-        <Text style={styles.guidelinesLinkText}>Connect safety & reporting</Text>
-        <ChevronRight size={16} color={Colors.textMuted} />
       </Pressable>
       <ScreenFlatList
         data={safeRooms}
@@ -806,143 +732,6 @@ export default function ConnectionScreen() {
   );
   */
 
-  const renderChatModal = () => {
-    const chat = activeChat;
-    if (!chat) return null;
-    const peerMessages = blockedPeerNames.includes(chat.anonymousName)
-      ? []
-      : chat.messages;
-    return (
-      <Modal visible={!!activeChatId} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={[styles.chatModal, { paddingBottom: insets.bottom + 10 }]}>
-            <View style={styles.chatModalHeader}>
-              <Pressable onPress={() => { setActiveChatId(null); setMessageText(''); }} hitSlop={12}>
-                <X size={22} color={Colors.textSecondary} />
-              </Pressable>
-              <View style={styles.chatModalTitleRow}>
-                <Text style={styles.chatModalTitle}>{chat.anonymousName}</Text>
-                {chat.isActive && <View style={styles.activeDotSmall} />}
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Pressable
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    router.push('/community-guidelines' as any);
-                  }}
-                  hitSlop={12}
-                >
-                  <BookOpen size={20} color={Colors.primary} />
-                </Pressable>
-                {chat.isActive ? (
-                  <Pressable
-                    onPress={() => {
-                      Alert.alert('End Chat', 'Are you sure you want to end this chat?', [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'End', style: 'destructive', onPress: () => { endPeerChat(chat.id); setActiveChatId(null); } },
-                      ]);
-                    }}
-                    hitSlop={12}
-                  >
-                    <Text style={styles.endChatText}>End</Text>
-                  </Pressable>
-                ) : (
-                  <View style={{ width: 28 }} />
-                )}
-              </View>
-            </View>
-            <ScreenFlatList
-              data={peerMessages}
-              keyExtractor={item => item.id}
-              style={styles.messageList}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }: { item: PeerMessage }) => (
-                <Pressable
-                  delayLongPress={400}
-                  onLongPress={() => {
-                    if (item.isOwn) return;
-                    Alert.alert('Message options', 'Practice content on this device only.', [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Report',
-                        onPress: () => {
-                          recordLocalUgcReport({
-                            scope: 'peer',
-                            contextId: chat.id,
-                            authorLabel: chat.anonymousName,
-                            contentPreview: item.content.slice(0, 200),
-                          });
-                          Alert.alert(
-                            'Report saved',
-                            'This practice chat is stored only on your device. For live spaces with server-side reporting, blocking, and moderator review, use Recovery Rooms when your organization has configured the social backend.',
-                          );
-                        },
-                      },
-                      {
-                        text: 'Block partner',
-                        style: 'destructive',
-                        onPress: () => {
-                          Alert.alert(
-                            'Block this partner?',
-                            'You will not see this practice partner name again on this device.',
-                            [
-                              { text: 'Cancel', style: 'cancel' },
-                              {
-                                text: 'Block',
-                                style: 'destructive',
-                                onPress: () => {
-                                  blockPeerPartner(chat.id);
-                                  setActiveChatId(null);
-                                  setMessageText('');
-                                },
-                              },
-                            ],
-                          );
-                        },
-                      },
-                    ]);
-                  }}
-                >
-                  <View style={[styles.messageBubble, item.isOwn ? styles.ownBubble : styles.otherBubble]}>
-                    <Text style={[styles.messageText, item.isOwn ? styles.ownMessageText : styles.otherMessageText]}>
-                      {item.content}
-                    </Text>
-                    <Text style={[styles.messageTime, item.isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
-                      {formatTime(item.timestamp)}
-                    </Text>
-                  </View>
-                </Pressable>
-              )}
-            />
-            {chat.isActive && (
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.chatInput}
-                  placeholder="Type a message..."
-                  placeholderTextColor={Colors.textMuted}
-                  value={messageText}
-                  onChangeText={setMessageText}
-                  maxLength={500}
-                  testID="chat-input"
-                />
-                <Pressable
-                  style={[styles.sendBtn, !messageText.trim() && styles.sendBtnDisabled]}
-                  onPress={handleSendMessage}
-                  disabled={!messageText.trim()}
-                >
-                  <Send size={18} color={messageText.trim() ? Colors.white : Colors.textMuted} />
-                </Pressable>
-              </View>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
-  };
-
   const renderRoomModal = () => {
     const room = activeRoom;
     if (!room) return null;
@@ -1137,7 +926,6 @@ export default function ConnectionScreen() {
       {activeTab === 'peers' && renderPeersTab()}
       {activeTab === 'rooms' && renderRoomsTab()}
 
-      {renderChatModal()}
       {renderRoomModal()}
 
       {/*

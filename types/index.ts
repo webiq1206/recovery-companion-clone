@@ -245,6 +245,18 @@ export interface PeerMessage {
   content: string;
   isOwn: boolean;
   timestamp: string;
+  /** When set, this message is a reply to another message in the same chat (on-device practice). */
+  replyToMessageId?: string;
+  /**
+   * Aggregate emoji reaction counts for this message (practice chat; all on-device).
+   * Older stored chats omit this field — treat as {}.
+   */
+  reactions?: Record<string, number>;
+  /**
+   * Single emoji the local user applied to this message (MVP: one reaction per message from "me").
+   * Tapping the same emoji again removes it.
+   */
+  myReaction?: string;
 }
 
 export interface SafeRoom {
