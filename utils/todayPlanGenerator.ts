@@ -1,4 +1,5 @@
 import type { RecoveryStage, RiskCategory } from '../types';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 
 export type TodayPlanActionKind =
   | 'growth'
@@ -185,7 +186,9 @@ export function generateTodayPlan(input: TodayPlanInput): TodayPlan {
       {
         id: 'connection-touchpoint',
         title: 'Connection touchpoint',
-        subtitle: 'Reach out to one safe person or community space.',
+        subtitle: arePeerPracticeFeaturesEnabled()
+          ? 'Reach out to one safe person or community space.'
+          : 'Reach out to one safe person from your trusted circle.',
         route: '/connection',
         kind: 'connection',
       },

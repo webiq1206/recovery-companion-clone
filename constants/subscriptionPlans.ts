@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from 'lucide-react-native';
 import type { PremiumFeature } from '../types';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
 
 /**
@@ -20,9 +21,19 @@ export const FREEMIUM_HIGHLIGHTS: string[] = [
   'Sobriety tracking, streaks & milestones',
   'Journal entries & reflection prompts',
   'Pledges, triggers & progress views',
-  'Connection hub & on-device practice scenarios (core)',
+  'Connection hub: trusted circle & support resources (core)',
   'Today hub, goals & growth insights (core)',
 ];
+
+/** Freemium bullets for paywalls; varies when peer practice features are omitted from the binary. */
+export function getFreemiumHighlights(): string[] {
+  const connectionLine = arePeerPracticeFeaturesEnabled()
+    ? 'Connection hub & on-device practice scenarios (core)'
+    : 'Connection hub: trusted circle & support resources (core)';
+  return FREEMIUM_HIGHLIGHTS.map((line) =>
+    line.startsWith('Connection hub') ? connectionLine : line,
+  );
+}
 
 /** Section title on paywall / plans for the free tier list */
 export const FREEMIUM_SECTION_TITLE = 'Freemium includes';
@@ -95,8 +106,13 @@ export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
 
 /** Premium marketing cards for the active binary (consumer store builds omit care-partner export). */
 export function getPremiumFeatureMarketingCards(): PremiumMarketingCard[] {
-  if (isProviderEnterpriseSuiteInBuild()) return PREMIUM_FEATURE_CARDS;
-  return PREMIUM_FEATURE_CARDS.filter((c) => c.featureKey !== 'therapist_export');
+  let cards = isProviderEnterpriseSuiteInBuild()
+    ? PREMIUM_FEATURE_CARDS
+    : PREMIUM_FEATURE_CARDS.filter((c) => c.featureKey !== 'therapist_export');
+  if (!arePeerPracticeFeaturesEnabled()) {
+    cards = cards.filter((c) => c.featureKey !== 'recovery_rooms');
+  }
+  return cards;
 }
 
 /**
@@ -169,3 +185,14 @@ export const TIER_COMPARISON_ROWS: TierComparisonRow[] = [
       'Freemium includes core progress and charts where available; Premium unlocks the full predictive engine and deeper analytics.',
   },
 ];
+
+/** Tier table for plan screens; omits Recovery Rooms when that capability is not shipped in the binary. */
+export function getTierComparisonRows(): TierComparisonRow[] {
+  const peer = arePeerPracticeFeaturesEnabled();
+  return TIER_COMPARISON_ROWS.filter((row) => peer || row.id !== 'rooms').map((row) => {
+    if (row.id === 'connection' && !peer) {
+      return { ...row, label: 'Connection hub: trusted circle & crisis resources' };
+    }
+    return row;
+  });
+}

@@ -4,6 +4,7 @@ import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { ShieldAlert, Anchor, Hammer, Trophy, Info, ArrowRight, Zap, BarChart3, Brain, Heart, Clock, TrendingUp } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 
 interface StageCardProps {
   icon: React.ReactNode;
@@ -39,6 +40,7 @@ function SignalRow({ label, description }: { label: string; description: string 
 }
 
 export default function RecoveryStagesExplainedScreen() {
+  const peerPractice = arePeerPracticeFeaturesEnabled();
   return (
     <ScreenScrollView
       style={styles.container}
@@ -225,7 +227,9 @@ export default function RecoveryStagesExplainedScreen() {
         />
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          Rebuild is where identity modules, exercises, and community engagement become especially powerful. You're not just sober - you're becoming who you want to be.
+          {peerPractice
+            ? "Rebuild is where identity modules, exercises, and community engagement become especially powerful. You're not just sober - you're becoming who you want to be."
+            : "Rebuild is where identity modules, exercises, and structured connection habits become especially powerful. You're not just sober - you're becoming who you want to be."}
         </Text>
       </StageCard>
 
@@ -246,7 +250,11 @@ export default function RecoveryStagesExplainedScreen() {
         <Text style={styles.subHeading}>How the app adapts</Text>
         <SignalRow
           label="Celebratory AI tone"
-          description="Your companion acknowledges your strength and helps you pay it forward through community and mentorship."
+          description={
+            peerPractice
+              ? 'Your companion acknowledges your strength and helps you pay it forward through community and mentorship.'
+              : 'Your companion acknowledges your strength and helps you pay it forward through habits like service, mentorship outside the app, and staying connected to people you trust.'
+          }
         />
         <SignalRow
           label="Periodic support"

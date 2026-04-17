@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { Check, X, Crown, Sparkles, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
-import { TIER_COMPARISON_ROWS } from '../constants/subscriptionPlans';
+import { getTierComparisonRows } from '../constants/subscriptionPlans';
 import { useSubscription } from '../providers/SubscriptionProvider';
 
 function openSubscriptionManagement() {
@@ -115,7 +115,7 @@ export default function SubscriptionPlansScreen() {
             </View>
           </View>
 
-          {TIER_COMPARISON_ROWS.map((row) => (
+          {getTierComparisonRows().map((row) => (
             <View key={row.id} style={styles.tableRow}>
               <View style={styles.tableFeatureCol}>
                 <Text style={styles.tableFeatureText}>{row.label}</Text>

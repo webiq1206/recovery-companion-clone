@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { useRecoveryRooms, TOPIC_LABELS } from '../providers/RecoveryRoomsProvider';
 import { useSubscription } from '../providers/SubscriptionProvider';
 import { RecoveryRoom, RecoveryRoomTopic, ScheduledSession } from '../types';
@@ -461,6 +462,33 @@ export default function RecoveryRoomsScreen() {
       />
     );
   };
+
+  if (!arePeerPracticeFeaturesEnabled()) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.premiumGate}>
+          <View style={styles.premiumGateIcon}>
+            <Users size={32} color={Colors.textMuted} />
+          </View>
+          <Text style={styles.premiumGateTitle}>Recovery Rooms</Text>
+          <Text style={styles.premiumGateDesc}>
+            Group recovery rooms are not enabled in this app build. Use Connect for your trusted circle and crisis
+            resources.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [styles.premiumGateBtn, pressed && { opacity: 0.8 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (router.canGoBack()) router.back();
+              else router.replace('/connection' as never);
+            }}
+          >
+            <Text style={styles.premiumGateBtnText}>Go back</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   if (!hasFeature('recovery_rooms')) {
     return (

@@ -26,7 +26,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
 import {
-  FREEMIUM_HIGHLIGHTS,
+  getFreemiumHighlights,
   FREEMIUM_SECTION_TITLE,
   getPremiumFeatureMarketingCards,
   type PremiumMarketingCard,
@@ -611,7 +611,7 @@ export default function PremiumUpgradeScreen() {
             <Sparkles size={14} color={Colors.primary} />
             <Text style={styles.freeSectionTitle}>{FREEMIUM_SECTION_TITLE}</Text>
           </View>
-          {FREEMIUM_HIGHLIGHTS.map((feat, i) => (
+          {getFreemiumHighlights().map((feat, i) => (
             <View key={i} style={styles.freeItem}>
               <Check size={14} color={Colors.primary} strokeWidth={3} />
               <Text style={styles.freeItemText}>{feat}</Text>

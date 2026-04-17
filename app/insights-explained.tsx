@@ -4,6 +4,7 @@ import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Stack } from 'expo-router';
 import { Brain, Shield, Heart, Users, TrendingUp, BarChart3, Info, Zap, Moon, Compass } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 
 interface ExplainerCardProps {
   icon: React.ReactNode;
@@ -39,6 +40,7 @@ function FactorRow({ label, description }: { label: string; description: string 
 }
 
 export default function InsightsExplainedScreen() {
+  const peerPractice = arePeerPracticeFeaturesEnabled();
   return (
     <ScreenScrollView
       style={styles.container}
@@ -196,17 +198,25 @@ export default function InsightsExplainedScreen() {
         accentColor="#AB47BC"
       >
         <Text style={styles.bodyText}>
-          Measures your engagement with community and social support networks.
+          {peerPractice
+            ? 'Measures your engagement with community and social support networks.'
+            : 'Measures your engagement with social support tools in the app (trusted circle, accountability, and similar connection actions).'}
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What affects it</Text>
         <FactorRow
-          label="Community engagement (100%)"
-          description="Earned through social micro-wins - actions like joining recovery rooms, engaging in community posts, or reaching out to peers. Earning 10 social wins earns full marks."
+          label={peerPractice ? 'Community engagement (100%)' : 'Connection micro-wins (100%)'}
+          description={
+            peerPractice
+              ? 'Earned through social micro-wins - actions like joining recovery rooms, engaging in community posts, or reaching out to peers. Earning 10 social wins earns full marks.'
+              : 'Earned through social micro-wins—such as reaching out through your trusted circle or accountability tools. Earning 10 social wins earns full marks.'
+          }
         />
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          Recovery is stronger together. Even small acts of connection - reading a post, sending encouragement - contribute to this score.
+          {peerPractice
+            ? 'Recovery is stronger together. Even small acts of connection - reading a post, sending encouragement - contribute to this score.'
+            : 'Recovery is stronger together. Even small acts of connection—a brief check-in text, one intentional reach-out—contribute to this score.'}
         </Text>
       </ExplainerCard>
 

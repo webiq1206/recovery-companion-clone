@@ -13,6 +13,7 @@ import {
   SponsorMessage,
   UserProfile,
 } from '../types';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 
 const STORAGE_KEYS = {
   TRUSTED_CONTACTS: 'connection_trusted_contacts',
@@ -150,13 +151,21 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
 
   const chatsQuery = useQuery({
     queryKey: ['connectionChats'],
-    queryFn: () => loadItem<PeerChat[]>(STORAGE_KEYS.PEER_CHATS, SAMPLE_PEER_CHATS),
+    queryFn: () =>
+      loadItem<PeerChat[]>(
+        STORAGE_KEYS.PEER_CHATS,
+        arePeerPracticeFeaturesEnabled() ? SAMPLE_PEER_CHATS : [],
+      ),
     staleTime: Infinity,
   });
 
   const roomsQuery = useQuery({
     queryKey: ['connectionRooms'],
-    queryFn: () => loadItem<SafeRoom[]>(STORAGE_KEYS.SAFE_ROOMS, SAMPLE_ROOMS),
+    queryFn: () =>
+      loadItem<SafeRoom[]>(
+        STORAGE_KEYS.SAFE_ROOMS,
+        arePeerPracticeFeaturesEnabled() ? SAMPLE_ROOMS : [],
+      ),
     staleTime: Infinity,
   });
 

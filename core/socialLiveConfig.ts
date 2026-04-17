@@ -40,3 +40,14 @@ export function getSocialPresentationMode(): SocialPresentationMode {
   if (isLocalSocialDemoEnabled()) return 'local_demo';
   return 'offline';
 }
+
+/**
+ * Recovery Rooms, simulated peer chat, sample “safe rooms,” and related marketing should only
+ * appear when live social is configured (real backend) or in a dev bundle where local demo is allowed.
+ * Release store builds without `EXPO_PUBLIC_LIVE_SOCIAL_API_URL` keep these fully hidden.
+ */
+export function arePeerPracticeFeaturesEnabled(): boolean {
+  if (isLiveSocialMode()) return true;
+  if (typeof __DEV__ === 'boolean' && __DEV__) return true;
+  return false;
+}

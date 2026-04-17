@@ -14,6 +14,7 @@ import {
   BarChart3,
 } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 
 interface ExplainerCardProps {
   icon: React.ReactNode;
@@ -60,6 +61,7 @@ function LoopCycleStep({ step, text, color }: { step: number; text: string; colo
 }
 
 export default function RecoveryInsightsExplainedScreen() {
+  const peerPractice = arePeerPracticeFeaturesEnabled();
   return (
     <ScreenScrollView
       style={styles.container}
@@ -99,7 +101,11 @@ export default function RecoveryInsightsExplainedScreen() {
         />
         <TriggerRow
           label="Confidence"
-          description="A 0–100 confidence-in-recovery score built from sober time, check-in consistency, navigating high-craving days, journaling, pledge streaks, and light community connection. It summarizes how much evidence you are building that you can stay on your path."
+          description={
+            peerPractice
+              ? 'A 0–100 confidence-in-recovery score built from sober time, check-in consistency, navigating high-craving days, journaling, pledge streaks, and light community connection. It summarizes how much evidence you are building that you can stay on your path.'
+              : 'A 0–100 confidence-in-recovery score built from sober time, check-in consistency, navigating high-craving days, journaling, pledge streaks, and connection habits (such as reaching out to your trusted circle). It summarizes how much evidence you are building that you can stay on your path.'
+          }
         />
         <TriggerRow
           label="Active loops"
@@ -274,34 +280,63 @@ export default function RecoveryInsightsExplainedScreen() {
           <Text style={styles.loopTaglineText}>Knowing you are not alone in this</Text>
         </View>
         <Text style={styles.bodyText}>
-          The Belonging Loop activates when you connect with others in your recovery community. Isolation is one of the biggest risks in recovery - this loop tracks how actively you're building and maintaining supportive connections.
+          {peerPractice
+            ? "The Belonging Loop activates when you connect with others in your recovery community. Isolation is one of the biggest risks in recovery - this loop tracks how actively you're building and maintaining supportive connections."
+            : 'The Belonging Loop activates when you use connection tools in Recovery Companion—trusted circle reach-outs, accountability check-ins, and similar actions. Isolation is one of the biggest risks in recovery; this loop tracks how actively you are building supportive connections.'}
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What activates it</Text>
-        <TriggerRow
-          label="Community engagement"
-          description="Interacting with community posts - reading, reacting, or commenting - counts as meaningful connection."
-        />
-        <TriggerRow
-          label="Joining recovery rooms"
-          description="Participating in group recovery sessions shows you're willing to be vulnerable with others."
-        />
-        <TriggerRow
-          label="Sharing support"
-          description="Offering encouragement, sharing your experience, or responding to someone in need."
-        />
-        <TriggerRow
-          label="Contacting an accountability partner"
-          description="Reaching out to your accountability partner, whether in crisis or just to check in."
-        />
+        {peerPractice ? (
+          <>
+            <TriggerRow
+              label="Community engagement"
+              description="Interacting with community posts - reading, reacting, or commenting - counts as meaningful connection."
+            />
+            <TriggerRow
+              label="Joining recovery rooms"
+              description="Participating in group recovery sessions shows you're willing to be vulnerable with others."
+            />
+            <TriggerRow
+              label="Sharing support"
+              description="Offering encouragement, sharing your experience, or responding to someone in need."
+            />
+            <TriggerRow
+              label="Contacting an accountability partner"
+              description="Reaching out to your accountability partner, whether in crisis or just to check in."
+            />
+          </>
+        ) : (
+          <>
+            <TriggerRow
+              label="Trusted circle reach-out"
+              description="Calling or texting someone in your trusted circle, or adding a new safe contact, counts as meaningful connection."
+            />
+            <TriggerRow
+              label="Accountability partner"
+              description="Reaching out to your accountability partner, whether in crisis or just to check in."
+            />
+            <TriggerRow
+              label="Connection hub activity"
+              description="Using Connect for structured support (for example instant reach or pledge-related touchpoints) reinforces belonging."
+            />
+            <TriggerRow
+              label="Sharing support"
+              description="Offering encouragement when you check in with someone you trust."
+            />
+          </>
+        )}
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>How the score grows</Text>
         <Text style={styles.bodyText}>
-          The Belonging Loop rewards any form of genuine connection. You don't need to be social every day - even reading a community post or sending a brief message activates it. Regular, small interactions build a stronger score than occasional large ones.
+          {peerPractice
+            ? "The Belonging Loop rewards any form of genuine connection. You don't need to be social every day - even reading a community post or sending a brief message activates it. Regular, small interactions build a stronger score than occasional large ones."
+            : 'The Belonging Loop rewards genuine connection. You do not need a big social day—even a short check-in text or one intentional reach-out activates it. Regular, small interactions build a stronger score than occasional large ones.'}
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.tipText}>
-          Recovery is stronger together. Even small acts of connection - reading a post, sending encouragement - contribute meaningfully to this loop.
+          {peerPractice
+            ? 'Recovery is stronger together. Even small acts of connection - reading a post, sending encouragement - contribute meaningfully to this loop.'
+            : 'Recovery is stronger together. Even small acts of connection—a brief message, one call when it counts—contribute meaningfully to this loop.'}
         </Text>
       </ExplainerCard>
 

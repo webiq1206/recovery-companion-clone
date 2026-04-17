@@ -11,6 +11,7 @@ import Purchases, {
   type PurchasesPackage,
 } from 'react-native-purchases';
 import { SubscriptionState, PremiumFeature } from '../types';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
 
 const STORAGE_KEY = 'subscription_state';
@@ -370,6 +371,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const hasFeature = useCallback(
     (feature: PremiumFeature): boolean => {
       if (!isProviderEnterpriseSuiteInBuild() && feature === 'therapist_export') return false;
+      if (feature === 'recovery_rooms' && !arePeerPracticeFeaturesEnabled()) return false;
       if (FREE_FEATURES.has(feature)) return true;
       if (subscription.tier === 'premium') return true;
       return false;

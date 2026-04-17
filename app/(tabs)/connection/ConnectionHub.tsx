@@ -15,6 +15,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
+import { arePeerPracticeFeaturesEnabled } from '../../../core/socialLiveConfig';
 import { useConnection } from '../../../providers/ConnectionProvider';
 import { TrustedContact, PeerChat, SafeRoom, PeerMessage, RoomMessage } from '../../../types';
 import { useHydrateToolUsageStore, useToolUsageStore } from '../../../features/tools/state/useToolUsageStore';
@@ -57,7 +58,14 @@ export default function ConnectionScreen() {
     [peerChats, blockedPeerNames],
   );
 
+  const peerPracticeEnabled = arePeerPracticeFeaturesEnabled();
   const [activeTab, setActiveTab] = useState<ConnectionTab>('circle');
+
+  React.useEffect(() => {
+    if (!peerPracticeEnabled && activeTab !== 'circle') {
+      setActiveTab('circle');
+    }
+  }, [peerPracticeEnabled, activeTab]);
   const [showAddContact, setShowAddContact] = useState<boolean>(false);
   const [contactName, setContactName] = useState<string>('');
   const [contactPhone, setContactPhone] = useState<string>('');
@@ -1034,11 +1042,14 @@ export default function ConnectionScreen() {
       </View>
 
       <View style={styles.tabRow}>
-        {([
-          { key: 'circle' as const, label: 'Circle', icon: Shield },
-          { key: 'peers' as const, label: 'Peers', icon: MessageCircle },
-          { key: 'rooms' as const, label: 'Rooms', icon: Users },
-        ]).map(tab => {
+        {(peerPracticeEnabled
+          ? ([
+              { key: 'circle' as const, label: 'Circle', icon: Shield },
+              { key: 'peers' as const, label: 'Peers', icon: MessageCircle },
+              { key: 'rooms' as const, label: 'Rooms', icon: Users },
+            ] as const)
+          : ([{ key: 'circle' as const, label: 'Circle', icon: Shield }] as const)
+        ).map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
           return (

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { useRecoveryRooms, TOPIC_LABELS } from '../providers/RecoveryRoomsProvider';
 import { RecoveryRoomMessage, RoomReport, ScheduledSession } from '../types';
 
@@ -231,6 +232,18 @@ export default function RoomSessionScreen() {
     if (!room) return null;
     return room.scheduledSessions.find(s => s.isActive) ?? null;
   }, [room]);
+
+  if (!arePeerPracticeFeaturesEnabled()) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Text style={styles.errorText}>Recovery rooms are not available in this app build.</Text>
+        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+          <Text style={styles.backBtnText}>Go Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (!room) {
     return (
