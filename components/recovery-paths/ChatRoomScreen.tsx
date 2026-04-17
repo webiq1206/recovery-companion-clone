@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Send } from "lucide-react-native";
+import { Send, X } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { findDemoRoomById } from "../../constants/recoveryPathRooms";
 
@@ -31,6 +31,9 @@ const PREMIUM = {
   sendDisabled: "#5A626C",
   reactionBar: "#1c2129",
   chip: "rgba(255,255,255,0.08)",
+  threadLine: "rgba(46,196,182,0.35)",
+  replyLink: "rgba(46,196,182,0.95)",
+  banner: "#141920",
 } as const;
 
 /** Reactions: emoji → distinct mock user ids (no duplicate user per emoji) */
@@ -41,7 +44,6 @@ export const REACTION_EMOJIS = ["👍", "❤️", "🔥", "🙏", "💯"] as con
 /** Logged-in user for mock dedupe */
 export const ROOM_CHAT_CURRENT_USER_ID = "u-you";
 
-/** Other simulated members in the room */
 const MOCK_USER_MENTOR = "u-mentor";
 const MOCK_USER_D12 = "u-day12";
 const MOCK_USER_D4 = "u-day4";
@@ -54,10 +56,78 @@ export type RoomChatMessage = {
   createdAt: number;
   isOwn: boolean;
   reactions: MessageReactions;
+  /** Set when this message is a reply in a thread */
+  replyToMessageId?: string;
 };
 
 function formatMessageTime(ts: number): string {
   return new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function buildMessageMap(messages: RoomChatMessage[]): Map<string, RoomChatMessage> {
+  const m = new Map<string, RoomChatMessage>();
+  for (const msg of messages) {
+    m.set(msg.id, msg);
+  }
+  return m;
+}
+
+/** Walk reply chain to the top message id (thread root) */
+function threadRootId(msg: RoomChatMessage, byId: Map<string, RoomChatMessage>): string {
+  let cur: RoomChatMessage | undefined = msg;
+  const seen = new Set<string>();
+  while (cur?.replyToMessageId) {
+    if (seen.has(cur.id)) return cur.id;
+    seen.add(cur.id);
+    const parent = byId.get(cur.replyToMessageId);
+    if (!parent) return cur.id;
+    cur = parent;
+  }
+  return cur.id;
+}
+
+/** 0 = root, 1 = direct reply, … */
+function replyDepth(msg: RoomChatMessage, byId: Map<string, RoomChatMessage>): number {
+  let d = 0;
+  let cur: RoomChatMessage | undefined = msg;
+  const seen = new Set<string>();
+  while (cur?.replyToMessageId) {
+    if (seen.has(cur.id)) break;
+    seen.add(cur.id);
+    cur = byId.get(cur.replyToMessageId);
+    if (!cur) break;
+    d += 1;
+  }
+  return d;
+}
+
+export type ThreadGroup = {
+  rootId: string;
+  root: RoomChatMessage;
+  /** Root first, then replies in chronological order */
+  messages: RoomChatMessage[];
+  latestAt: number;
+};
+
+function buildThreadGroups(messages: RoomChatMessage[]): ThreadGroup[] {
+  const byId = buildMessageMap(messages);
+  const buckets = new Map<string, RoomChatMessage[]>();
+  for (const m of messages) {
+    const tid = threadRootId(m, byId);
+    const list = buckets.get(tid) ?? [];
+    list.push(m);
+    buckets.set(tid, list);
+  }
+  const out: ThreadGroup[] = [];
+  for (const [rootId, arr] of buckets) {
+    const root = byId.get(rootId);
+    if (!root) continue;
+    const others = arr.filter((x) => x.id !== root.id).sort((a, b) => a.createdAt - b.createdAt);
+    const ordered = [root, ...others];
+    const latestAt = Math.max(...ordered.map((x) => x.createdAt));
+    out.push({ rootId, root, messages: ordered, latestAt });
+  }
+  return out.sort((a, b) => b.latestAt - a.latestAt);
 }
 
 function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
@@ -74,6 +144,51 @@ function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
         "👍": [MOCK_USER_D12, MOCK_USER_D4],
         "🙏": [MOCK_USER_R7],
       },
+    },
+    {
+      id: "seed-1-r1",
+      userTag: "Day 4",
+      text: "Thank you—keeping it short today.",
+      createdAt: t - 1000 * 60 * 11,
+      isOwn: false,
+      reactions: {},
+      replyToMessageId: "seed-1",
+    },
+    {
+      id: "seed-1-r2",
+      userTag: "Day 12",
+      text: "Same. One meeting at a time.",
+      createdAt: t - 1000 * 60 * 10.5,
+      isOwn: false,
+      reactions: { "👍": [MOCK_USER_MENTOR] },
+      replyToMessageId: "seed-1",
+    },
+    {
+      id: "seed-1-r3",
+      userTag: "You",
+      text: "Noted—will read guidelines before I jump in.",
+      createdAt: t - 1000 * 60 * 10.2,
+      isOwn: true,
+      reactions: {},
+      replyToMessageId: "seed-1",
+    },
+    {
+      id: "seed-1-r4",
+      userTag: "Mentor",
+      text: "That’s exactly the energy we want.",
+      createdAt: t - 1000 * 60 * 9.8,
+      isOwn: false,
+      reactions: {},
+      replyToMessageId: "seed-1",
+    },
+    {
+      id: "seed-1-r5",
+      userTag: "You",
+      text: "Following your lead on short check-ins.",
+      createdAt: t - 1000 * 60 * 9.5,
+      isOwn: true,
+      reactions: {},
+      replyToMessageId: "seed-1-r2",
     },
     {
       id: "seed-2",
@@ -134,32 +249,55 @@ function reactionSummary(reactions: MessageReactions): { emoji: string; count: n
 
 type MessageRowProps = {
   item: RoomChatMessage;
+  byId: Map<string, RoomChatMessage>;
   showReactionBar: boolean;
   onLongPress: () => void;
   onPickReaction: (emoji: string) => void;
   currentUserReacted: (emoji: string) => boolean;
+  onReply: () => void;
+  /** Visual thread indent (left rail) */
+  depth: number;
 };
 
 function RoomMessageRow({
   item,
+  byId,
   showReactionBar,
   onLongPress,
   onPickReaction,
   currentUserReacted,
+  onReply,
+  depth,
 }: MessageRowProps) {
   const summary = useMemo(() => reactionSummary(item.reactions), [item.reactions]);
+  const parentSnippet = item.replyToMessageId ? byId.get(item.replyToMessageId)?.text : undefined;
+  const isNested = depth > 0;
+  const bubbleCompact = isNested;
 
   return (
-    <View style={[styles.msgRow, item.isOwn ? styles.msgRowOwn : styles.msgRowOther]}>
-      <View style={[styles.msgBlock, item.isOwn ? styles.msgBlockOwn : styles.msgBlockOther]}>
-        <Text style={styles.userTag}>{item.userTag}</Text>
+    <View
+      style={[
+        styles.msgRow,
+        item.isOwn ? styles.msgRowOwn : styles.msgRowOther,
+        isNested && styles.msgRowNested,
+        { marginLeft: isNested ? Math.min(depth, 4) * 10 : 0 },
+      ]}
+    >
+      {isNested ? <View style={styles.threadRail} /> : null}
+      <View style={[styles.msgBlock, item.isOwn ? styles.msgBlockOwn : styles.msgBlockOther, isNested && styles.msgBlockNested]}>
+        {parentSnippet ? (
+          <Text style={styles.replyContext} numberOfLines={1}>
+            Replying to · {parentSnippet}
+          </Text>
+        ) : null}
+        <Text style={[styles.userTag, bubbleCompact && styles.userTagCompact]}>{item.userTag}</Text>
         <Pressable
           onLongPress={onLongPress}
           delayLongPress={380}
           style={({ pressed }) => [pressed && styles.bubblePressed]}
         >
-          <View style={[styles.bubble, item.isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
-            <Text style={styles.bubbleText} selectable>
+          <View style={[styles.bubble, item.isOwn ? styles.bubbleOwn : styles.bubbleOther, bubbleCompact && styles.bubbleCompact]}>
+            <Text style={[styles.bubbleText, bubbleCompact && styles.bubbleTextCompact]} selectable>
               {item.text}
             </Text>
             <Text style={[styles.timeText, item.isOwn ? styles.timeOwn : styles.timeOther]}>
@@ -208,7 +346,89 @@ function RoomMessageRow({
             })}
           </View>
         ) : null}
+        <Pressable
+          onPress={() => {
+            void Haptics.selectionAsync();
+            onReply();
+          }}
+          hitSlop={{ top: 4, bottom: 4, left: 8, right: 8 }}
+          style={({ pressed }) => [styles.replyLinkWrap, item.isOwn ? styles.replyLinkWrapOwn : styles.replyLinkWrapOther, pressed && { opacity: 0.75 }]}
+        >
+          <Text style={styles.replyLink}>Reply</Text>
+        </Pressable>
       </View>
+    </View>
+  );
+}
+
+type ThreadRowProps = {
+  group: ThreadGroup;
+  byId: Map<string, RoomChatMessage>;
+  expanded: boolean;
+  onToggleReplies: () => void;
+  reactionBarMessageId: string | null;
+  openReactionBar: (id: string) => void;
+  applyReaction: (id: string, emoji: string) => void;
+  currentUserReactedOnMessage: (m: RoomChatMessage, emoji: string) => boolean;
+  beginReplyTo: (id: string) => void;
+};
+
+function RoomThreadRow({
+  group,
+  byId,
+  expanded,
+  onToggleReplies,
+  reactionBarMessageId,
+  openReactionBar,
+  applyReaction,
+  currentUserReactedOnMessage,
+  beginReplyTo,
+}: ThreadRowProps) {
+  const root = group.root;
+  const replies = group.messages.slice(1);
+  const showToggle = replies.length > 2;
+  const visibleReplies = !showToggle || expanded ? replies : replies.slice(0, 2);
+
+  return (
+    <View style={styles.threadGroup}>
+      <RoomMessageRow
+        item={root}
+        byId={byId}
+        showReactionBar={reactionBarMessageId === root.id}
+        onLongPress={() => openReactionBar(root.id)}
+        onPickReaction={(emoji) => applyReaction(root.id, emoji)}
+        currentUserReacted={(emoji) => currentUserReactedOnMessage(root, emoji)}
+        onReply={() => beginReplyTo(root.id)}
+        depth={replyDepth(root, byId)}
+      />
+      {visibleReplies.map((msg) => (
+        <RoomMessageRow
+          key={msg.id}
+          item={msg}
+          byId={byId}
+          showReactionBar={reactionBarMessageId === msg.id}
+          onLongPress={() => openReactionBar(msg.id)}
+          onPickReaction={(emoji) => applyReaction(msg.id, emoji)}
+          currentUserReacted={(emoji) => currentUserReactedOnMessage(msg, emoji)}
+          onReply={() => beginReplyTo(msg.id)}
+          depth={replyDepth(msg, byId)}
+        />
+      ))}
+      {showToggle ? (
+        <Pressable
+          onPress={() => {
+            void Haptics.selectionAsync();
+            onToggleReplies();
+          }}
+          style={({ pressed }) => [styles.viewRepliesBtn, pressed && { opacity: 0.8 }]}
+          accessibilityRole="button"
+          accessibilityLabel={expanded ? "Hide replies" : `View all ${replies.length} replies`}
+        >
+          <Text style={styles.viewRepliesText}>
+            {expanded ? "Hide replies" : `View replies (${replies.length})`}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -223,10 +443,14 @@ export default function ChatRoomScreen() {
   const [messages, setMessages] = useState<RoomChatMessage[]>(messageSeed);
   const [input, setInput] = useState("");
   const [reactionBarMessageId, setReactionBarMessageId] = useState<string | null>(null);
+  const [replyDraftParentId, setReplyDraftParentId] = useState<string | null>(null);
+  const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setMessages(messageSeed);
     setReactionBarMessageId(null);
+    setReplyDraftParentId(null);
+    setExpandedThreads({});
   }, [messageSeed]);
 
   useLayoutEffect(() => {
@@ -235,7 +459,19 @@ export default function ChatRoomScreen() {
     });
   }, [navigation, room?.name]);
 
-  const listData = useMemo(() => [...messages].reverse(), [messages]);
+  const byId = useMemo(() => buildMessageMap(messages), [messages]);
+  const threadGroups = useMemo(() => buildThreadGroups(messages), [messages]);
+
+  const replyPreview = replyDraftParentId ? byId.get(replyDraftParentId) : undefined;
+
+  const toggleThreadExpanded = useCallback((rootId: string) => {
+    setExpandedThreads((prev) => ({ ...prev, [rootId]: !prev[rootId] }));
+  }, []);
+
+  const beginReplyTo = useCallback((messageId: string) => {
+    setReactionBarMessageId(null);
+    setReplyDraftParentId(messageId);
+  }, []);
 
   const openReactionBar = useCallback((messageId: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -261,17 +497,30 @@ export default function ChatRoomScreen() {
     [],
   );
 
-  const renderItem = useCallback<ListRenderItem<RoomChatMessage>>(
+  const renderItem = useCallback<ListRenderItem<ThreadGroup>>(
     ({ item }) => (
-      <RoomMessageRow
-        item={item}
-        showReactionBar={reactionBarMessageId === item.id}
-        onLongPress={() => openReactionBar(item.id)}
-        onPickReaction={(emoji) => applyReaction(item.id, emoji)}
-        currentUserReacted={(emoji) => currentUserReactedOnMessage(item, emoji)}
+      <RoomThreadRow
+        group={item}
+        byId={byId}
+        expanded={!!expandedThreads[item.rootId]}
+        onToggleReplies={() => toggleThreadExpanded(item.rootId)}
+        reactionBarMessageId={reactionBarMessageId}
+        openReactionBar={openReactionBar}
+        applyReaction={applyReaction}
+        currentUserReactedOnMessage={currentUserReactedOnMessage}
+        beginReplyTo={beginReplyTo}
       />
     ),
-    [reactionBarMessageId, openReactionBar, applyReaction, currentUserReactedOnMessage],
+    [
+      byId,
+      expandedThreads,
+      reactionBarMessageId,
+      openReactionBar,
+      applyReaction,
+      currentUserReactedOnMessage,
+      beginReplyTo,
+      toggleThreadExpanded,
+    ],
   );
 
   const onSend = useCallback(() => {
@@ -285,11 +534,13 @@ export default function ChatRoomScreen() {
       createdAt: Date.now(),
       isOwn: true,
       reactions: emptyReactions(),
+      ...(replyDraftParentId ? { replyToMessageId: replyDraftParentId } : {}),
     };
     setMessages((prev) => [...prev, msg]);
     setInput("");
     setReactionBarMessageId(null);
-  }, [input]);
+    setReplyDraftParentId(null);
+  }, [input, replyDraftParentId]);
 
   const keyboardOffset = Platform.OS === "ios" ? insets.top + 52 : 0;
 
@@ -300,22 +551,42 @@ export default function ChatRoomScreen() {
       keyboardVerticalOffset={keyboardOffset}
     >
       <FlatList
-        data={listData}
-        keyExtractor={(m) => m.id}
+        data={threadGroups}
+        keyExtractor={(g) => g.rootId}
         renderItem={renderItem}
         inverted
         keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={() => setReactionBarMessageId(null)}
+        onScrollBeginDrag={() => {
+          setReactionBarMessageId(null);
+        }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContent,
           { paddingTop: 10 + insets.bottom, paddingBottom: 8 },
         ]}
       />
+      {replyPreview ? (
+        <View style={styles.replyBanner}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.replyBannerLabel}>Replying to {replyPreview.userTag}</Text>
+            <Text style={styles.replyBannerText} numberOfLines={2}>
+              {replyPreview.text}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setReplyDraftParentId(null)}
+            hitSlop={10}
+            style={({ pressed }) => [styles.replyBannerClear, pressed && { opacity: 0.75 }]}
+            accessibilityLabel="Cancel reply"
+          >
+            <X size={18} color={PREMIUM.muted} />
+          </Pressable>
+        </View>
+      ) : null}
       <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
         <TextInput
           style={styles.input}
-          placeholder="Message"
+          placeholder={replyPreview ? "Write a reply…" : "Message"}
           placeholderTextColor={PREMIUM.muted}
           value={input}
           onChangeText={setInput}
@@ -349,12 +620,17 @@ const styles = StyleSheet.create({
     backgroundColor: PREMIUM.bg,
   },
   listContent: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     flexGrow: 1,
   },
+  threadGroup: {
+    marginBottom: 16,
+    maxWidth: "100%",
+  },
   msgRow: {
-    marginBottom: 14,
-    maxWidth: "92%",
+    marginBottom: 6,
+    maxWidth: "94%",
+    flexDirection: "row",
   },
   msgRowOwn: {
     alignSelf: "flex-end",
@@ -362,14 +638,36 @@ const styles = StyleSheet.create({
   msgRowOther: {
     alignSelf: "flex-start",
   },
+  msgRowNested: {
+    maxWidth: "98%",
+  },
+  threadRail: {
+    width: 3,
+    borderRadius: 2,
+    backgroundColor: PREMIUM.threadLine,
+    marginRight: 8,
+    marginTop: 4,
+    marginBottom: 4,
+    opacity: 0.9,
+  },
   msgBlock: {
-    minWidth: "44%",
+    flex: 1,
+    minWidth: 0,
   },
   msgBlockOwn: {
     alignItems: "flex-end",
   },
   msgBlockOther: {
     alignItems: "flex-start",
+  },
+  msgBlockNested: {
+    paddingRight: 2,
+  },
+  replyContext: {
+    fontSize: 11,
+    color: PREMIUM.muted,
+    marginBottom: 4,
+    maxWidth: "100%",
   },
   userTag: {
     fontSize: 11,
@@ -378,6 +676,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginBottom: 4,
     marginHorizontal: 2,
+  },
+  userTagCompact: {
+    fontSize: 10,
   },
   bubblePressed: {
     opacity: 0.92,
@@ -388,6 +689,12 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 8,
     borderWidth: 1,
+  },
+  bubbleCompact: {
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   bubbleOwn: {
     backgroundColor: PREMIUM.bubbleOwn,
@@ -401,6 +708,10 @@ const styles = StyleSheet.create({
     color: PREMIUM.text,
     fontSize: 16,
     lineHeight: 22,
+  },
+  bubbleTextCompact: {
+    fontSize: 15,
+    lineHeight: 20,
   },
   timeText: {
     fontSize: 11,
@@ -473,6 +784,59 @@ const styles = StyleSheet.create({
   },
   reactionEmojiMuted: {
     opacity: 0.55,
+  },
+  replyLinkWrap: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+  },
+  replyLinkWrapOwn: {
+    alignSelf: "flex-end",
+  },
+  replyLinkWrapOther: {
+    alignSelf: "flex-start",
+  },
+  replyLink: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: PREMIUM.replyLink,
+  },
+  viewRepliesBtn: {
+    alignSelf: "flex-start",
+    marginTop: 4,
+    marginLeft: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  viewRepliesText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: PREMIUM.muted,
+  },
+  replyBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: PREMIUM.banner,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: PREMIUM.border,
+  },
+  replyBannerLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: PREMIUM.accent,
+    marginBottom: 2,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  replyBannerText: {
+    fontSize: 13,
+    color: PREMIUM.muted,
+    lineHeight: 18,
+  },
+  replyBannerClear: {
+    padding: 6,
   },
   inputBar: {
     flexDirection: "row",
