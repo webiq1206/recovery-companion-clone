@@ -22,7 +22,6 @@ import { CheckInReminderSync } from "../components/CheckInReminderSync";
 import LockScreen from "../components/LockScreen";
 import Colors from "../constants/colors";
 import { useShakeToCrisis } from "../hooks/useShakeToCrisis";
-import { trpc, trpcClient } from "../lib/trpc";
 import { shouldEnableStrictIARedirects } from "../utils/legacyRoutes";
 import { logger } from "../utils/logger";
 
@@ -179,16 +178,14 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <ErrorBoundary fallbackMessage="Something unexpected happened. Your recovery data is safe.">
-            <SecurityProvider>
-              <SecuredApp />
-            </SecurityProvider>
-          </ErrorBoundary>
-        </GestureHandlerRootView>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ErrorBoundary fallbackMessage="Something unexpected happened. Your recovery data is safe.">
+          <SecurityProvider>
+            <SecuredApp />
+          </SecurityProvider>
+        </ErrorBoundary>
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }

@@ -43,7 +43,8 @@ const DEFAULT_SECURITY_SETTINGS: SecuritySettings = {
   securityLevel: 'standard',
   dataEncryptionEnabled: true,
   auditLoggingEnabled: true,
-  anonymizedAnalyticsEnabled: true,
+  /** Opt-in: buffer stays in secure storage on-device only; never uploaded by this app. */
+  anonymizedAnalyticsEnabled: false,
   screenCaptureBlocked: false,
   lastAuthAt: '',
   failedAttempts: 0,

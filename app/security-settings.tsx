@@ -320,7 +320,7 @@ export default function SecuritySettingsScreen() {
           </View>
           <View>
             <Text style={styles.rowTitle}>Security audit log</Text>
-            <Text style={styles.rowSubtitle}>Track sensitive actions on this device</Text>
+            <Text style={styles.rowSubtitle}>Log sensitive actions in secure storage on this device only</Text>
           </View>
         </View>
         <View style={[styles.toggle, settings.auditLoggingEnabled && styles.toggleOn]}>
@@ -340,8 +340,10 @@ export default function SecuritySettingsScreen() {
             <BarChart3 size={18} color="#42A5F5" />
           </View>
           <View>
-            <Text style={styles.rowTitle}>Anonymized Analytics</Text>
-            <Text style={styles.rowSubtitle}>Privacy-safe usage insights</Text>
+            <Text style={styles.rowTitle}>Anonymized analytics buffer</Text>
+            <Text style={styles.rowSubtitle}>
+              When on, minimal security-related events are saved only on this device; nothing is uploaded to us
+            </Text>
           </View>
         </View>
         <View style={[styles.toggle, settings.anonymizedAnalyticsEnabled && styles.toggleOn]}>

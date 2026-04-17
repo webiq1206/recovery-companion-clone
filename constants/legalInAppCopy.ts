@@ -33,7 +33,9 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       '• Subscription state cached on-device after validation through the app stores.\n\n' +
       '• A pseudonymous app-user identifier generated on-device for subscription services when store billing is enabled (see Purchases).\n\n' +
       '• If optional live community or recovery rooms are enabled for your build, a device identifier and session token used with that service, plus content you submit (posts, comments, room messages, reports, and profile fields supported by that API).\n\n' +
-      '• Optional on-device “anonymized analytics” and diagnostics buffers (for example security-related event metadata) when those features are enabled; these are designed to remain on your device unless you use a feature that transmits data elsewhere.',
+      '• Optional on-device “anonymized analytics” buffer (security-related event metadata) when you turn it on under Security settings; it is stored only in protected on-device storage and is not uploaded by this app.\n\n' +
+      '• Short bursts of device motion (accelerometer) processed only on-device to detect an optional shake gesture that opens crisis resources; motion values are not stored or sent to our servers.\n\n' +
+      '• Builds may ship with an optional operator API URL for future or enterprise features; current store UI does not send recovery data to that HTTP API. If you enable such integrations, treat them as a separate disclosure in App Store Connect.',
   },
   {
     heading: 'How we use information',
@@ -73,6 +75,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       'We share data only as needed to run the App:\n\n' +
       '• Apple and Google: in-app purchases, receipts, and platform services.\n\n' +
       '• RevenueCat: subscription validation and customer entitlement state when enabled.\n\n' +
+      '• When you use a Share sheet or “open in” flow (for example a care-circle or enterprise report), content goes only to the app or destination you choose; we do not receive a copy.\n\n' +
       '• Optional live social API operator: community and room traffic when that URL is configured.\n\n' +
       '• Law enforcement or regulators: when we reasonably believe disclosure is required by applicable law, subpoena, or court order (for data in our possession; most recovery journal content remains on your device unless you sent it to a backend).\n\n' +
       'We do not intentionally disclose your on-device recovery journal to advertisers.',
@@ -121,7 +124,8 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       '• User content: If live social is enabled, posts, comments, room messages, and reports you submit are collected by that API for app functionality and moderation.\n\n' +
       '• Health & Fitness (or Other Data types Apple lists for wellness journaling, if you select them): Recovery-related content you type into the App is processed on-device; declare off-device collection only if you enable a backend that receives that content.\n\n' +
       '• Contact info: Names or phone numbers you store for support contacts remain on-device unless you enable a feature that transmits them.\n\n' +
-      '• Usage / diagnostics: The App’s optional anonymized analytics buffer is intended to stay on-device—if you do not transmit it, declare “not collected” for off-device usage analytics.\n\n' +
+      '• Usage / diagnostics: The optional anonymized analytics buffer stays on-device only—declare “Data Not Collected” for off-device Usage Data / Analytics unless you add code that uploads it.\n\n' +
+      '• Device motion: Shake-to-crisis uses accelerometer samples on-device only; declare “Data Not Collected” for off-device motion unless you transmit it.\n\n' +
       'Update App Store Connect whenever you change backends, SDKs, or data practices so disclosures stay identical to this Policy.',
   },
 ];
@@ -183,5 +187,10 @@ export const DATA_AND_SHARING_SECTIONS: LegalSection[] = [
     heading: 'Exports and backups',
     body:
       'The App does not ship a universal “export my recovery file” in every build. Your platform backup (iCloud, Google backup, or computer backup) may include App data until you remove the App or change backup settings.',
+  },
+  {
+    heading: 'When you share from the app',
+    body:
+      'Some workspace or provider screens let you copy or share a generated summary through your device’s share or clipboard. That action is entirely your choice; the recipient is whoever or whatever app you pick, not a hidden Recovery Companion server.',
   },
 ];

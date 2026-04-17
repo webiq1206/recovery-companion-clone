@@ -40,7 +40,11 @@ We collect and process the following categories, depending on how you use the Ap
 
 - If **optional live community or recovery rooms** are enabled for your build, a device identifier and session token used with that service, plus content you submit (posts, comments, room messages, reports, and profile fields supported by that API).
 
-- **Optional on-device “anonymized analytics”** and diagnostics buffers (for example security-related event metadata) when those features are enabled; these are designed to remain on your device unless you use a feature that transmits data elsewhere.
+- **Optional on-device “anonymized analytics” buffer** (security-related event metadata) when you turn it on under Security settings; it is stored only in protected on-device storage and is **not uploaded** by this app.
+
+- Short bursts of **device motion** (accelerometer) processed only on-device to detect an optional shake gesture that opens crisis resources; motion values are not stored or sent to our servers.
+
+- Builds may ship with an **optional operator API URL** for future or enterprise features; current store UI does **not** send recovery data to that HTTP API. If you enable such integrations, treat them as a separate disclosure in App Store Connect.
 
 ## How we use information
 
@@ -83,6 +87,8 @@ We share data only as needed to run the App:
 - **Apple and Google:** in-app purchases, receipts, and platform services.
 
 - **RevenueCat:** subscription validation and customer entitlement state when enabled.
+
+- **When you use a Share sheet or “open in” flow** (for example a care-circle or enterprise report), content goes only to the app or destination you choose; we do not receive a copy.
 
 - **Optional live social API operator:** community and room traffic when that API is configured in the build.
 
@@ -138,7 +144,9 @@ App Store Connect asks you to declare data collected “off device.” Mirror th
 
 - **Contact info:** Names or phone numbers you store for support contacts remain on-device unless you enable a feature that transmits them.
 
-- **Usage / diagnostics:** The App’s optional anonymized analytics buffer is intended to stay on-device—if you do not transmit it, declare “not collected” for off-device usage analytics.
+- **Usage / diagnostics:** The optional anonymized analytics buffer stays on-device only—declare **Data Not Collected** for off-device Usage Data / Analytics unless you add code that uploads it.
+
+- **Device motion:** Shake-to-crisis uses accelerometer samples on-device only—declare **Data Not Collected** for off-device motion unless you transmit it.
 
 Update App Store Connect whenever you change backends, SDKs, or data practices so disclosures stay identical to this Policy.
 
