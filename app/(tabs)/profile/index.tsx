@@ -570,7 +570,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.settingTextColumn}>
             <Text style={styles.settingLabel}>How to Use Recovery Companion</Text>
-            <Text style={styles.settingValue}>Daily flow, scores, and guides</Text>
+            <Text style={styles.settingValue}>Daily flow, stability readouts, and guides</Text>
           </View>
         </View>
         <ChevronRight size={16} color={Colors.textMuted} />

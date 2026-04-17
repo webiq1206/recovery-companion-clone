@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,8 @@ import {
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
 import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
+import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
+import { useSubscription } from '../providers/SubscriptionProvider';
 
 interface ExpandableSectionProps {
   title: string;
@@ -130,67 +132,92 @@ const StageItem = React.memo(({ label, description, color }: StageItemProps) => 
   </View>
 ));
 
-const DAILY_STEPS: Omit<StepCardProps, 'isLast'>[] = [
-  {
-    number: 1,
-    title: 'Start on Today',
-    description:
-      'Use the Today tab for morning, afternoon, and evening check-ins. Each one updates your stability picture. Review your recovery stability readout and follow any suggested next step—small actions add up.',
-    icon: <Sun size={16} color="#FFB347" />,
-    color: '#FFB347',
-  },
-  {
-    number: 2,
-    title: 'Check Progress',
-    description:
-      'Open the Progress tab for trends, scores, and how cravings, mood, and triggers show up over time. Use it to notice patterns—not to judge yourself.',
-    icon: <TrendingUp size={16} color={Colors.primary} />,
-    color: Colors.primary,
-  },
-  {
-    number: 3,
-    title: 'Journal',
-    description:
-      'Visit the Journal tab for a short entry or reflection. Putting feelings into words can ease intensity and help you spot themes later.',
-    icon: <BookOpen size={16} color="#7C8CF8" />,
-    color: '#7C8CF8',
-  },
-  {
-    number: 4,
-    title: 'Rebuild action',
-    description:
-      'Open the Rebuild tab and complete one habit-replacement or identity exercise. Consistency matters more than size.',
-    icon: <Hammer size={16} color="#42A5F5" />,
-    color: '#42A5F5',
-  },
-  {
-    number: 5,
-    title: 'Connect',
-    description:
-      'Use the Connect tab to send a message, join a peer space, or reach someone you trust. Connection buffers stress and isolation.',
-    icon: <Users size={16} color="#AB47BC" />,
-    color: '#AB47BC',
-  },
-  {
-    number: 6,
-    title: 'Accountability',
-    description:
-      'Open Accountability for commitments, partner check-ins, and gentle structure. Pairing intentions with another person can make follow-through easier.',
-    icon: <Handshake size={16} color="#2E7D32" />,
-    color: '#2E7D32',
-  },
-  {
-    number: 7,
-    title: 'Evening wrap-up and safety',
-    description:
-      'Finish an evening check-in on Today when you can. If stress or urges rise at any time, open Crisis Mode early or use Quick Coping Tools (from Profile under Help) for breathing, urge support, and grounding.',
-    icon: <Moon size={16} color="#5C6BC0" />,
-    color: '#5C6BC0',
-  },
-];
+function buildDailySteps(options: {
+  peerPractice: boolean;
+  rebuildPrograms: boolean;
+  advancedAccountability: boolean;
+}): Omit<StepCardProps, 'isLast'>[] {
+  const rebuildDescription = options.rebuildPrograms
+    ? 'Open the Rebuild tab and complete one habit-replacement or identity exercise. Consistency matters more than size.'
+    : 'The Rebuild tab hosts Life Rebuild Programs (Premium). On the free tier you will see how to unlock them—keep momentum with Today, Progress, and Journal until you choose to upgrade.';
+
+  const connectDescription = options.peerPractice
+    ? 'Use the Connect tab for your trusted circle, support resources, and recovery-room style prompts when your build includes them—wellness practice only, not live therapy or crisis care.'
+    : 'Use the Connect tab for your trusted circle and support resources—quick reach-outs buffer stress and isolation.';
+
+  const accountabilityDescription = options.advancedAccountability
+    ? 'Open Accountability for commitments, partner check-ins, and gentle structure. Pairing intentions with another person can make follow-through easier.'
+    : 'Open Accountability for personal commitments and follow-through. Premium adds partner check-ins and simple drift alerts when you want more structure.';
+
+  return [
+    {
+      number: 1,
+      title: 'Start on Today',
+      description:
+        'Use the Today tab for morning, afternoon, and evening check-ins. Each one updates your stability picture. Review your recovery stability readout and follow any suggested next step—small actions add up.',
+      icon: <Sun size={16} color="#FFB347" />,
+      color: '#FFB347',
+    },
+    {
+      number: 2,
+      title: 'Check Progress',
+      description:
+        'Open the Progress tab for trends and how cravings, mood, and triggers show up over time. Use it to notice patterns—not to judge yourself.',
+      icon: <TrendingUp size={16} color={Colors.primary} />,
+      color: Colors.primary,
+    },
+    {
+      number: 3,
+      title: 'Journal',
+      description:
+        'Visit the Journal tab for a short entry or reflection. Putting feelings into words can ease intensity and help you spot themes later.',
+      icon: <BookOpen size={16} color="#7C8CF8" />,
+      color: '#7C8CF8',
+    },
+    {
+      number: 4,
+      title: 'Rebuild action',
+      description: rebuildDescription,
+      icon: <Hammer size={16} color="#42A5F5" />,
+      color: '#42A5F5',
+    },
+    {
+      number: 5,
+      title: 'Connect',
+      description: connectDescription,
+      icon: <Users size={16} color="#AB47BC" />,
+      color: '#AB47BC',
+    },
+    {
+      number: 6,
+      title: 'Accountability',
+      description: accountabilityDescription,
+      icon: <Handshake size={16} color="#2E7D32" />,
+      color: '#2E7D32',
+    },
+    {
+      number: 7,
+      title: 'Evening wrap-up and safety',
+      description:
+        'Finish an evening check-in on Today when you can. If stress or urges rise at any time, open Crisis Mode early or use Quick Coping Tools (from Profile under Help) for breathing, urge support, and grounding.',
+      icon: <Moon size={16} color="#5C6BC0" />,
+      color: '#5C6BC0',
+    },
+  ];
+}
 
 export default function HowToUseScreen() {
   const router = useRouter();
+  const { hasFeature } = useSubscription();
+  const dailySteps = useMemo(
+    () =>
+      buildDailySteps({
+        peerPractice: arePeerPracticeFeaturesEnabled(),
+        rebuildPrograms: hasFeature('rebuild_programs'),
+        advancedAccountability: hasFeature('advanced_accountability'),
+      }),
+    [hasFeature],
+  );
 
   return (
     <View style={styles.container}>
@@ -243,11 +270,11 @@ export default function HowToUseScreen() {
             demands it; aim to touch each area across the week.
           </Text>
           <View style={styles.stepsContainer}>
-            {DAILY_STEPS.map((step, index) => (
+            {dailySteps.map((step, index) => (
               <StepCard
                 key={step.number}
                 {...step}
-                isLast={index === DAILY_STEPS.length - 1}
+                isLast={index === dailySteps.length - 1}
               />
             ))}
           </View>
@@ -261,7 +288,8 @@ export default function HowToUseScreen() {
           <Text style={styles.bodyText}>
             Your profile and app settings live off the main tab bar. On Today and other main screens, use the icons
             at the top right: open Profile for sobriety date, notifications, subscription, and Help—including this
-            guide, Growth Insights, and Quick Coping Tools. Use Settings for security, privacy, and app preferences.
+            guide, why stability matters, and Quick Coping Tools. Use Settings for security, privacy, and app preferences.
+            Open the Progress tab for stability explainers; Premium unlocks the full Recovery Journey analytics screen.
           </Text>
           <View style={styles.infoCard}>
             <Text style={styles.infoCardTitle}>Quick Coping Tools</Text>
@@ -301,12 +329,12 @@ export default function HowToUseScreen() {
         </ExpandableSection>
 
         <ExpandableSection
-          title="Stability & Risk Scores"
+          title="Stability readouts & support tone"
           icon={<BarChart3 size={18} color="#42A5F5" />}
           accentColor="#42A5F5"
         >
           <Text style={styles.bodyText}>
-            Your scores are calculated from multiple signals working together to give you an honest picture of where you stand. You will see the big picture on Today and more detail on Progress.
+            Readouts combine your own check-ins (mood, cravings, sleep, stress, and similar signals) into a wellness-oriented snapshot—not a clinical diagnosis or medical risk assessment. You will see the overview on Today and more detail on Progress.
           </Text>
           <View style={styles.factorsList}>
             <View style={styles.factorItem}>
@@ -332,7 +360,7 @@ export default function HowToUseScreen() {
           </View>
           <View style={[styles.infoCard, { borderColor: '#42A5F520' }]}>
             <Text style={styles.infoCardText}>
-              When your risk score rises, the app increases support intensity. This is protective, not punishment. Higher support means more tools available to keep you safe.
+              When your entries suggest more strain, the app surfaces extra support tools and gentler pacing. That is protective, not punishment—more suggestions simply mean more options to choose from.
             </Text>
           </View>
         </ExpandableSection>
@@ -411,7 +439,7 @@ export default function HowToUseScreen() {
             <View style={styles.guidelineItem}>
               <CheckCircle size={16} color={Colors.success} />
               <Text style={styles.guidelineText}>
-                Open Profile for Growth Insights when you want deeper analytics and explainers.
+                Use Progress for trends and stability explainers; subscribe to Premium if you want the full Recovery Journey analytics.
               </Text>
             </View>
             <View style={styles.guidelineItem}>

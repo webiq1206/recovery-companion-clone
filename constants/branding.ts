@@ -3,7 +3,8 @@ import { WELLNESS_APP_DISCLAIMER } from './wellnessDisclaimer';
 export const BRAND = {
   tagline: 'Wellness support for recovery and life goals',
   shortTagline: 'Reflect. Support yourself. Rebuild.',
-  appName: 'Guardian',
+  /** Matches App Store / Play listing name for consumer builds. */
+  appName: 'Recovery Companion',
   mission: 'Self-help tools that support your recovery journey and help you rebuild—not just count days.',
 } as const;
 
@@ -37,7 +38,7 @@ export const ONBOARDING_COPY = {
       icon: 'lock' as const,
       title: 'Privacy-First Architecture',
       description:
-        'Encrypted, anonymous-capable, and consent-driven. Privacy Policy, Terms, and “Your data & sharing” are available in-app before and after setup.',
+        'On-device storage with optional app-layer encryption, an anonymous name option, and consent-driven sharing where applicable. Privacy Policy, Terms, and “Your data & sharing” are available in-app before and after setup.',
     },
   ],
   steps: {
