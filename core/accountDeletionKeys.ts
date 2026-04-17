@@ -1,4 +1,5 @@
 import { RECOVERY_KEYS_TO_CLEAR } from './persistence/recovery';
+import { SMART_ENTRY_BANNER_DISMISS_KEY } from './smartEntryRouting';
 
 /**
  * AsyncStorage keys removed on "delete account" / full local wipe (store submission).
@@ -31,7 +32,7 @@ export const ACCOUNT_DELETION_EXTRA_ASYNC_STORAGE_KEYS: readonly string[] = [
   'recovery_rooms_blocked_authors',
   'recovery_rooms_blocked_author_ids',
   'recovery_anonymous_chat_identity_v1',
-  'smart_entry_banner_dismissed_day',
+  SMART_ENTRY_BANNER_DISMISS_KEY,
   'risk_prediction_data',
   'recovery:wizard_behavior',
   'behavioral_notification_state',

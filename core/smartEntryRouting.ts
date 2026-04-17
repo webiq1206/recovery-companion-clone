@@ -1,8 +1,16 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RecoveryPathId } from '../constants/recoveryPaths';
 import { RECOVERY_PATHS } from '../constants/recoveryPaths';
 import { PATH_DEMO_ROOMS } from '../constants/recoveryPathRooms';
 import type { DailyCheckIn } from '../types';
 import type { RecoveryRoomTopic } from '../types';
+
+/** AsyncStorage key: local calendar day string when user dismissed the Today hub smart-entry banner. */
+export const SMART_ENTRY_BANNER_DISMISS_KEY = 'smart_entry_banner_dismissed_day';
+
+export async function clearSmartEntryBannerDismiss(): Promise<void> {
+  await AsyncStorage.removeItem(SMART_ENTRY_BANNER_DISMISS_KEY);
+}
 
 /** 1–5 scales aligned with daily check-ins (1 = hardest mood / lowest energy, 5 = strongest cravings). */
 export type SmartEntryMoodInput = {

@@ -28,6 +28,8 @@ import { hairline, radius, shadows, spacing } from '../../../constants/theme';
 import { useUser } from '../../../core/domains/useUser';
 import { arePeerPracticeFeaturesEnabled } from '../../../core/socialLiveConfig';
 import {
+  SMART_ENTRY_BANNER_DISMISS_KEY,
+  clearSmartEntryBannerDismiss,
   DEFAULT_SMART_ENTRY_MOOD,
   getSmartEntryRecommendation,
   moodInputFromLatestCheckIn,
@@ -43,8 +45,6 @@ import { getGuidanceCollapsedFocusIndex, type WizardAction } from '../../../util
 import { formatGuidanceDateKeyUs, getGuidanceDateKey, getLocalDateKey } from '../../../utils/checkInDate';
 import { TabHeaderActions } from '../../../components/TabHeaderActions';
 import { ProfileHeaderSummaryCard } from '../../../components/ProfileHeaderSummaryCard';
-
-const SMART_ENTRY_BANNER_DISMISS_KEY = 'smart_entry_banner_dismissed_day';
 
 const PLEASE_WAIT_TOKEN = 'PLEASE WAIT';
 
@@ -144,10 +144,18 @@ export default function TodayHubScreen() {
   const showSmartEntryBanner =
     smartBannerDismissedDay !== null && smartBannerDismissedDay !== todayDateKey;
 
+  const showSmartEntryRestoreLink =
+    smartBannerDismissedDay !== null && smartBannerDismissedDay === todayDateKey;
+
   const dismissSmartEntryBanner = useCallback(() => {
     const key = getLocalDateKey(new Date());
     setSmartBannerDismissedDay(key);
     void AsyncStorage.setItem(SMART_ENTRY_BANNER_DISMISS_KEY, key);
+  }, []);
+
+  const restoreSmartEntryBanner = useCallback(() => {
+    setSmartBannerDismissedDay('');
+    void clearSmartEntryBannerDismiss();
   }, []);
 
 
@@ -293,6 +301,21 @@ export default function TodayHubScreen() {
             <Text style={styles.greetingSubtitle}>
               Welcome back. Let\u2019s ease into today.
             </Text>
+          ) : null}
+          {showSmartEntryRestoreLink ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Show path and room suggestion again"
+              onPress={() => {
+                Haptics.selectionAsync();
+                restoreSmartEntryBanner();
+              }}
+              style={({ pressed }) => [styles.smartEntryRestoreLink, pressed && styles.pressed]}
+              testID="todayhub-smart-entry-restore"
+            >
+              <Compass size={15} color={Colors.primary} />
+              <Text style={styles.smartEntryRestoreLinkText}>Show path & room suggestion</Text>
+            </Pressable>
           ) : null}
           <Pressable
             style={({ pressed }) => [
@@ -623,6 +646,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 4,
+  },
+  smartEntryRestoreLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 8,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xxs,
+    paddingVertical: spacing.xxs,
+    paddingRight: spacing.xs,
+  },
+  smartEntryRestoreLinkText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primary,
   },
   contextHintCard: {
     flexDirection: 'row',
