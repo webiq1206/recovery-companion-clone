@@ -16,7 +16,11 @@ Run from the repo root:
 npm run social-server
 ```
 
-Defaults to port **3847**. State is persisted under `backend/social/data/social-state.json` (overridable with `SOCIAL_DATA_DIR`). Set `SOCIAL_ADMIN_SECRET` to enable moderation and admin routes.
+Defaults to port **3847**. State is persisted in **SQLite** as `social.db` under `backend/social/data/` (overridable with `SOCIAL_DATA_DIR`). If an older `social-state.json` file is present and the database is empty, it is imported once and the JSON file is renamed aside.
+
+Set **`SOCIAL_JWT_SECRET`** (required when `NODE_ENV=production`) for signing user session tokens, and **`SOCIAL_ADMIN_SECRET`** so moderation admin routes accept `Authorization: Bearer …` with that value.
+
+Optional: **`SOCIAL_ALLOWED_ORIGINS`** — comma-separated browser origins for CORS (omit to allow all origins, which is typical for native app–only deployments). **`SOCIAL_DEV_JWT_SECRET`** — stable JWT signing key for non-production runs when you do not want tokens to reset on every server restart.
 
 ### User safety (implemented in this server)
 
@@ -28,14 +32,16 @@ Defaults to port **3847**. State is persisted under `backend/social/data/social-
 
 ### Admin & moderation (requires `SOCIAL_ADMIN_SECRET`)
 
+Send **`Authorization: Bearer <SOCIAL_ADMIN_SECRET>`** on every admin request (this is separate from end-user session JWTs).
+
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/v1/admin/reports?secret=…` | List moderation queue items |
-| PATCH | `/v1/admin/reports/:id?secret=…` | Body: `{ "status": "reviewed" \| "resolved", "notes": "…" }` |
-| POST | `/v1/admin/moderation/hide-room-message?secret=…` | Body: `{ "roomId", "messageId" }` — redacts message |
-| POST | `/v1/admin/moderation/hide-community-post?secret=…` | Body: `{ "postId" }` |
-| POST | `/v1/admin/moderation/hide-community-comment?secret=…` | Body: `{ "commentId" }` |
-| POST | `/v1/admin/moderation/restrict-user?secret=…` | Body: `{ "userId", "restrict": true \| false }` |
+| GET | `/v1/admin/reports` | List moderation queue items |
+| PATCH | `/v1/admin/reports/:id` | Body: `{ "status": "reviewed" \| "resolved", "notes": "…" }` |
+| POST | `/v1/admin/moderation/hide-room-message` | Body: `{ "roomId", "messageId" }` — redacts message |
+| POST | `/v1/admin/moderation/hide-community-post` | Body: `{ "postId" }` |
+| POST | `/v1/admin/moderation/hide-community-comment` | Body: `{ "commentId" }` |
+| POST | `/v1/admin/moderation/restrict-user` | Body: `{ "userId", "restrict": true \| false }` |
 
 ### App configuration
 
@@ -56,10 +62,10 @@ For **Android** with an `http://` URL, the native app must allow cleartext traff
 
 ### Production hardening checklist
 
-- Replace JSON file persistence with your **database** and backups.
-- Add **authenticated identities** (e.g. Sign in with Apple) mapped to stable user IDs.
-- Run **TLS** in front of the API; do not ship production bearer tokens over plain HTTP.
-- Connect admin routes to your **internal tooling**, SSO, and audit logging.
-- Define **retention**, appeals, and crisis escalation** with your legal and clinical teams.
+- Run **TLS** in front of the API; do not ship production session tokens over plain HTTP.
+- Back up **`social.db`** on a schedule appropriate to your retention policy.
+- Add **authenticated identities** (e.g. Sign in with Apple) mapped to stable user IDs if you need accounts beyond anonymous device binding.
+- Connect admin routes to your **internal tooling**, SSO, and audit logging; rotate **`SOCIAL_ADMIN_SECRET`** and **`SOCIAL_JWT_SECRET`** on compromise.
+- Define **retention**, appeals, and crisis escalation with your legal and clinical teams.
 
 The mobile app **polls** the API on an interval in live mode; for large communities, add WebSockets or push and adjust battery/network expectations accordingly.

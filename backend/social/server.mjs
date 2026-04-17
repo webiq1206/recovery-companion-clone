@@ -1,203 +1,133 @@
 /**
  * Live social API for Recovery Companion (community + recovery rooms).
  *
- * Run: `npm run social-server` from repo root.
- * Configure the app: EXPO_PUBLIC_LIVE_SOCIAL_API_URL=https://your-host (or LAN http in dev)
+ * Run: `npm run social-server` from the repo root.
  *
- * Features: durable JSON persistence, per-user rate limits, duplicate/spam checks,
- * moderation queue with content snapshots, admin review and enforcement actions.
+ * Persistence: SQLite (`social.db` under `SOCIAL_DATA_DIR`). One-time import from legacy
+ * `social-state.json` runs automatically when the database is empty and that file exists.
  *
- * Env:
+ * Environment:
  *   PORT (default 3847)
- *   SOCIAL_ADMIN_SECRET — required for admin routes
- *   SOCIAL_DATA_DIR — optional directory for social-state.json (default: ./data next to this file)
+ *   SOCIAL_DATA_DIR — directory for `social.db` (default: ./data next to this file)
+ *   SOCIAL_JWT_SECRET — signing key for session JWTs (required when NODE_ENV=production)
+ *   SOCIAL_DEV_JWT_SECRET — optional stable JWT secret for local development
+ *   SOCIAL_ADMIN_SECRET — enables moderation admin routes (Bearer token, see below)
+ *   SOCIAL_ALLOWED_ORIGINS — optional comma-separated list for browser CORS; omit to allow all origins
  *
- * Production deployments should terminate TLS in front of this process, use strong secrets,
- * and consider replacing JSON persistence with a managed database and authenticated users.
+ * Admin API: send `Authorization: Bearer <SOCIAL_ADMIN_SECRET>` on admin routes.
+ *
+ * Deployments should terminate TLS in front of this process, set strong secrets, configure
+ * `SOCIAL_ALLOWED_ORIGINS` for any browser clients, and take regular backups of `social.db`.
  */
 
-import http from 'node:http';
 import fs from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
+import { SocialDatabase } from './db.mjs';
+import { signSessionJwt, verifySessionJwt } from './jwt.mjs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3847);
-const ADMIN_SECRET = process.env.SOCIAL_ADMIN_SECRET || '';
+const isProd = process.env.NODE_ENV === 'production';
+const ADMIN_SECRET = (process.env.SOCIAL_ADMIN_SECRET || '').trim();
+const JWT_SECRET_ENV = (process.env.SOCIAL_JWT_SECRET || '').trim();
+const DEV_JWT_SECRET = (process.env.SOCIAL_DEV_JWT_SECRET || '').trim();
 const DATA_DIR = process.env.SOCIAL_DATA_DIR || path.join(__dirname, 'data');
-const STATE_FILE = path.join(DATA_DIR, 'social-state.json');
+const DB_FILE = path.join(DATA_DIR, 'social.db');
+const LEGACY_STATE_FILE = path.join(DATA_DIR, 'social-state.json');
+
+const ALLOWED_ORIGINS = (process.env.SOCIAL_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 const MAX_ROOM_MESSAGE_LEN = 2000;
 const MAX_POST_LEN = 5000;
 const MAX_COMMENT_LEN = 2000;
 const MAX_REPORT_DESC_LEN = 1000;
+const MAX_DEVICE_ID_LEN = 200;
+const MAX_DISPLAY_NAME_LEN = 80;
 
 const RATE = {
   room_message: { limit: 40, windowMs: 60_000 },
   community_post: { limit: 15, windowMs: 3600_000 },
   community_comment: { limit: 60, windowMs: 3600_000 },
   report: { limit: 25, windowMs: 3600_000 },
+  auth_session_ip: { limit: 60, windowMs: 60_000 },
 };
 
-/** @type {Map<string, { userId: string }>} */
-const sessions = new Map();
-
-/** @type {Map<string, any>} */
-const users = new Map();
-
-/** @type {Map<string, Set<string>>} */
-const roomMembers = new Map();
-
-/** @type {Map<string, any[]>} */
-const roomMessages = new Map();
-
-/** @type {Map<string, { names: Set<string>, ids: Set<string> }>} */
-const roomBlocksByUser = new Map();
-
-/** @type {any[]} */
-let communityPosts = [];
-
-/** @type {any[]} */
-let communityComments = [];
-
-/** @type {any[]} */
-let communityGroups = [];
-
-/** @type {any[]} */
-let moderationReports = [];
-
-/** @type {Map<string, number[]>} key: `${userId}:${bucket}` -> timestamps */
+/** @type {Map<string, number[]>} */
 const rateHitTimestamps = new Map();
-
-/** @type {Map<string, { content: string; at: number }>} last post fingerprint per user */
+/** @type {Map<string, number[]>} */
+const authIpHits = new Map();
+/** @type {Map<string, { content: string; at: number }>} */
 const lastContentFingerprint = new Map();
 
+let jwtSecretValue = '';
+
+function resolveJwtSecret() {
+  if (JWT_SECRET_ENV) return JWT_SECRET_ENV;
+  if (isProd) {
+    throw new Error('SOCIAL_JWT_SECRET must be set before accepting traffic.');
+  }
+  if (DEV_JWT_SECRET) return DEV_JWT_SECRET;
+  console.warn(
+    '[social] SOCIAL_JWT_SECRET unset; using an ephemeral dev signing key (sessions reset when the process restarts). Set SOCIAL_DEV_JWT_SECRET or SOCIAL_JWT_SECRET for stable local tokens.',
+  );
+  return `dev-ephemeral-${randomUUID()}`;
+}
+
+function jwtSecret() {
+  if (!jwtSecretValue) jwtSecretValue = resolveJwtSecret();
+  return jwtSecretValue;
+}
+
 function ensureDataDir() {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  } catch (e) {
-    console.error('Could not create data dir', DATA_DIR, e);
-  }
+  fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-function setsToPlainRoomBlocks() {
-  const out = {};
-  for (const [uid, b] of roomBlocksByUser.entries()) {
-    out[uid] = { names: [...b.names], ids: [...b.ids] };
-  }
-  return out;
-}
-
-function plainToSetsRoomBlocks(obj) {
-  roomBlocksByUser.clear();
-  if (!obj || typeof obj !== 'object') return;
-  for (const [uid, b] of Object.entries(obj)) {
-    const names = new Set(Array.isArray(b?.names) ? b.names : []);
-    const ids = new Set(Array.isArray(b?.ids) ? b.ids : []);
-    roomBlocksByUser.set(uid, { names, ids });
-  }
-}
-
-function serializeState() {
-  const membersObj = {};
-  for (const [rid, set] of roomMembers.entries()) {
-    membersObj[rid] = [...set];
-  }
-  const messagesObj = {};
-  for (const [rid, list] of roomMessages.entries()) {
-    messagesObj[rid] = list;
-  }
-  const sessionsObj = Object.fromEntries(sessions.entries());
-  const usersObj = Object.fromEntries(users.entries());
+/** @param {import('./db.mjs').SocialDatabase} store */
+function publicUser(u) {
+  if (!u) return null;
   return {
-    version: 2,
-    savedAt: new Date().toISOString(),
-    users: usersObj,
-    sessions: sessionsObj,
-    roomMembers: membersObj,
-    roomMessages: messagesObj,
-    roomBlocks: setsToPlainRoomBlocks(),
-    communityPosts,
-    communityComments,
-    communityGroups,
-    moderationReports,
+    id: u.id,
+    username: u.username,
+    displayName: u.displayName,
+    avatar: u.avatar,
+    bio: u.bio,
+    joinedAt: u.joinedAt,
+    followerIds: u.followerIds || [],
+    followingIds: u.followingIds || [],
+    postingRestricted: Boolean(u.postingRestricted),
   };
 }
 
-function loadState() {
-  try {
-    if (!fs.existsSync(STATE_FILE)) return false;
-    const raw = fs.readFileSync(STATE_FILE, 'utf8');
-    const data = JSON.parse(raw);
-    users.clear();
-    sessions.clear();
-    if (data.users && typeof data.users === 'object') {
-      for (const [k, v] of Object.entries(data.users)) {
-        users.set(k, { postingRestricted: false, ...v });
-      }
-    }
-    if (data.sessions && typeof data.sessions === 'object') {
-      for (const [tok, s] of Object.entries(data.sessions)) {
-        if (s?.userId) sessions.set(tok, { userId: s.userId });
-      }
-    }
-    plainToSetsRoomBlocks(data.roomBlocks);
-    roomMembers.clear();
-    if (data.roomMembers && typeof data.roomMembers === 'object') {
-      for (const [rid, arr] of Object.entries(data.roomMembers)) {
-        roomMembers.set(rid, new Set(Array.isArray(arr) ? arr : []));
-      }
-    }
-    roomMessages.clear();
-    if (data.roomMessages && typeof data.roomMessages === 'object') {
-      for (const [rid, arr] of Object.entries(data.roomMessages)) {
-        roomMessages.set(rid, Array.isArray(arr) ? arr : []);
-      }
-    }
-    communityPosts = Array.isArray(data.communityPosts) ? data.communityPosts : [];
-    communityComments = Array.isArray(data.communityComments) ? data.communityComments : [];
-    communityGroups = Array.isArray(data.communityGroups) ? data.communityGroups : [];
-    moderationReports = Array.isArray(data.moderationReports) ? data.moderationReports : [];
-    return true;
-  } catch (e) {
-    console.error('Failed to load state file', e);
-    return false;
-  }
+function clientIp(req) {
+  const xf = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  if (xf) return xf.slice(0, 128);
+  return String(req.socket?.remoteAddress || 'unknown').slice(0, 128);
 }
 
-let saveTimer = null;
-function scheduleSave() {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    try {
-      ensureDataDir();
-      const tmp = STATE_FILE + '.tmp';
-      fs.writeFileSync(tmp, JSON.stringify(serializeState()), 'utf8');
-      fs.renameSync(tmp, STATE_FILE);
-    } catch (e) {
-      console.error('Persist failed', e);
-    }
-  }, 400);
+function resolveCorsOrigin(req) {
+  if (ALLOWED_ORIGINS.length === 0) return '*';
+  const origin = req.headers.origin;
+  if (!origin) return '*';
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  return null;
 }
 
-function assertAdmin(url, res, origin) {
-  const secret = url.searchParams.get('secret') || '';
-  if (!ADMIN_SECRET || secret !== ADMIN_SECRET) {
-    json(res, 403, { error: 'Forbidden', code: 'admin_forbidden' }, origin);
-    return false;
-  }
-  return true;
-}
-
-function json(res, code, body, origin) {
-  const o = origin || '*';
+function json(res, code, body, corsOrigin) {
+  const o = corsOrigin ?? '*';
   res.writeHead(code, {
     'Content-Type': 'application/json; charset=utf-8',
+    'X-Content-Type-Options': 'nosniff',
     'Access-Control-Allow-Origin': o,
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Requested-With',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    'Vary': 'Origin',
   });
   res.end(JSON.stringify(body));
 }
@@ -205,7 +135,12 @@ function json(res, code, body, origin) {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', (c) => (data += c));
+    req.on('data', (c) => {
+      data += c;
+      if (data.length > 1_000_000) {
+        reject(new Error('payload too large'));
+      }
+    });
     req.on('end', () => {
       if (!data) return resolve(null);
       try {
@@ -218,33 +153,34 @@ function readBody(req) {
   });
 }
 
-function authUser(req) {
+function bearerToken(req) {
   const h = req.headers.authorization || '';
   const m = /^Bearer\s+(.+)$/i.exec(h);
-  if (!m) return null;
-  const tok = m[1].trim();
-  const s = sessions.get(tok);
-  if (!s) return null;
-  return users.get(s.userId) || null;
+  return m ? m[1].trim() : '';
 }
 
-function authToken(req) {
-  const h = req.headers.authorization || '';
-  const m = /^Bearer\s+(.+)$/i.exec(h);
-  return m ? m[1].trim() : null;
+/** @param {import('./db.mjs').SocialDatabase} store */
+function authUser(req, store) {
+  const tok = bearerToken(req);
+  if (!tok) return null;
+  const userId = verifySessionJwt(tok, jwtSecret());
+  if (!userId) return null;
+  return store.getUser(userId);
 }
 
-function getRoomBlocks(userId) {
-  let b = roomBlocksByUser.get(userId);
-  if (!b) {
-    b = { names: new Set(), ids: new Set() };
-    roomBlocksByUser.set(userId, b);
+function assertAdmin(req, res, corsOrigin) {
+  if (!ADMIN_SECRET) {
+    json(res, 403, { error: 'Admin API is not configured.', code: 'admin_disabled' }, corsOrigin);
+    return false;
   }
-  return b;
+  if (bearerToken(req) !== ADMIN_SECRET) {
+    json(res, 403, { error: 'Forbidden', code: 'admin_forbidden' }, corsOrigin);
+    return false;
+  }
+  return true;
 }
 
-function checkRateLimit(userId, bucket, cfg) {
-  const key = `${userId}:${bucket}`;
+function checkRateLimit(key, cfg) {
   const now = Date.now();
   let arr = rateHitTimestamps.get(key) || [];
   arr = arr.filter((t) => now - t < cfg.windowMs);
@@ -256,8 +192,20 @@ function checkRateLimit(userId, bucket, cfg) {
   return { ok: true };
 }
 
+function checkAuthIpRate(ip) {
+  const key = `ip:${ip}`;
+  const now = Date.now();
+  let arr = authIpHits.get(key) || [];
+  arr = arr.filter((t) => now - t < RATE.auth_session_ip.windowMs);
+  if (arr.length >= RATE.auth_session_ip.limit) {
+    return { ok: false, retryAfterSec: Math.ceil((RATE.auth_session_ip.windowMs - (now - arr[0])) / 1000) };
+  }
+  arr.push(now);
+  authIpHits.set(key, arr);
+  return { ok: true };
+}
+
 function checkSpamRepeat(userId, content, windowMs = 20_000) {
-  const fp = `${userId}:${content}`;
   const prev = lastContentFingerprint.get(userId);
   const now = Date.now();
   if (prev && prev.content === content && now - prev.at < windowMs) {
@@ -268,7 +216,7 @@ function checkSpamRepeat(userId, content, windowMs = 20_000) {
 }
 
 function userMayPost(user) {
-  if (!user) return false;
+  if (!user) return { ok: false, error: 'Unauthorized', code: 'unauthorized' };
   if (user.postingRestricted) {
     return { ok: false, error: 'Posting is temporarily restricted on this account.', code: 'restricted' };
   }
@@ -348,165 +296,204 @@ function roomTemplates() {
   ];
 }
 
-function initRoomsIfEmpty() {
-  for (const r of roomTemplates()) {
-    if (!roomMembers.has(r.id)) roomMembers.set(r.id, new Set());
-    if (!roomMessages.has(r.id)) roomMessages.set(r.id, []);
-  }
-}
-
-function buildRoomView(roomId, userId) {
+/** @param {import('./db.mjs').SocialDatabase} store */
+function buildRoomView(roomId, userId, store) {
   const tpl = roomTemplates().find((r) => r.id === roomId);
   if (!tpl) return null;
-  const members = roomMembers.get(roomId);
-  const msgs = roomMessages.get(roomId) || [];
-  const count = members ? members.size : 0;
+  const count = store.roomMemberCount(roomId);
+  const rows = store.listRoomMessages(roomId);
+  const msgs = rows.map((row) => store.msgRowToClient(row, userId));
   return {
     ...tpl,
     memberCount: count,
-    isJoined: userId ? members.has(userId) : false,
-    messages: msgs.map((m) => ({
-      ...m,
-      isOwn: Boolean(userId && m.authorId === userId),
-    })),
+    isJoined: userId ? store.roomHasMember(roomId, userId) : false,
+    messages: msgs,
     lastActivity: msgs.length ? msgs[msgs.length - 1].timestamp : tpl.lastActivity,
   };
 }
 
-function listRoomsForUser(userId) {
+/** @param {import('./db.mjs').SocialDatabase} store */
+function listRoomsForUser(userId, store) {
   return roomTemplates()
-    .map((t) => buildRoomView(t.id, userId))
+    .map((t) => buildRoomView(t.id, userId, store))
     .filter(Boolean);
 }
 
-function findMessage(roomId, messageId) {
-  const list = roomMessages.get(roomId) || [];
-  return list.find((m) => m.id === messageId) || null;
+/** @param {import('./db.mjs').SocialDatabase} store */
+function findMessage(roomId, messageId, store) {
+  const row = store.findRoomMessage(roomId, messageId);
+  return row;
+}
+
+function normalizeUsername(raw) {
+  return String(raw || '')
+    .toLowerCase()
+    .trim()
+    .slice(0, 32);
+}
+
+function validateUsername(u) {
+  if (u.length < 3 || u.length > 32) return false;
+  return /^[a-z0-9_]+$/.test(u);
 }
 
 ensureDataDir();
-if (loadState()) {
-  console.log('Loaded social state from', STATE_FILE);
-} else {
-  console.log('Starting with empty persisted state (new file will be created at', STATE_FILE, ')');
+const store = SocialDatabase.open(DB_FILE);
+try {
+  if (store.migrateFromLegacyStateFile(LEGACY_STATE_FILE)) {
+    console.log('[social] Imported legacy JSON state into SQLite and archived the old file.');
+  }
+} catch (e) {
+  console.error('[social] Legacy state import failed', e);
+  process.exit(1);
 }
-initRoomsIfEmpty();
+
+if (isProd && !JWT_SECRET_ENV) {
+  console.error('[social] SOCIAL_JWT_SECRET is required when NODE_ENV=production.');
+  process.exit(1);
+}
 
 const server = http.createServer(async (req, res) => {
-  const origin = req.headers.origin || '*';
+  const corsOrigin = resolveCorsOrigin(req);
+  if (corsOrigin === null) {
+    return json(res, 403, { error: 'Origin not allowed', code: 'cors_forbidden' }, '*');
+  }
+
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
-      'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+      'Access-Control-Allow-Origin': corsOrigin,
+      'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Requested-With',
       'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+      'Vary': 'Origin',
     });
     return res.end();
   }
 
   const url = new URL(req.url || '/', `http://localhost:${PORT}`);
-  const path = url.pathname.replace(/\/+$/, '') || '/';
+  const routePath = url.pathname.replace(/\/+$/, '') || '/';
 
   try {
-    if (path === '/v1/auth/session' && req.method === 'POST') {
+    if (routePath === '/v1/auth/session' && req.method === 'POST') {
+      const ip = clientIp(req);
+      const rl = checkAuthIpRate(ip);
+      if (!rl.ok) {
+        return json(
+          res,
+          429,
+          {
+            error: 'Too many session requests from this network. Try again shortly.',
+            code: 'rate_limited',
+            retryAfterSec: rl.retryAfterSec,
+          },
+          corsOrigin,
+        );
+      }
       const body = await readBody(req);
-      const deviceId = String(body?.deviceId || randomUUID());
-      let user = [...users.values()].find((u) => u.deviceId === deviceId);
+      let deviceId = String(body?.deviceId || randomUUID()).trim().slice(0, MAX_DEVICE_ID_LEN);
+      if (!deviceId) deviceId = randomUUID();
+
+      let user = store.findUserByDevice(deviceId);
       if (!user) {
         const id = `u_${randomUUID().slice(0, 8)}`;
-        user = {
+        const username = `member_${id.slice(-6)}`;
+        store.insertUser({
           id,
-          username: `member_${id.slice(-6)}`,
+          username,
           displayName: '',
           avatar: AVATAR,
           bio: '',
           joinedAt: new Date().toISOString(),
-          followerIds: [],
-          followingIds: [],
           deviceId,
           postingRestricted: false,
-        };
-        users.set(id, user);
+          followerIds: [],
+          followingIds: [],
+        });
+        user = store.getUser(id);
       }
-      const token = randomUUID() + randomUUID();
-      sessions.set(token, { userId: user.id });
-      scheduleSave();
-      return json(res, 200, { token, user }, origin);
+      const token = signSessionJwt(user.id, jwtSecret());
+      return json(res, 200, { token, user: publicUser(user) }, corsOrigin);
     }
 
-    const user = authUser(req);
-    if (!user && path !== '/v1/auth/session') {
-      return json(res, 401, { error: 'Unauthorized', code: 'unauthorized' }, origin);
+    const isAdminRoute = routePath.startsWith('/v1/admin/');
+    const user = authUser(req, store);
+    if (!user && routePath !== '/v1/auth/session' && !isAdminRoute) {
+      return json(res, 401, { error: 'Unauthorized', code: 'unauthorized' }, corsOrigin);
     }
 
-    if (path === '/v1/me' && req.method === 'GET') {
-      return json(res, 200, { user }, origin);
+    if (routePath === '/v1/me' && req.method === 'GET') {
+      return json(res, 200, { user: publicUser(user) }, corsOrigin);
     }
 
-    if (path === '/v1/me' && req.method === 'PATCH') {
+    if (routePath === '/v1/me' && req.method === 'PATCH') {
       const body = await readBody(req);
-      if (body?.displayName != null) user.displayName = String(body.displayName).trim();
-      if (body?.username != null) user.username = String(body.username).toLowerCase().trim();
-      if (body?.bio != null) user.bio = String(body.bio);
-      users.set(user.id, user);
-      scheduleSave();
-      return json(res, 200, { user }, origin);
+      if (body?.displayName != null) {
+        user.displayName = String(body.displayName).trim().slice(0, MAX_DISPLAY_NAME_LEN);
+      }
+      if (body?.username != null) {
+        const next = normalizeUsername(body.username);
+        if (!validateUsername(next)) {
+          return json(res, 400, { error: 'Username must be 3–32 characters: lowercase letters, digits, underscore.', code: 'invalid_username' }, corsOrigin);
+        }
+        if (store.isUsernameTaken(next, user.id)) {
+          return json(res, 409, { error: 'Username already taken', code: 'username_taken' }, corsOrigin);
+        }
+        user.username = next;
+      }
+      if (body?.bio != null) user.bio = String(body.bio).slice(0, 2000);
+      store.updateUserRow(user.id, {
+        displayName: user.displayName,
+        username: user.username,
+        bio: user.bio,
+      });
+      const fresh = store.getUser(user.id);
+      return json(res, 200, { user: publicUser(fresh) }, corsOrigin);
     }
 
-    if (path === '/v1/me/blocks' && req.method === 'GET') {
-      const b = getRoomBlocks(user.id);
-      return json(
-        res,
-        200,
-        { blockedAuthorNames: [...b.names], blockedUserIds: [...b.ids] },
-        origin,
-      );
+    if (routePath === '/v1/me/blocks' && req.method === 'GET') {
+      const b = store.getRoomBlocks(user.id);
+      return json(res, 200, { blockedAuthorNames: [...b.names], blockedUserIds: [...b.ids] }, corsOrigin);
     }
 
-    if (path === '/v1/me/blocks' && req.method === 'POST') {
+    if (routePath === '/v1/me/blocks' && req.method === 'POST') {
       const body = await readBody(req);
       const name = String(body?.authorName || '').trim();
       const sid = String(body?.authorId || '').trim();
-      if (!name && !sid) return json(res, 400, { error: 'authorName or authorId required' }, origin);
-      const b = getRoomBlocks(user.id);
-      if (name) b.names.add(name);
-      if (sid) b.ids.add(sid);
-      scheduleSave();
-      return json(res, 200, { blockedAuthorNames: [...b.names], blockedUserIds: [...b.ids] }, origin);
+      if (!name && !sid) return json(res, 400, { error: 'authorName or authorId required' }, corsOrigin);
+      store.addRoomBlock(user.id, name, sid);
+      const b = store.getRoomBlocks(user.id);
+      return json(res, 200, { blockedAuthorNames: [...b.names], blockedUserIds: [...b.ids] }, corsOrigin);
     }
 
-    if (path === '/v1/rooms' && req.method === 'GET') {
-      return json(res, 200, { rooms: listRoomsForUser(user.id) }, origin);
+    if (routePath === '/v1/rooms' && req.method === 'GET') {
+      return json(res, 200, { rooms: listRoomsForUser(user.id, store) }, corsOrigin);
     }
 
-    const joinMatch = /^\/v1\/rooms\/([^/]+)\/join$/.exec(path);
+    const joinMatch = /^\/v1\/rooms\/([^/]+)\/join$/.exec(routePath);
     if (joinMatch && req.method === 'POST') {
       const roomId = joinMatch[1];
-      const members = roomMembers.get(roomId);
-      if (!members) return json(res, 404, { error: 'Room not found' }, origin);
-      const room = buildRoomView(roomId, user.id);
-      if (room.memberCount >= room.maxMembers) {
-        return json(res, 403, { error: 'Room full' }, origin);
+      const tpl = roomTemplates().find((r) => r.id === roomId);
+      if (!tpl) return json(res, 404, { error: 'Room not found' }, corsOrigin);
+      const count = store.roomMemberCount(roomId);
+      if (count >= tpl.maxMembers) {
+        return json(res, 403, { error: 'Room full' }, corsOrigin);
       }
-      members.add(user.id);
-      scheduleSave();
-      return json(res, 200, { rooms: listRoomsForUser(user.id) }, origin);
+      store.roomMemberAdd(roomId, user.id);
+      return json(res, 200, { rooms: listRoomsForUser(user.id, store) }, corsOrigin);
     }
 
-    const leaveMatch = /^\/v1\/rooms\/([^/]+)\/leave$/.exec(path);
+    const leaveMatch = /^\/v1\/rooms\/([^/]+)\/leave$/.exec(routePath);
     if (leaveMatch && req.method === 'POST') {
       const roomId = leaveMatch[1];
-      const members = roomMembers.get(roomId);
-      if (members) members.delete(user.id);
-      scheduleSave();
-      return json(res, 200, { rooms: listRoomsForUser(user.id) }, origin);
+      store.roomMemberRemove(roomId, user.id);
+      return json(res, 200, { rooms: listRoomsForUser(user.id, store) }, corsOrigin);
     }
 
-    const msgMatch = /^\/v1\/rooms\/([^/]+)\/messages$/.exec(path);
+    const msgMatch = /^\/v1\/rooms\/([^/]+)\/messages$/.exec(routePath);
     if (msgMatch && req.method === 'POST') {
       const roomId = msgMatch[1];
       const may = userMayPost(user);
-      if (!may.ok) return json(res, 403, { error: may.error, code: may.code }, origin);
-      const rl = checkRateLimit(user.id, 'room_message', RATE.room_message);
+      if (!may.ok) return json(res, 403, { error: may.error, code: may.code }, corsOrigin);
+      const rl = checkRateLimit(`${user.id}:room_message`, RATE.room_message);
       if (!rl.ok) {
         return json(
           res,
@@ -516,56 +503,58 @@ const server = http.createServer(async (req, res) => {
             code: 'rate_limited',
             retryAfterSec: rl.retryAfterSec,
           },
-          origin,
+          corsOrigin,
         );
       }
       const body = await readBody(req);
       let content = String(body?.content || '').trim();
-      if (!content) return json(res, 400, { error: 'content required' }, origin);
+      if (!content) return json(res, 400, { error: 'content required' }, corsOrigin);
       if (content.length > MAX_ROOM_MESSAGE_LEN) {
-        return json(res, 400, { error: `Message too long (max ${MAX_ROOM_MESSAGE_LEN})` }, origin);
+        return json(res, 400, { error: `Message too long (max ${MAX_ROOM_MESSAGE_LEN})` }, corsOrigin);
       }
       if (!checkSpamRepeat(user.id, content)) {
-        return json(res, 429, { error: 'Duplicate message detected. Please wait before retrying.', code: 'spam' }, origin);
+        return json(res, 429, { error: 'Duplicate message detected. Please wait before retrying.', code: 'spam' }, corsOrigin);
       }
       const anonymous = Boolean(body?.anonymous);
-      const members = roomMembers.get(roomId);
-      if (!members || !members.has(user.id)) {
-        return json(res, 403, { error: 'Join the room before posting' }, origin);
+      if (!store.roomHasMember(roomId, user.id)) {
+        return json(res, 403, { error: 'Join the room before posting' }, corsOrigin);
       }
       const authorName = anonymous ? 'Anonymous' : user.displayName || user.username || 'Member';
       const msg = {
         id: `m_${randomUUID().slice(0, 12)}`,
         roomId,
-        authorName,
         authorId: user.id,
+        authorName,
         content,
         timestamp: new Date().toISOString(),
         isAnonymous: anonymous,
         isReported: false,
         reportReason: '',
+        removedByModeration: false,
       };
-      const list = roomMessages.get(roomId) || [];
-      list.push(msg);
-      roomMessages.set(roomId, list);
-      scheduleSave();
-      return json(res, 200, { rooms: listRoomsForUser(user.id) }, origin);
+      store.insertRoomMessage(msg);
+      return json(res, 200, { rooms: listRoomsForUser(user.id, store) }, corsOrigin);
     }
 
-    if (path === '/v1/rooms/reports' && req.method === 'POST') {
-      const rl = checkRateLimit(user.id, 'report', RATE.report);
+    if (routePath === '/v1/rooms/reports' && req.method === 'POST') {
+      const rl = checkRateLimit(`${user.id}:report`, RATE.report);
       if (!rl.ok) {
         return json(
           res,
           429,
-          { error: 'Too many reports from this account. Try again later.', code: 'rate_limited', retryAfterSec: rl.retryAfterSec },
-          origin,
+          {
+            error: 'Too many reports from this account. Try again later.',
+            code: 'rate_limited',
+            retryAfterSec: rl.retryAfterSec,
+          },
+          corsOrigin,
         );
       }
       const body = await readBody(req);
       const roomId = String(body?.roomId || '');
       const messageId = String(body?.messageId || '');
-      const msg = roomId && messageId ? findMessage(roomId, messageId) : null;
+      const row = roomId && messageId ? findMessage(roomId, messageId, store) : null;
+      const msg = row ? store.msgRowToClient(row, user.id) : null;
       const rep = {
         id: `rep_${randomUUID().slice(0, 12)}`,
         type: 'room_message',
@@ -576,7 +565,7 @@ const server = http.createServer(async (req, res) => {
         description: String(body?.description || '').slice(0, MAX_REPORT_DESC_LEN),
         createdAt: new Date().toISOString(),
         status: 'pending',
-        snapshot: msg
+        snapshot: row
           ? {
               messageContent: msg.content,
               authorId: msg.authorId,
@@ -585,23 +574,28 @@ const server = http.createServer(async (req, res) => {
             }
           : null,
       };
-      moderationReports.push(rep);
-      if (msg) {
-        msg.isReported = true;
-        msg.reportReason = String(body?.reason || 'reported');
+      store.appendModerationReport(rep);
+      if (row) {
+        store.updateRoomMessageModeration(roomId, messageId, {
+          isReported: true,
+          reportReason: String(body?.reason || 'reported'),
+        });
       }
-      scheduleSave();
-      return json(res, 201, { ok: true, reportId: rep.id }, origin);
+      return json(res, 201, { ok: true, reportId: rep.id }, corsOrigin);
     }
 
-    if (path === '/v1/rooms/user-reports' && req.method === 'POST') {
-      const rl = checkRateLimit(user.id, 'report', RATE.report);
+    if (routePath === '/v1/rooms/user-reports' && req.method === 'POST') {
+      const rl = checkRateLimit(`${user.id}:report`, RATE.report);
       if (!rl.ok) {
         return json(
           res,
           429,
-          { error: 'Too many reports from this account. Try again later.', code: 'rate_limited', retryAfterSec: rl.retryAfterSec },
-          origin,
+          {
+            error: 'Too many reports from this account. Try again later.',
+            code: 'rate_limited',
+            retryAfterSec: rl.retryAfterSec,
+          },
+          corsOrigin,
         );
       }
       const body = await readBody(req);
@@ -618,59 +612,66 @@ const server = http.createServer(async (req, res) => {
         createdAt: new Date().toISOString(),
         status: 'pending',
       };
-      moderationReports.push(rep);
-      scheduleSave();
-      return json(res, 201, { ok: true, reportId: rep.id }, origin);
+      store.appendModerationReport(rep);
+      return json(res, 201, { ok: true, reportId: rep.id }, corsOrigin);
     }
 
-    if (path === '/v1/community/register' && req.method === 'POST') {
+    if (routePath === '/v1/community/register' && req.method === 'POST') {
       const body = await readBody(req);
-      user.username = String(body?.username || user.username).toLowerCase().trim();
-      user.displayName = String(body?.displayName || '').trim();
-      users.set(user.id, user);
-      scheduleSave();
-      return json(res, 200, { me: user, users: [...users.values()] }, origin);
+      const username = normalizeUsername(body?.username);
+      const displayName = String(body?.displayName || '').trim().slice(0, MAX_DISPLAY_NAME_LEN);
+      if (!validateUsername(username)) {
+        return json(res, 400, { error: 'Username must be 3–32 characters: lowercase letters, digits, underscore.', code: 'invalid_username' }, corsOrigin);
+      }
+      if (store.isUsernameTaken(username, user.id)) {
+        return json(res, 409, { error: 'Username already taken', code: 'username_taken' }, corsOrigin);
+      }
+      store.registerUserProfile(user.id, username, displayName);
+      const me = store.getUser(user.id);
+      return json(res, 200, { me: publicUser(me), users: store.listUsers().map(publicUser) }, corsOrigin);
     }
 
-    if (path === '/v1/community/users' && req.method === 'GET') {
-      return json(res, 200, { users: [...users.values()] }, origin);
+    if (routePath === '/v1/community/users' && req.method === 'GET') {
+      return json(res, 200, { users: store.listUsers().map(publicUser) }, corsOrigin);
     }
 
-    if (path === '/v1/community/posts' && req.method === 'GET') {
-      const visible = communityPosts.filter((p) => !p.removedByModeration);
-      return json(res, 200, { posts: visible }, origin);
+    if (routePath === '/v1/community/posts' && req.method === 'GET') {
+      return json(res, 200, { posts: store.listCommunityPostsVisible() }, corsOrigin);
     }
 
-    if (path === '/v1/community/comments' && req.method === 'GET') {
-      const visible = communityComments.filter((c) => !c.removedByModeration);
-      return json(res, 200, { comments: visible }, origin);
+    if (routePath === '/v1/community/comments' && req.method === 'GET') {
+      return json(res, 200, { comments: store.listCommunityCommentsVisible() }, corsOrigin);
     }
 
-    if (path === '/v1/community/groups' && req.method === 'GET') {
-      return json(res, 200, { groups: [...communityGroups] }, origin);
+    if (routePath === '/v1/community/groups' && req.method === 'GET') {
+      return json(res, 200, { groups: store.listCommunityGroups() }, corsOrigin);
     }
 
-    if (path === '/v1/community/posts' && req.method === 'POST') {
+    if (routePath === '/v1/community/posts' && req.method === 'POST') {
       const may = userMayPost(user);
-      if (!may.ok) return json(res, 403, { error: may.error, code: may.code }, origin);
-      const rl = checkRateLimit(user.id, 'community_post', RATE.community_post);
+      if (!may.ok) return json(res, 403, { error: may.error, code: may.code }, corsOrigin);
+      const rl = checkRateLimit(`${user.id}:community_post`, RATE.community_post);
       if (!rl.ok) {
         return json(
           res,
           429,
-          { error: 'Post limit reached. Try again later.', code: 'rate_limited', retryAfterSec: rl.retryAfterSec },
-          origin,
+          {
+            error: 'Post limit reached. Try again later.',
+            code: 'rate_limited',
+            retryAfterSec: rl.retryAfterSec,
+          },
+          corsOrigin,
         );
       }
       const body = await readBody(req);
       const content = String(body?.content || '').trim();
       const visibility = body?.visibility === 'private' ? 'private' : 'public';
-      if (!content) return json(res, 400, { error: 'content required' }, origin);
+      if (!content) return json(res, 400, { error: 'content required' }, corsOrigin);
       if (content.length > MAX_POST_LEN) {
-        return json(res, 400, { error: `Post too long (max ${MAX_POST_LEN})` }, origin);
+        return json(res, 400, { error: `Post too long (max ${MAX_POST_LEN})` }, corsOrigin);
       }
       if (!checkSpamRepeat(user.id, content, 30_000)) {
-        return json(res, 429, { error: 'Duplicate post detected.', code: 'spam' }, origin);
+        return json(res, 429, { error: 'Duplicate post detected.', code: 'spam' }, corsOrigin);
       }
       const post = {
         id: `p_${randomUUID().slice(0, 10)}`,
@@ -682,35 +683,43 @@ const server = http.createServer(async (req, res) => {
         commentIds: [],
         removedByModeration: false,
       };
-      communityPosts.unshift(post);
-      scheduleSave();
-      return json(res, 200, { posts: communityPosts.filter((p) => !p.removedByModeration), comments: communityComments.filter((c) => !c.removedByModeration) }, origin);
+      store.insertCommunityPost(post);
+      return json(
+        res,
+        200,
+        { posts: store.listCommunityPostsVisible(), comments: store.listCommunityCommentsVisible() },
+        corsOrigin,
+      );
     }
 
-    if (path === '/v1/community/comments' && req.method === 'POST') {
+    if (routePath === '/v1/community/comments' && req.method === 'POST') {
       const may = userMayPost(user);
-      if (!may.ok) return json(res, 403, { error: may.error, code: may.code }, origin);
-      const rl = checkRateLimit(user.id, 'community_comment', RATE.community_comment);
+      if (!may.ok) return json(res, 403, { error: may.error, code: may.code }, corsOrigin);
+      const rl = checkRateLimit(`${user.id}:community_comment`, RATE.community_comment);
       if (!rl.ok) {
         return json(
           res,
           429,
-          { error: 'Comment limit reached. Try again later.', code: 'rate_limited', retryAfterSec: rl.retryAfterSec },
-          origin,
+          {
+            error: 'Comment limit reached. Try again later.',
+            code: 'rate_limited',
+            retryAfterSec: rl.retryAfterSec,
+          },
+          corsOrigin,
         );
       }
       const body = await readBody(req);
       const postId = String(body?.postId || '');
-      let content = String(body?.content || '').trim();
-      if (!postId || !content) return json(res, 400, { error: 'postId and content required' }, origin);
+      const content = String(body?.content || '').trim();
+      if (!postId || !content) return json(res, 400, { error: 'postId and content required' }, corsOrigin);
       if (content.length > MAX_COMMENT_LEN) {
-        return json(res, 400, { error: `Comment too long (max ${MAX_COMMENT_LEN})` }, origin);
+        return json(res, 400, { error: `Comment too long (max ${MAX_COMMENT_LEN})` }, corsOrigin);
       }
       if (!checkSpamRepeat(user.id, content, 15_000)) {
-        return json(res, 429, { error: 'Duplicate comment detected.', code: 'spam' }, origin);
+        return json(res, 429, { error: 'Duplicate comment detected.', code: 'spam' }, corsOrigin);
       }
-      const p = communityPosts.find((x) => x.id === postId && !x.removedByModeration);
-      if (!p) return json(res, 404, { error: 'Post not found' }, origin);
+      const p = store.getCommunityPost(postId);
+      if (!p || p.removedByModeration) return json(res, 404, { error: 'Post not found' }, corsOrigin);
       const c = {
         id: `c_${randomUUID().slice(0, 10)}`,
         postId,
@@ -719,36 +728,45 @@ const server = http.createServer(async (req, res) => {
         createdAt: new Date().toISOString(),
         removedByModeration: false,
       };
-      communityComments.push(c);
-      p.commentIds = [...(p.commentIds || []), c.id];
-      scheduleSave();
-      return json(res, 200, { posts: communityPosts.filter((x) => !x.removedByModeration), comments: communityComments.filter((x) => !x.removedByModeration) }, origin);
+      store.insertCommunityComment(c);
+      const nextIds = [...(p.commentIds || []), c.id];
+      store.updatePostLikesAndComments(postId, p.likes || [], nextIds);
+      return json(
+        res,
+        200,
+        { posts: store.listCommunityPostsVisible(), comments: store.listCommunityCommentsVisible() },
+        corsOrigin,
+      );
     }
 
-    if (path === '/v1/community/reports' && req.method === 'POST') {
-      const rl = checkRateLimit(user.id, 'report', RATE.report);
+    if (routePath === '/v1/community/reports' && req.method === 'POST') {
+      const rl = checkRateLimit(`${user.id}:report`, RATE.report);
       if (!rl.ok) {
         return json(
           res,
           429,
-          { error: 'Too many reports from this account. Try again later.', code: 'rate_limited', retryAfterSec: rl.retryAfterSec },
-          origin,
+          {
+            error: 'Too many reports from this account. Try again later.',
+            code: 'rate_limited',
+            retryAfterSec: rl.retryAfterSec,
+          },
+          corsOrigin,
         );
       }
       const body = await readBody(req);
       const targetType = body?.targetType === 'comment' ? 'comment' : 'post';
       const targetId = String(body?.targetId || '');
       const postId = String(body?.postId || '');
-      if (!targetId) return json(res, 400, { error: 'targetId required' }, origin);
+      if (!targetId) return json(res, 400, { error: 'targetId required' }, corsOrigin);
       let snapshot = null;
       if (targetType === 'post') {
-        const post = communityPosts.find((x) => x.id === targetId);
-        if (post) {
+        const post = store.getCommunityPost(targetId);
+        if (post && !post.removedByModeration) {
           snapshot = { content: post.content, authorId: post.authorId, visibility: post.visibility };
         }
       } else {
-        const com = communityComments.find((x) => x.id === targetId);
-        if (com) {
+        const com = store.getCommunityComment(targetId);
+        if (com && !com.removedByModeration) {
           snapshot = { content: com.content, authorId: com.authorId, postId: com.postId };
         }
       }
@@ -764,130 +782,123 @@ const server = http.createServer(async (req, res) => {
         status: 'pending',
         snapshot,
       };
-      moderationReports.push(rep);
-      scheduleSave();
-      return json(res, 201, { ok: true, reportId: rep.id }, origin);
+      store.appendModerationReport(rep);
+      return json(res, 201, { ok: true, reportId: rep.id }, corsOrigin);
     }
 
-    const likeMatch = /^\/v1\/community\/posts\/([^/]+)\/like$/.exec(path);
+    const likeMatch = /^\/v1\/community\/posts\/([^/]+)\/like$/.exec(routePath);
     if (likeMatch && req.method === 'POST') {
       const postId = likeMatch[1];
-      const p = communityPosts.find((x) => x.id === postId);
-      if (!p || p.removedByModeration) return json(res, 404, { error: 'Post not found' }, origin);
-      const has = (p.likes || []).includes(user.id);
-      p.likes = has ? (p.likes || []).filter((id) => id !== user.id) : [...(p.likes || []), user.id];
-      scheduleSave();
-      return json(res, 200, { posts: communityPosts.filter((x) => !x.removedByModeration) }, origin);
+      const p = store.getCommunityPost(postId);
+      if (!p || p.removedByModeration) return json(res, 404, { error: 'Post not found' }, corsOrigin);
+      const likes = p.likes || [];
+      const has = likes.includes(user.id);
+      const next = has ? likes.filter((id) => id !== user.id) : [...likes, user.id];
+      store.updatePostLikesAndComments(postId, next, p.commentIds || []);
+      return json(res, 200, { posts: store.listCommunityPostsVisible() }, corsOrigin);
     }
 
-    const followMatch = /^\/v1\/community\/users\/([^/]+)\/follow$/.exec(path);
+    const followMatch = /^\/v1\/community\/users\/([^/]+)\/follow$/.exec(routePath);
     if (followMatch && req.method === 'POST') {
       const targetId = followMatch[1];
-      const target = users.get(targetId);
-      if (!target) return json(res, 404, { error: 'User not found' }, origin);
-      const following = user.followingIds || [];
-      const isF = following.includes(targetId);
-      if (isF) {
-        user.followingIds = following.filter((id) => id !== targetId);
-        target.followerIds = (target.followerIds || []).filter((id) => id !== user.id);
-      } else {
-        user.followingIds = [...following, targetId];
-        target.followerIds = [...(target.followerIds || []), user.id];
-      }
-      users.set(user.id, user);
-      users.set(target.id, target);
-      scheduleSave();
-      return json(res, 200, { me: user, users: [...users.values()] }, origin);
+      const target = store.getUser(targetId);
+      if (!target) return json(res, 404, { error: 'User not found' }, corsOrigin);
+      store.toggleFollow(user.id, targetId);
+      const me = store.getUser(user.id);
+      return json(res, 200, { me: publicUser(me), users: store.listUsers().map(publicUser) }, corsOrigin);
     }
 
-    if (path === '/v1/admin/reports' && req.method === 'GET') {
-      if (!assertAdmin(url, res, origin)) return;
-      return json(res, 200, { reports: moderationReports }, origin);
+    if (routePath === '/v1/admin/reports' && req.method === 'GET') {
+      if (!assertAdmin(req, res, corsOrigin)) return;
+      return json(res, 200, { reports: store.listModerationReports() }, corsOrigin);
     }
 
-    const patchReportMatch = /^\/v1\/admin\/reports\/([^/]+)$/.exec(path);
+    const patchReportMatch = /^\/v1\/admin\/reports\/([^/]+)$/.exec(routePath);
     if (patchReportMatch && req.method === 'PATCH') {
-      if (!assertAdmin(url, res, origin)) return;
+      if (!assertAdmin(req, res, corsOrigin)) return;
       const id = patchReportMatch[1];
       const body = await readBody(req);
       const status = body?.status === 'resolved' || body?.status === 'reviewed' ? body.status : null;
-      if (!status) return json(res, 400, { error: 'status must be reviewed or resolved' }, origin);
-      const rep = moderationReports.find((r) => r.id === id);
-      if (!rep) return json(res, 404, { error: 'Report not found' }, origin);
+      if (!status) return json(res, 400, { error: 'status must be reviewed or resolved' }, corsOrigin);
+      const rep = store.findModerationReport(id);
+      if (!rep) return json(res, 404, { error: 'Report not found' }, corsOrigin);
       rep.status = status;
       rep.moderatorNotes = String(body?.notes || '').slice(0, 2000);
       rep.updatedAt = new Date().toISOString();
-      scheduleSave();
-      return json(res, 200, { report: rep }, origin);
+      store.updateModerationReport(rep);
+      return json(res, 200, { report: rep }, corsOrigin);
     }
 
-    if (path === '/v1/admin/moderation/hide-room-message' && req.method === 'POST') {
-      if (!assertAdmin(url, res, origin)) return;
+    if (routePath === '/v1/admin/moderation/hide-room-message' && req.method === 'POST') {
+      if (!assertAdmin(req, res, corsOrigin)) return;
       const body = await readBody(req);
       const roomId = String(body?.roomId || '');
       const messageId = String(body?.messageId || '');
-      const msg = roomId && messageId ? findMessage(roomId, messageId) : null;
-      if (!msg) return json(res, 404, { error: 'Message not found' }, origin);
-      msg.content = '[This message was removed because it violated community guidelines.]';
-      msg.isReported = true;
-      msg.reportReason = 'moderation_removed';
-      msg.removedByModeration = true;
-      scheduleSave();
-      return json(res, 200, { ok: true }, origin);
+      const row = roomId && messageId ? findMessage(roomId, messageId, store) : null;
+      if (!row) return json(res, 404, { error: 'Message not found' }, corsOrigin);
+      store.updateRoomMessageModeration(roomId, messageId, {
+        content: '[This message was removed because it violated community guidelines.]',
+        isReported: true,
+        reportReason: 'moderation_removed',
+        removedByModeration: true,
+      });
+      return json(res, 200, { ok: true }, corsOrigin);
     }
 
-    if (path === '/v1/admin/moderation/hide-community-post' && req.method === 'POST') {
-      if (!assertAdmin(url, res, origin)) return;
+    if (routePath === '/v1/admin/moderation/hide-community-post' && req.method === 'POST') {
+      if (!assertAdmin(req, res, corsOrigin)) return;
       const body = await readBody(req);
       const postId = String(body?.postId || '');
-      const p = communityPosts.find((x) => x.id === postId);
-      if (!p) return json(res, 404, { error: 'Post not found' }, origin);
-      p.removedByModeration = true;
-      p.content = '[Removed]';
-      scheduleSave();
-      return json(res, 200, { ok: true }, origin);
+      const p = store.getCommunityPost(postId);
+      if (!p) return json(res, 404, { error: 'Post not found' }, corsOrigin);
+      store.hideCommunityPost(postId);
+      return json(res, 200, { ok: true }, corsOrigin);
     }
 
-    if (path === '/v1/admin/moderation/hide-community-comment' && req.method === 'POST') {
-      if (!assertAdmin(url, res, origin)) return;
+    if (routePath === '/v1/admin/moderation/hide-community-comment' && req.method === 'POST') {
+      if (!assertAdmin(req, res, corsOrigin)) return;
       const body = await readBody(req);
       const commentId = String(body?.commentId || '');
-      const c = communityComments.find((x) => x.id === commentId);
-      if (!c) return json(res, 404, { error: 'Comment not found' }, origin);
-      c.removedByModeration = true;
-      c.content = '[Removed]';
-      scheduleSave();
-      return json(res, 200, { ok: true }, origin);
+      const c = store.getCommunityComment(commentId);
+      if (!c) return json(res, 404, { error: 'Comment not found' }, corsOrigin);
+      store.hideCommunityComment(commentId);
+      return json(res, 200, { ok: true }, corsOrigin);
     }
 
-    if (path === '/v1/admin/moderation/restrict-user' && req.method === 'POST') {
-      if (!assertAdmin(url, res, origin)) return;
+    if (routePath === '/v1/admin/moderation/restrict-user' && req.method === 'POST') {
+      if (!assertAdmin(req, res, corsOrigin)) return;
       const body = await readBody(req);
       const userId = String(body?.userId || '');
       const restrict = Boolean(body?.restrict);
-      const u = users.get(userId);
-      if (!u) return json(res, 404, { error: 'User not found' }, origin);
-      u.postingRestricted = restrict;
-      users.set(userId, u);
-      scheduleSave();
-      return json(res, 200, { user: u }, origin);
+      const u = store.getUser(userId);
+      if (!u) return json(res, 404, { error: 'User not found' }, corsOrigin);
+      store.updateUserRow(userId, { postingRestricted: restrict });
+      const fresh = store.getUser(userId);
+      return json(res, 200, { user: publicUser(fresh) }, corsOrigin);
     }
 
-    return json(res, 404, { error: 'Not found' }, origin);
+    return json(res, 404, { error: 'Not found' }, corsOrigin);
   } catch (e) {
     console.error(e);
-    return json(res, 500, { error: 'Server error' }, origin);
+    if (String(e?.message || '').includes('payload too large')) {
+      return json(res, 413, { error: 'Payload too large' }, corsOrigin);
+    }
+    if (typeof e === 'object' && e && (e.code === 'SQLITE_CONSTRAINT_UNIQUE' || e.code === 'SQLITE_CONSTRAINT_PRIMARYKEY')) {
+      return json(res, 409, { error: 'Conflict', code: 'constraint' }, corsOrigin);
+    }
+    return json(res, 500, { error: 'Server error' }, corsOrigin);
   }
 });
 
 server.listen(PORT, () => {
-  console.log(`Live social API http://localhost:${PORT}`);
-  console.log(`Persistence: ${STATE_FILE}`);
-  console.log('Set EXPO_PUBLIC_LIVE_SOCIAL_API_URL in the Expo app to this origin (use LAN IP for physical devices).');
+  console.log(`[social] API listening on port ${PORT}`);
+  console.log(`[social] SQLite database: ${DB_FILE}`);
+  if (ALLOWED_ORIGINS.length) {
+    console.log(`[social] CORS restricted to: ${ALLOWED_ORIGINS.join(', ')}`);
+  }
   if (ADMIN_SECRET) {
-    console.log('Admin: GET /v1/admin/reports?secret=***  |  PATCH /v1/admin/reports/:id?secret=***');
-    console.log('Admin actions: POST /v1/admin/moderation/hide-room-message|hide-community-post|hide-community-comment|restrict-user?secret=***');
+    console.log('[social] Admin moderation routes enabled (Authorization: Bearer <SOCIAL_ADMIN_SECRET>).');
   } else {
-    console.warn('SOCIAL_ADMIN_SECRET is not set; admin moderation routes are disabled.');
+    console.warn('[social] SOCIAL_ADMIN_SECRET is not set; admin moderation routes respond with 403.');
   }
 });

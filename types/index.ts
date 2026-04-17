@@ -154,6 +154,8 @@ export interface CommunityUser {
   joinedAt: string;
   followerIds: string[];
   followingIds: string[];
+  /** Present when the live social API includes enforcement state (e.g. posting restriction). */
+  postingRestricted?: boolean;
 }
 
 export interface CommunityPost {

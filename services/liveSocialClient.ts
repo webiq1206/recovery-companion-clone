@@ -1,6 +1,6 @@
 /**
  * HTTP client for the live social API (`backend/social/server.mjs`).
- * Auth: Bearer token issued by POST /v1/auth/session.
+ * Auth: signed session JWT from POST /v1/auth/session (send as `Authorization: Bearer …` on all calls).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
