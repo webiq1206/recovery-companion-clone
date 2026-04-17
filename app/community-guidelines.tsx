@@ -41,9 +41,9 @@ export default function CommunityGuidelinesScreen() {
           on context.
         </Text>
         <Text style={styles.body}>
-          When <Text style={styles.em}>live community</Text> is enabled for your build, reports are sent to the app’s
-          backend moderation queue. When live community is off, reports may be stored on your device so you can
-          document concerns for a sponsor, clinician, or platform support channel outside the app.
+          When your build is connected to the configured social backend, reports are delivered for staff review in line
+          with our enforcement process. When that backend is not configured, reports may be stored only on your device so
+          you can document concerns for a sponsor, clinician, or your platform’s support channel outside the app.
         </Text>
 
         <Text style={styles.section}>Block users</Text>

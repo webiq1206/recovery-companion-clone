@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Alert } from 'react-native';
 import {
   TrustedContact,
@@ -135,8 +135,29 @@ async function saveItem<T>(key: string, data: T): Promise<T> {
   return data;
 }
 
+const PRACTICE_MSG_BURST = { max: 28, windowMs: 60_000 };
+const PRACTICE_REPORT_BURST = { max: 18, windowMs: 3600_000 };
+
+function allowInSlidingWindow(
+  ref: { current: number[] },
+  policy: { max: number; windowMs: number },
+): boolean {
+  const now = Date.now();
+  const pruned = ref.current.filter((t) => now - t < policy.windowMs);
+  if (pruned.length >= policy.max) {
+    ref.current = pruned;
+    return false;
+  }
+  pruned.push(now);
+  ref.current = pruned;
+  return true;
+}
+
 export const [ConnectionProvider, useConnection] = createContextHook(() => {
   const queryClient = useQueryClient();
+  const peerMessageTimesRef = useRef<number[]>([]);
+  const roomMessageTimesRef = useRef<number[]>([]);
+  const localReportTimesRef = useRef<number[]>([]);
   const [trustedContacts, setTrustedContacts] = useState<TrustedContact[]>([]);
   const [peerChats, setPeerChats] = useState<PeerChat[]>([]);
   const [safeRooms, setSafeRooms] = useState<SafeRoom[]>([]);
@@ -330,6 +351,13 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
   }, [peerChats, queryClient]);
 
   const sendPeerMessage = useCallback((chatId: string, content: string) => {
+    if (!allowInSlidingWindow(peerMessageTimesRef, PRACTICE_MSG_BURST)) {
+      Alert.alert(
+        'Slow down a moment',
+        'Too many practice messages in a short time. Pause briefly before sending more.',
+      );
+      return;
+    }
     const message: PeerMessage = {
       id: 'pm_' + Date.now().toString(),
       chatId,
@@ -412,6 +440,13 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     authorLabel: string;
     contentPreview: string;
   }) => {
+    if (!allowInSlidingWindow(localReportTimesRef, PRACTICE_REPORT_BURST)) {
+      Alert.alert(
+        'Report limit',
+        'You have submitted many practice reports recently. Try again later, or use Recovery Rooms with your configured backend for full moderation intake.',
+      );
+      return;
+    }
     const existing = queryClient.getQueryData<ConnectionLocalUgcReport[]>(['connectionLocalUgcReports']) ?? [];
     const row: ConnectionLocalUgcReport = {
       id: 'ugc_' + Date.now().toString(),
@@ -436,6 +471,13 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
   }, [safeRooms]);
 
   const sendRoomMessage = useCallback((roomId: string, content: string) => {
+    if (!allowInSlidingWindow(roomMessageTimesRef, PRACTICE_MSG_BURST)) {
+      Alert.alert(
+        'Slow down a moment',
+        'Too many practice messages in a short time. Pause briefly before sending more.',
+      );
+      return;
+    }
     const name = displayName || 'You';
     const message: RoomMessage = {
       id: 'rm_' + Date.now().toString(),

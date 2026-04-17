@@ -2,6 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Alert } from 'react-native';
 import {
   RecoveryRoom,
   RecoveryRoomMessage,
@@ -11,7 +12,20 @@ import {
 } from '../types';
 import { getSocialPresentationMode, isLiveSocialMode, isLocalSocialDemoEnabled } from '../core/socialLiveConfig';
 import type { LiveSocialSession } from '../services/liveSocialClient';
+import { LiveSocialApiError } from '../services/liveSocialClient';
 import * as liveSocial from '../services/liveSocialClient';
+
+function alertLiveSocialFailure(title: string, err: unknown) {
+  if (err instanceof LiveSocialApiError) {
+    let message = err.message;
+    if (err.status === 429 && err.retryAfterSec != null) {
+      message += ` Try again in about ${err.retryAfterSec}s.`;
+    }
+    Alert.alert(title, message);
+    return;
+  }
+  console.log(title, err);
+}
 
 const STORAGE_KEYS = {
   ROOMS: 'recovery_rooms_data',
@@ -515,7 +529,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
           );
           await queryClient.invalidateQueries({ queryKey: ['recoveryRooms'] });
         } catch (e) {
-          console.log('[RecoveryRooms] updateLiveProfile failed:', e);
+          alertLiveSocialFailure('Could not update display name', e);
         }
       })();
       return;
@@ -538,7 +552,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
           setRooms(next);
           queryClient.setQueryData(['recoveryRooms'], next);
         } catch (e) {
-          console.log('[RecoveryRooms] joinLiveRoom failed:', e);
+          alertLiveSocialFailure('Could not join room', e);
         }
       })();
       return;
@@ -559,7 +573,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
           setRooms(next);
           queryClient.setQueryData(['recoveryRooms'], next);
         } catch (e) {
-          console.log('[RecoveryRooms] leaveLiveRoom failed:', e);
+          alertLiveSocialFailure('Could not leave room', e);
         }
       })();
       return;
@@ -579,7 +593,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
           setRooms(next);
           queryClient.setQueryData(['recoveryRooms'], next);
         } catch (e) {
-          console.log('[RecoveryRooms] sendLiveRoomMessage failed:', e);
+          alertLiveSocialFailure('Message not sent', e);
         }
       })();
       return;
@@ -647,7 +661,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
           await liveSocial.reportLiveRoomMessage({ roomId, messageId, reason, description });
           await queryClient.invalidateQueries({ queryKey: ['recoveryRooms'] });
         } catch (e) {
-          console.log('[RecoveryRooms] reportLiveRoomMessage failed:', e);
+          alertLiveSocialFailure('Report not submitted', e);
         }
       })();
       return;
@@ -699,7 +713,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
             });
             await queryClient.invalidateQueries({ queryKey: ['recoveryRooms'] });
           } catch (e) {
-            console.log('[RecoveryRooms] reportLiveRoomUser failed:', e);
+            alertLiveSocialFailure('Report not submitted', e);
           }
         })();
         return;
@@ -738,7 +752,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
           setBlockedUserIds(next.blockedUserIds ?? []);
           await queryClient.invalidateQueries({ queryKey: ['liveSocialBlocks'] });
         } catch (e) {
-          console.log('[RecoveryRooms] addLiveRoomBlock failed:', e);
+          alertLiveSocialFailure('Block not saved', e);
         }
       })();
       return;

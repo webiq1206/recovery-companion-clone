@@ -2,9 +2,29 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { CommunityUser, CommunityPost, CommunityComment, PrivateGroup } from '../types';
+import { Alert } from 'react-native';
+import {
+  CommunityUser,
+  CommunityPost,
+  CommunityComment,
+  PrivateGroup,
+  RoomReport,
+} from '../types';
 import { getSocialPresentationMode, isLiveSocialMode, isLocalSocialDemoEnabled } from '../core/socialLiveConfig';
+import { LiveSocialApiError } from '../services/liveSocialClient';
 import * as liveSocial from '../services/liveSocialClient';
+
+function alertLiveSocialFailure(title: string, err: unknown) {
+  if (err instanceof LiveSocialApiError) {
+    let message = err.message;
+    if (err.status === 429 && err.retryAfterSec != null) {
+      message += ` Try again in about ${err.retryAfterSec}s.`;
+    }
+    Alert.alert(title, message);
+    return;
+  }
+  console.log(title, err);
+}
 
 const STORAGE_KEYS = {
   COMMUNITY_USER: 'community_user',
@@ -53,6 +73,31 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [comments, setComments] = useState<CommunityComment[]>([]);
   const [groups, setGroups] = useState<PrivateGroup[]>([]);
+  const [blockedCommunityAuthorNames, setBlockedCommunityAuthorNames] = useState<string[]>([]);
+  const [blockedCommunityUserIds, setBlockedCommunityUserIds] = useState<string[]>([]);
+
+  const liveBlocksQuery = useQuery({
+    queryKey: ['liveSocialBlocks'],
+    queryFn: async () => {
+      await liveSocial.ensureLiveSocialSession();
+      return liveSocial.listLiveRoomBlocks();
+    },
+    enabled: isLiveSocialMode(),
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (!isLiveSocialMode()) {
+      setBlockedCommunityAuthorNames([]);
+      setBlockedCommunityUserIds([]);
+      return;
+    }
+    const b = liveBlocksQuery.data;
+    if (b) {
+      setBlockedCommunityAuthorNames(b.blockedAuthorNames ?? []);
+      setBlockedCommunityUserIds(b.blockedUserIds ?? []);
+    }
+  }, [liveBlocksQuery.data]);
 
   const liveFeedQuery = useQuery({
     queryKey: ['liveSocialCommunityFeed'],
@@ -213,7 +258,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
           setAllUsers(users);
           await queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
         } catch (e) {
-          console.log('[Community] registerLiveCommunityProfile failed:', e);
+          alertLiveSocialFailure('Could not register profile', e);
         }
       })();
       return null;
@@ -247,7 +292,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
           setComments(nextComments);
           await queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
         } catch (e) {
-          console.log('[Community] createLiveCommunityPost failed:', e);
+          alertLiveSocialFailure('Post not published', e);
         }
       })();
       return;
@@ -279,7 +324,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
           setComments(nextComments);
           await queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
         } catch (e) {
-          console.log('[Community] createLiveCommunityComment failed:', e);
+          alertLiveSocialFailure('Comment not published', e);
         }
       })();
       return;
@@ -311,7 +356,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
           setPosts(nextPosts);
           await queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
         } catch (e) {
-          console.log('[Community] toggleLiveCommunityPostLike failed:', e);
+          alertLiveSocialFailure('Could not update like', e);
         }
       })();
       return;
@@ -340,7 +385,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
           setAllUsers(users);
           await queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
         } catch (e) {
-          console.log('[Community] toggleLiveCommunityFollow failed:', e);
+          alertLiveSocialFailure('Could not update follow', e);
         }
       })();
       return;
@@ -417,33 +462,100 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     return allUsers.find(u => u.id === userId);
   }, [currentUser, allUsers]);
 
-  const getCommentsForPost = useCallback((postId: string): CommunityComment[] => {
-    return comments.filter(c => c.postId === postId).sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-  }, [comments]);
+  const isAuthorBlocked = useCallback(
+    (authorId: string) => {
+      if (blockedCommunityUserIds.includes(authorId)) return true;
+      const author =
+        allUsers.find(u => u.id === authorId) ?? (currentUser?.id === authorId ? currentUser : undefined);
+      const lowerNames = blockedCommunityAuthorNames.map((n) => n.trim().toLowerCase());
+      if (author) {
+        if (lowerNames.includes(author.displayName.trim().toLowerCase())) return true;
+        if (lowerNames.includes(author.username.trim().toLowerCase())) return true;
+      }
+      return false;
+    },
+    [blockedCommunityUserIds, blockedCommunityAuthorNames, allUsers, currentUser],
+  );
+
+  const getCommentsForPost = useCallback(
+    (postId: string): CommunityComment[] => {
+      return comments
+        .filter((c) => c.postId === postId && !isAuthorBlocked(c.authorId))
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    },
+    [comments, isAuthorBlocked],
+  );
+
+  const reportCommunityContent = useCallback(
+    (
+      targetType: 'post' | 'comment',
+      targetId: string,
+      postId: string | undefined,
+      reason: RoomReport['reason'],
+      description: string,
+    ) => {
+      if (!isLiveSocialMode()) return;
+      void (async () => {
+        try {
+          await liveSocial.reportLiveCommunityTarget({
+            targetType,
+            targetId,
+            postId,
+            reason,
+            description,
+          });
+          await queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
+        } catch (e) {
+          alertLiveSocialFailure('Report not submitted', e);
+        }
+      })();
+    },
+    [queryClient],
+  );
+
+  const blockCommunityUser = useCallback(
+    (authorId: string, authorDisplayName: string) => {
+      const id = authorId.trim();
+      const label = authorDisplayName.trim();
+      if (!id && !label) return;
+      if (isLiveSocialMode()) {
+        void (async () => {
+          try {
+            const next = await liveSocial.addLiveRoomBlock({
+              authorId: id || undefined,
+              authorName: label || undefined,
+            });
+            setBlockedCommunityAuthorNames(next.blockedAuthorNames ?? []);
+            setBlockedCommunityUserIds(next.blockedUserIds ?? []);
+            await queryClient.invalidateQueries({ queryKey: ['liveSocialBlocks'] });
+            await queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
+          } catch (e) {
+            alertLiveSocialFailure('Block not saved', e);
+          }
+        })();
+      }
+    },
+    [queryClient],
+  );
 
   const visiblePosts = useMemo(() => {
-    if (!currentUser) return posts.filter(p => p.visibility === 'public');
-
-    const myGroupMemberUsernames = groups
-      .filter(g => g.ownerId === currentUser.id)
-      .flatMap(g => g.memberUsernames);
-
-    const groupsImIn = groups.filter(g =>
-      g.memberUsernames.includes(currentUser.username)
-    );
-    const ownerIds = groupsImIn.map(g => g.ownerId);
-
-    return posts.filter(p => {
+    const visibilityOk = (p: CommunityPost) => {
+      if (!currentUser) return p.visibility === 'public';
+      const myGroupMemberUsernames = groups
+        .filter(g => g.ownerId === currentUser.id)
+        .flatMap(g => g.memberUsernames);
+      const groupsImIn = groups.filter(g => g.memberUsernames.includes(currentUser.username));
+      const ownerIds = groupsImIn.map(g => g.ownerId);
       if (p.visibility === 'public') return true;
       if (p.authorId === currentUser.id) return true;
       const author = allUsers.find(u => u.id === p.authorId);
       if (author && myGroupMemberUsernames.includes(author.username)) return true;
       if (ownerIds.includes(p.authorId)) return true;
       return false;
-    });
-  }, [posts, currentUser, groups, allUsers]);
+    };
+
+    return posts.filter((p) => visibilityOk(p) && !isAuthorBlocked(p.authorId));
+  }, [posts, currentUser, groups, allUsers, isAuthorBlocked]);
 
   const isLoading =
     (isLiveSocialMode() && liveFeedQuery.isLoading) ||
@@ -455,6 +567,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
 
   const refetchCommunity = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['liveSocialCommunityFeed'] });
+    void queryClient.invalidateQueries({ queryKey: ['liveSocialBlocks'] });
     void queryClient.invalidateQueries({ queryKey: ['communityUser'] });
     void queryClient.invalidateQueries({ queryKey: ['communityPosts'] });
   }, [queryClient]);
@@ -465,6 +578,8 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     posts: visiblePosts,
     comments,
     groups,
+    blockedCommunityUserIds,
+    blockedCommunityAuthorNames,
     isLoading,
     socialMode,
     refetchCommunity,
@@ -479,10 +594,15 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     deleteGroup,
     getUserById,
     getCommentsForPost,
+    reportCommunityContent,
+    blockCommunityUser,
+    isAuthorBlocked,
   }), [
     currentUser, allUsers, visiblePosts, comments, groups,
+    blockedCommunityUserIds, blockedCommunityAuthorNames,
     isLoading, socialMode, refetchCommunity, setupUser, createPost, addComment, toggleLike,
     toggleFollow, createGroup, addMemberToGroup, removeMemberFromGroup,
-    deleteGroup, getUserById, getCommentsForPost,
+    deleteGroup, getUserById, getCommentsForPost, reportCommunityContent, blockCommunityUser,
+    isAuthorBlocked,
   ]);
 });

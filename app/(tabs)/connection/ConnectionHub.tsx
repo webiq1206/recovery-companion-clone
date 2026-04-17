@@ -831,7 +831,7 @@ export default function ConnectionScreen() {
                           });
                           Alert.alert(
                             'Report saved',
-                            'Stored only on this device. There is no live moderation queue for this practice feature.',
+                            'This practice chat is stored only on your device. For live spaces with server-side reporting, blocking, and moderator review, use Recovery Rooms when your organization has configured the social backend.',
                           );
                         },
                       },
@@ -968,7 +968,7 @@ export default function ConnectionScreen() {
                           });
                           Alert.alert(
                             'Report saved',
-                            'Stored only on this device. There is no live moderation queue for this practice feature.',
+                            'This practice room is stored only on your device. For live spaces with server-side reporting, blocking, and moderator review, use Recovery Rooms when your organization has configured the social backend.',
                           );
                         },
                       },

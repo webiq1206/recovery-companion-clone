@@ -157,8 +157,8 @@ export default function RoomSessionScreen() {
     Alert.alert(
       'Report received',
       live
-        ? 'Thank you. Your report was sent to the moderation queue for this app’s backend. We may remove content or restrict accounts that violate the Community Guidelines. You will not receive a personal reply for every report.'
-        : 'Thank you. Your report is saved on this device so you can share it with a sponsor or clinician if you choose. It is not sent to a remote moderation team unless live community is enabled for your build.',
+        ? 'Thank you. Your report was sent to the app’s backend for moderator review. We may remove content or restrict accounts that violate the Community Guidelines. You will not receive a personal reply for every report.'
+        : 'Thank you. Your report is saved on this device so you can share it with a sponsor or clinician if you choose. It is only sent for staff review when this build is connected to your organization’s social backend.',
     );
   }, [roomId, reportingMessageId, reportReason, reportDescription, reportMessage, socialMode]);
 
@@ -172,7 +172,7 @@ export default function RoomSessionScreen() {
       'User report received',
       live
         ? 'Thank you. This report flags the participant for moderators (not just a single message). Serious or illegal content may be escalated according to our enforcement policy. Emergency: contact local emergency services if you are in immediate danger.'
-        : 'Thank you. This user report is stored on this device. Enable the live community backend so reports can reach a moderation team.',
+        : 'Thank you. This user report is stored on this device. Connect this build to your organization’s social backend so reports can reach your moderation team.',
     );
   }, [roomId, reportingSubject, reportReason, reportDescription, reportUser, socialMode]);
 

@@ -40,3 +40,6 @@ yarn-error.*
 .vercel
 
 .env
+
+# Live social API persisted state (self-hosted / staging)
+backend/social/data/

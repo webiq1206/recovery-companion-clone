@@ -1,5 +1,5 @@
 /**
- * HTTP client for the reference live social API (`backend/social/server.mjs`).
+ * HTTP client for the live social API (`backend/social/server.mjs`).
  * Auth: Bearer token issued by POST /v1/auth/session.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +16,23 @@ import { getLiveSocialApiBaseUrl } from '../core/socialLiveConfig';
 
 const TOKEN_KEY = 'live_social_access_token';
 const DEVICE_KEY = 'live_social_device_id';
+
+export class LiveSocialApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly retryAfterSec?: number;
+
+  constructor(
+    message: string,
+    opts: { status: number; code?: string; retryAfterSec?: number },
+  ) {
+    super(message);
+    this.name = 'LiveSocialApiError';
+    this.status = opts.status;
+    this.code = opts.code;
+    this.retryAfterSec = opts.retryAfterSec;
+  }
+}
 
 async function getDeviceId(): Promise<string> {
   let id = await AsyncStorage.getItem(DEVICE_KEY);
@@ -60,8 +77,13 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     json = null;
   }
   if (!res.ok) {
-    const msg = (json as { error?: string } | null)?.error ?? text ?? res.statusText;
-    throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`);
+    const body = json as { error?: string; code?: string; retryAfterSec?: number } | null;
+    const msg = (typeof body?.error === 'string' && body.error) || text || res.statusText;
+    throw new LiveSocialApiError(typeof msg === 'string' ? msg : `HTTP ${res.status}`, {
+      status: res.status,
+      code: typeof body?.code === 'string' ? body.code : undefined,
+      retryAfterSec: typeof body?.retryAfterSec === 'number' ? body.retryAfterSec : undefined,
+    });
   }
   return json as T;
 }
@@ -162,6 +184,20 @@ export async function reportLiveRoomUser(payload: {
   description: string;
 }): Promise<void> {
   await api('/v1/rooms/user-reports', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/** Report a community post or comment (live backend moderation queue). */
+export async function reportLiveCommunityTarget(payload: {
+  targetType: 'post' | 'comment';
+  targetId: string;
+  postId?: string;
+  reason: RoomReport['reason'];
+  description: string;
+}): Promise<{ ok?: boolean; reportId?: string }> {
+  return api('/v1/community/reports', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
