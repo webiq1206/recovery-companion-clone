@@ -1,15 +1,12 @@
 import { create } from "zustand";
 
-import {
-  MAX_ROOM_USERS,
-  getCatalogOccupancyByRoomId,
-} from "../constants/recoveryPathRooms";
+import { getCatalogOccupancyByRoomId } from "../constants/recoveryPathRooms";
 
 type MockRoomCapacityState = {
   countsByRoomId: Record<string, number>;
   /** Room id the local user is counted in, if any */
   activeRoomId: string | null;
-  /** Returns false when room is already at max (join blocked). */
+  /** Always allows joining (no capacity cap in product UI). */
   enterRoom: (roomId: string) => boolean;
   leaveRoom: (roomId: string) => void;
   resetToCatalog: () => void;
@@ -25,12 +22,18 @@ export const useMockRoomCapacityStore = create<MockRoomCapacityState>((set, get)
 
   enterRoom: (roomId) => {
     const base = catalog();
+    if (!roomId) return false;
+    if (Object.keys(base).length === 0) {
+      const s = get();
+      if (s.activeRoomId === roomId) return true;
+      set({ activeRoomId: roomId });
+      return true;
+    }
     if (!(roomId in base)) return false;
     const s = get();
     if (s.activeRoomId === roomId) return true;
 
     const cur = s.countsByRoomId[roomId] ?? base[roomId] ?? 0;
-    if (cur >= MAX_ROOM_USERS) return false;
 
     const next = { ...s.countsByRoomId };
     if (s.activeRoomId) {
@@ -45,6 +48,10 @@ export const useMockRoomCapacityStore = create<MockRoomCapacityState>((set, get)
 
   leaveRoom: (roomId) => {
     const base = catalog();
+    if (Object.keys(base).length === 0) {
+      set((s) => (s.activeRoomId === roomId ? { activeRoomId: null } : s));
+      return;
+    }
     if (!(roomId in base)) return;
     set((s) => {
       if (s.activeRoomId !== roomId) return s;

@@ -23,14 +23,15 @@ export const RECOVERY_PATHS: readonly RecoveryPathMeta[] = [
     id: "stabilize",
     title: "Stabilize",
     phase: "Days 1–30",
-    description: "Safety first—routines, sleep, and lowering daily risk.",
+    description:
+      "Safety first—Adjusting to life without addiction. The importance of routines, sleep, and lowering daily risk.",
     progressPlaceholder: 0.22,
   },
   {
     id: "build_control",
-    title: "Build Control",
+    title: "Maintain",
     phase: "30–90 days",
-    description: "Skills and patterns that hold when pressure spikes.",
+    description: "Using new skills and patterns that hold when pressure spikes.",
     progressPlaceholder: 0.38,
   },
   {

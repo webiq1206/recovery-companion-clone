@@ -9,130 +9,63 @@ export type DemoRoom = {
   description: string;
   activeUsers: number;
   status: RoomStatusBadge;
-  /** When `activeUsers` >= MAX_ROOM_USERS, UI offers navigation here */
+  /** Optional overflow room id for future UI */
   overflowRoomId?: string;
 };
 
-export const MAX_ROOM_USERS = 20;
-
+/** Path-keyed catalog; currently empty (no demo rooms surfaced in product UI). */
 export const PATH_DEMO_ROOMS: Record<RecoveryPathId, readonly DemoRoom[]> = {
   stabilize: [
     {
-      id: "stabilize-dawn-checkin",
-      name: "Dawn check-in",
-      description: "Short grounding before the day starts—no advice, just presence.",
-      activeUsers: 20,
-      status: "live",
-      overflowRoomId: "stabilize-dawn-overflow",
-    },
-    {
-      id: "stabilize-dawn-overflow",
-      name: "Dawn check-in · Room 2",
-      description: "Same rhythm as the main room when it’s at capacity.",
-      activeUsers: 9,
-      status: "open",
-    },
-    {
-      id: "stabilize-sleep-reset",
-      name: "Sleep reset lab",
-      description: "Wind-down scripts and screen-off wins for early recovery nights.",
-      activeUsers: 14,
+      id: "stabilize-chat",
+      name: "Stabilize",
+      description:
+        "Safety first—Adjusting to life without addiction. The importance of routines, sleep, and lowering daily risk.",
+      activeUsers: 12,
       status: "open",
     },
   ],
   build_control: [
     {
-      id: "build-urge-skills",
-      name: "Urge skills floor",
-      description: "Practice STOP, surf, and replacement actions with timed reps.",
-      activeUsers: 17,
-      status: "live",
-    },
-    {
-      id: "build-pattern-review",
-      name: "Pattern review",
-      description: "Weekly review of triggers, slips, and what actually worked.",
-      activeUsers: 20,
-      status: "open",
-      overflowRoomId: "build-pattern-overflow",
-    },
-    {
-      id: "build-pattern-overflow",
-      name: "Pattern review · Room 2",
-      description: "Overflow space when the main review room is full.",
-      activeUsers: 6,
+      id: "maintain-chat",
+      name: "Maintain",
+      description: "Using new skills and patterns that hold when pressure spikes.",
+      activeUsers: 14,
       status: "open",
     },
   ],
   repair_life: [
     {
-      id: "repair-trust-window",
-      name: "Trust repair window",
-      description: "Small, honest steps after harm—boundaries without performance.",
+      id: "rebuild-chat",
+      name: "Rebuild",
+      description: "Trust, work, money, and relationships—steady, visible steps.",
       activeUsers: 11,
-      status: "live",
-    },
-    {
-      id: "repair-money-clarity",
-      name: "Money clarity hour",
-      description: "Practical planning without shame—bills, income, next right size.",
-      activeUsers: 8,
       status: "open",
     },
   ],
   heal_deep: [
     {
-      id: "deep-nervous-system",
-      name: "Nervous system circle",
-      description: "Body-first language; pacing and consent are non-negotiable.",
-      activeUsers: 20,
-      status: "live",
-      overflowRoomId: "deep-nervous-overflow",
-    },
-    {
-      id: "deep-nervous-overflow",
-      name: "Nervous system circle · Room 2",
-      description: "Parallel circle when the main room reaches capacity.",
-      activeUsers: 12,
+      id: "heal-chat",
+      name: "Heal",
+      description: "Trauma-informed depth alongside your day-to-day plan.",
+      activeUsers: 13,
       status: "open",
     },
   ],
   grow_forward: [
     {
-      id: "grow-purpose-studio",
-      name: "Purpose studio",
-      description: "Identity beyond survival—values, roles, and meaningful next steps.",
+      id: "grow-chat",
+      name: "Grow",
+      description: "Purpose, identity, and momentum beyond crisis mode.",
       activeUsers: 15,
       status: "open",
-    },
-    {
-      id: "grow-momentum-lab",
-      name: "Momentum lab",
-      description: "Accountability for long-arc goals without hustle toxicity.",
-      activeUsers: 19,
-      status: "live",
     },
   ],
   give_back: [
     {
-      id: "give-mentor-guild",
-      name: "Mentor guild",
-      description: "Share experience carefully—boundaries, humility, and self-care.",
-      activeUsers: 20,
-      status: "live",
-      overflowRoomId: "give-mentor-overflow",
-    },
-    {
-      id: "give-mentor-overflow",
-      name: "Mentor guild · Room 2",
-      description: "Overflow mentor space with the same agreements.",
-      activeUsers: 4,
-      status: "open",
-    },
-    {
-      id: "give-service-design",
-      name: "Service design",
-      description: "Sustainable volunteering and leadership without burnout.",
+      id: "give-back-chat",
+      name: "Give Back",
+      description: "Mentorship and service—without losing your center.",
       activeUsers: 10,
       status: "open",
     },
@@ -151,14 +84,6 @@ export function findDemoRoomById(roomId: string | undefined): DemoRoom | null {
     if (hit) return hit;
   }
   return null;
-}
-
-export function isRoomFull(room: DemoRoom): boolean {
-  return room.activeUsers >= MAX_ROOM_USERS;
-}
-
-export function isAtCapacity(activeUsers: number): boolean {
-  return activeUsers >= MAX_ROOM_USERS;
 }
 
 /** Baseline occupancy from demo catalog (used to reset mock state). */

@@ -5,13 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { ScreenScrollView } from "../ScreenScrollView";
 import { getRecoveryPathById } from "../../constants/recoveryPaths";
-import {
-  getDemoRoomsForPath,
-  isAtCapacity,
-  MAX_ROOM_USERS,
-  type DemoRoom,
-} from "../../constants/recoveryPathRooms";
-import { useMockRoomCapacityStore } from "../../stores/useMockRoomCapacityStore";
+import { getDemoRoomsForPath, type DemoRoom } from "../../constants/recoveryPathRooms";
 
 const PREMIUM = {
   bg: "#0b0d0f",
@@ -22,8 +16,6 @@ const PREMIUM = {
   accent: "#2EC4B6",
   live: "rgba(46,196,182,0.2)",
   open: "rgba(255,255,255,0.08)",
-  full: "rgba(239,83,80,0.2)",
-  fullText: "#F2A6A6",
 } as const;
 
 export default function RoomListScreen() {
@@ -34,7 +26,6 @@ export default function RoomListScreen() {
   const pathIdRaw = Array.isArray(raw.pathId) ? raw.pathId[0] : raw.pathId;
   const path = useMemo(() => getRecoveryPathById(pathIdRaw), [pathIdRaw]);
   const rooms = useMemo(() => getDemoRoomsForPath(path?.id ?? null), [path?.id]);
-  const countsByRoomId = useMockRoomCapacityStore((s) => s.countsByRoomId);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -66,12 +57,7 @@ export default function RoomListScreen() {
             <Text style={styles.sectionLabel}>Rooms</Text>
             <View style={styles.list}>
               {rooms.map((room) => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  liveCount={countsByRoomId[room.id] ?? room.activeUsers}
-                  onOpenRoom={openChat}
-                />
+                <RoomCard key={room.id} room={room} onOpenRoom={openChat} />
               ))}
             </View>
           </>
@@ -83,64 +69,23 @@ export default function RoomListScreen() {
   );
 }
 
-function RoomCard({
-  room,
-  liveCount,
-  onOpenRoom,
-}: {
-  room: DemoRoom;
-  liveCount: number;
-  onOpenRoom: (roomId: string) => void;
-}) {
-  const full = isAtCapacity(liveCount);
-  const showOverflowCta = full && room.overflowRoomId;
-  const joinDisabled = full;
-
+function RoomCard({ room, onOpenRoom }: { room: DemoRoom; onOpenRoom: (roomId: string) => void }) {
   return (
     <View style={styles.card}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${room.name}. ${room.description}`}
-        accessibilityState={{ disabled: joinDisabled }}
-        disabled={joinDisabled}
         onPress={() => onOpenRoom(room.id)}
-        style={({ pressed }) => [
-          styles.cardMain,
-          joinDisabled && styles.cardMainDisabled,
-          pressed && !joinDisabled && styles.cardPressed,
-        ]}
+        style={({ pressed }) => [styles.cardMain, pressed && styles.cardPressed]}
       >
         <View style={styles.cardHeader}>
           <Text style={styles.roomName}>{room.name}</Text>
-          <View style={styles.badgeRow}>
-            <View style={[styles.statusBadge, room.status === "live" ? styles.statusLive : styles.statusOpen]}>
-              <Text style={styles.statusBadgeText}>{room.status === "live" ? "Live" : "Open"}</Text>
-            </View>
-            {full ? (
-              <View style={styles.fullBadge}>
-                <Text style={styles.fullBadgeText}>Full</Text>
-              </View>
-            ) : null}
+          <View style={[styles.statusBadge, room.status === "live" ? styles.statusLive : styles.statusOpen]}>
+            <Text style={styles.statusBadgeText}>{room.status === "live" ? "Live" : "Open"}</Text>
           </View>
         </View>
         <Text style={styles.roomDescription}>{room.description}</Text>
-        <Text style={styles.activeLine}>
-          {liveCount} / {MAX_ROOM_USERS} active
-        </Text>
-        {joinDisabled ? (
-          <Text style={styles.joinHint}>{showOverflowCta ? "Main room is at capacity." : "This room is at capacity."}</Text>
-        ) : null}
       </Pressable>
-      {showOverflowCta ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Join overflow room"
-          onPress={() => onOpenRoom(room.overflowRoomId!)}
-          style={({ pressed }) => [styles.overflowCta, pressed && styles.overflowPressed]}
-        >
-          <Text style={styles.overflowCtaText}>Join Overflow Room</Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -189,9 +134,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
-  cardMainDisabled: {
-    opacity: 0.52,
-  },
   cardPressed: {
     opacity: 0.88,
   },
@@ -209,16 +151,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.2,
   },
-  badgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flexShrink: 0,
-  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    flexShrink: 0,
   },
   statusLive: {
     backgroundColor: PREMIUM.live,
@@ -233,50 +170,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: "uppercase",
   },
-  fullBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-    backgroundColor: PREMIUM.full,
-  },
-  fullBadgeText: {
-    color: PREMIUM.fullText,
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
   roomDescription: {
     color: PREMIUM.muted,
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 10,
-  },
-  activeLine: {
-    color: PREMIUM.muted,
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  joinHint: {
-    marginTop: 10,
-    fontSize: 12,
-    color: PREMIUM.muted,
-    lineHeight: 16,
-  },
-  overflowCta: {
-    borderTopWidth: 1,
-    borderTopColor: PREMIUM.border,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: "center",
-  },
-  overflowPressed: {
-    opacity: 0.85,
-  },
-  overflowCtaText: {
-    color: PREMIUM.accent,
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 0.2,
   },
 });

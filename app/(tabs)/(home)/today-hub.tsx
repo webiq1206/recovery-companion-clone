@@ -6,7 +6,6 @@ import {
   Pressable,
   Animated as RNAnimated,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Redirect, usePathname } from 'expo-router';
@@ -18,31 +17,20 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  Compass,
   Info,
-  X,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
 import { hairline, radius, shadows, spacing } from '../../../constants/theme';
 import { useUser } from '../../../core/domains/useUser';
-import { arePeerPracticeFeaturesEnabled } from '../../../core/socialLiveConfig';
-import {
-  SMART_ENTRY_BANNER_DISMISS_KEY,
-  clearSmartEntryBannerDismiss,
-  DEFAULT_SMART_ENTRY_MOOD,
-  getSmartEntryRecommendation,
-  moodInputFromLatestCheckIn,
-} from '../../../core/smartEntryRouting';
 import { useAppStore } from '../../../stores/useAppStore';
-import { useSubscription } from '../../../providers/SubscriptionProvider';
 import { useTodayHub } from '../../../features/home/hooks/useTodayHub';
 import { useWizardEngineHook } from '../../../hooks/useWizardEngine';
 import { HomeLoadingSkeleton } from '../../../components/LoadingSkeleton';
 import { getStrictRedirectTarget, resolveCanonicalRoute } from '../../../utils/legacyRoutes';
 import { isCheckInPeriodInWindow } from '../../../utils/checkInWindows';
 import { getGuidanceCollapsedFocusIndex, type WizardAction } from '../../../utils/wizardEngine';
-import { formatGuidanceDateKeyUs, getGuidanceDateKey, getLocalDateKey } from '../../../utils/checkInDate';
+import { formatGuidanceDateKeyUs, getGuidanceDateKey } from '../../../utils/checkInDate';
 import { TabHeaderActions } from '../../../components/TabHeaderActions';
 import { ProfileHeaderSummaryCard } from '../../../components/ProfileHeaderSummaryCard';
 
@@ -111,53 +99,10 @@ export default function TodayHubScreen() {
   const router = useRouter();
   const pathname = usePathname();
   const vm = useTodayHub();
-  const { profile, daysSober } = useUser();
-  const { hasFeature } = useSubscription();
+  const { profile } = useUser();
   const centralProfile = useAppStore((s) => s.userProfile);
-  const dailyCheckIns = useAppStore((s) => s.dailyCheckIns);
-
   const { plan: wizardPlan, recentCompletion, clearRecentCompletion } =
     useWizardEngineHook();
-
-  const [smartBannerDismissedDay, setSmartBannerDismissedDay] = useState<string | null>(null);
-
-  useEffect(() => {
-    void AsyncStorage.getItem(SMART_ENTRY_BANNER_DISMISS_KEY).then((v) =>
-      setSmartBannerDismissedDay(v ?? ''),
-    );
-  }, []);
-
-  const { smartMoodInput, usedLatestCheckInForRouting } = useMemo(() => {
-    const fromCheckIn = moodInputFromLatestCheckIn(dailyCheckIns);
-    return {
-      smartMoodInput: fromCheckIn ?? DEFAULT_SMART_ENTRY_MOOD,
-      usedLatestCheckInForRouting: fromCheckIn !== null,
-    };
-  }, [dailyCheckIns]);
-
-  const smartEntry = useMemo(
-    () => getSmartEntryRecommendation(daysSober, smartMoodInput),
-    [daysSober, smartMoodInput],
-  );
-
-  const todayDateKey = getLocalDateKey(new Date());
-  const showSmartEntryBanner =
-    smartBannerDismissedDay !== null && smartBannerDismissedDay !== todayDateKey;
-
-  const showSmartEntryRestoreLink =
-    smartBannerDismissedDay !== null && smartBannerDismissedDay === todayDateKey;
-
-  const dismissSmartEntryBanner = useCallback(() => {
-    const key = getLocalDateKey(new Date());
-    setSmartBannerDismissedDay(key);
-    void AsyncStorage.setItem(SMART_ENTRY_BANNER_DISMISS_KEY, key);
-  }, []);
-
-  const restoreSmartEntryBanner = useCallback(() => {
-    setSmartBannerDismissedDay('');
-    void clearSmartEntryBannerDismiss();
-  }, []);
-
 
   /** Re-render every minute so check-in windows update at period boundaries. */
   const [checkInWindowTick, setCheckInWindowTick] = useState(0);
@@ -302,21 +247,6 @@ export default function TodayHubScreen() {
               Welcome back. Let\u2019s ease into today.
             </Text>
           ) : null}
-          {showSmartEntryRestoreLink ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Show path and room suggestion again"
-              onPress={() => {
-                Haptics.selectionAsync();
-                restoreSmartEntryBanner();
-              }}
-              style={({ pressed }) => [styles.smartEntryRestoreLink, pressed && styles.pressed]}
-              testID="todayhub-smart-entry-restore"
-            >
-              <Compass size={15} color={Colors.primary} />
-              <Text style={styles.smartEntryRestoreLinkText}>Show path & room suggestion</Text>
-            </Pressable>
-          ) : null}
           <Pressable
             style={({ pressed }) => [
               styles.struggleButton,
@@ -343,80 +273,6 @@ export default function TodayHubScreen() {
           centeredHeadline="Recovery is one day at a time"
           testID="todayhub-recovery-journey-card"
         />
-
-        {showSmartEntryBanner ? (
-          <View style={styles.smartEntryCard} testID="todayhub-smart-entry-banner">
-            <View style={styles.smartEntryHeaderRow}>
-              <View style={styles.smartEntryIconWrap}>
-                <Compass size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.smartEntryHeaderText}>
-                <Text style={styles.smartEntryTitle}>Suggested for you</Text>
-                <Text style={styles.smartEntryKicker} numberOfLines={2}>
-                  {usedLatestCheckInForRouting
-                    ? 'Based on your latest check-in and time sober.'
-                    : 'Signals use neutral defaults until you check in.'}
-                </Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Dismiss suggestion for today"
-                hitSlop={12}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  dismissSmartEntryBanner();
-                }}
-                style={({ pressed }) => [styles.smartEntryDismiss, pressed && styles.pressed]}
-              >
-                <X size={20} color={Colors.textMuted} />
-              </Pressable>
-            </View>
-            <Text style={styles.smartEntryBody} numberOfLines={3}>
-              Path: {smartEntry.recoveryPathTitle}. Room: {smartEntry.recoveryRoomName}.{' '}
-              {smartEntry.reasons[0]}
-            </Text>
-            <View style={styles.smartEntryActions}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.smartEntryBtn,
-                  styles.smartEntryBtnSecondary,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push({
-                    pathname: '/recovery-paths/room-list',
-                    params: { pathId: smartEntry.recoveryPathId },
-                  } as never);
-                }}
-              >
-                <Text style={styles.smartEntryBtnSecondaryText}>Recovery path</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.smartEntryBtn,
-                  styles.smartEntryBtnPrimary,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  const canRoomSession =
-                    hasFeature('recovery_rooms') && arePeerPracticeFeaturesEnabled();
-                  if (canRoomSession) {
-                    router.push({
-                      pathname: '/room-session',
-                      params: { roomId: smartEntry.recoveryRoomId },
-                    } as never);
-                  } else {
-                    router.push('/recovery-rooms' as never);
-                  }
-                }}
-              >
-                <Text style={styles.smartEntryBtnPrimaryText}>Recovery room</Text>
-              </Pressable>
-            </View>
-          </View>
-        ) : null}
 
         {/* Context hint (replaces PersonalizationCard) */}
         {dailyGuidance.contextHint && (
@@ -647,21 +503,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 4,
   },
-  smartEntryRestoreLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 8,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xxs,
-    paddingVertical: spacing.xxs,
-    paddingRight: spacing.xs,
-  },
-  smartEntryRestoreLinkText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
   contextHintCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -767,84 +608,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 2,
-  },
-  smartEntryCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: hairline,
-    ...shadows.soft,
-  },
-  smartEntryHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 10,
-  },
-  smartEntryIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.primary + '18',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  smartEntryHeaderText: {
-    flex: 1,
-    minWidth: 0,
-  },
-  smartEntryTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  smartEntryKicker: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  smartEntryDismiss: {
-    padding: 4,
-    marginTop: -2,
-    marginRight: -4,
-  },
-  smartEntryBody: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 14,
-  },
-  smartEntryActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  smartEntryBtn: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  smartEntryBtnPrimary: {
-    backgroundColor: Colors.primary,
-  },
-  smartEntryBtnPrimaryText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  smartEntryBtnSecondary: {
-    backgroundColor: Colors.cardBackground,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: hairline,
-  },
-  smartEntryBtnSecondaryText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.text,
   },
   guidanceTitleRow: {
     flexDirection: 'row' as const,

@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookOpen, Send, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../../constants/colors';
+import { ChatSafetyLinksBar } from '../../../../components/ChatSafetyLinksBar';
 import { arePeerPracticeFeaturesEnabled } from '../../../../core/socialLiveConfig';
 import { useConnection } from '../../../../providers/ConnectionProvider';
 import type { PeerMessage } from '../../../../types';
@@ -311,6 +312,7 @@ export default function PeerChatScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
     >
+      <ChatSafetyLinksBar tone="light" testID="peer-chat-safety-bar" />
       <FlatList
         data={listData}
         keyExtractor={(m) => m.id}

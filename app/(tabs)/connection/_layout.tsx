@@ -24,6 +24,12 @@ export default function ConnectionLayout() {
         }}
       />
       <Stack.Screen
+        name="chat-paths"
+        options={{
+          title: "Chat",
+        }}
+      />
+      <Stack.Screen
         name="recovery-rooms"
         options={{
           title: "Recovery Rooms",

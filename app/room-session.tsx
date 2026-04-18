@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import type { FlatList } from 'react-native';
 import { ScreenFlatList } from '../components/ScreenFlatList';
+import { ChatSafetyLinksBar } from '../components/ChatSafetyLinksBar';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -556,20 +557,12 @@ export default function RoomSessionScreen() {
         })}
       </View>
 
-      <Pressable
-        style={({ pressed }) => [styles.safetyBar, pressed && { opacity: 0.88 }]}
-        onPress={() => {
-          Haptics.selectionAsync();
-          router.push('/community-guidelines' as any);
-        }}
+      <ChatSafetyLinksBar
+        tone="light"
+        showBottomDivider={false}
         testID="room-safety-guidelines-bar"
-      >
-        <Shield size={16} color={Colors.primary} />
-        <Text style={styles.safetyBarText} numberOfLines={2}>
-          Guidelines · Report abuse · Block users — long-press a message for options
-        </Text>
-        <ChevronRight size={16} color={Colors.textMuted} />
-      </Pressable>
+        style={styles.safetyBar}
+      />
 
       {sessionView === 'chat' && (
         <KeyboardAvoidingView
@@ -906,24 +899,12 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   safetyBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     marginHorizontal: 16,
     marginBottom: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: Colors.cardBackground,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-  },
-  safetyBarText: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: Colors.textSecondary,
-    lineHeight: 16,
+    overflow: 'hidden',
   },
   guidelinesCta: {
     flexDirection: 'row',

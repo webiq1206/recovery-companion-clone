@@ -15,6 +15,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { ScreenFlatList } from '../../../components/ScreenFlatList';
+import { ChatSafetyLinksBar } from '../../../components/ChatSafetyLinksBar';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,6 +23,7 @@ import {
   Heart, Shield, MessageCircle, Users, Phone, Plus, X,
   Send, UserPlus, CircleDot, ChevronRight,
   PhoneCall, Trash2, ToggleLeft, ToggleRight, Radio, BookOpen, Flag,
+  MessagesSquare,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
@@ -780,6 +782,12 @@ export default function ConnectionScreen() {
                 )}
               </View>
             </View>
+            <ChatSafetyLinksBar
+              tone="light"
+              showBottomDivider={false}
+              testID="connection-practice-room-safety-bar"
+              style={styles.chatModalSafetyBar}
+            />
             <ScreenFlatList
               data={roomMessages}
               keyExtractor={item => item.id}
@@ -880,6 +888,26 @@ export default function ConnectionScreen() {
             allowed. This store-style build is showing Circle only.
           </Text>
         ) : null}
+      </View>
+
+      <View style={styles.chatTopLinkWrap}>
+        <Pressable
+          style={({ pressed }) => [styles.chatTopLink, pressed && { opacity: 0.9 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/(tabs)/connection/chat-paths' as never);
+          }}
+          testID="connection-chat-paths-btn"
+        >
+          <MessagesSquare size={18} color={Colors.primary} />
+          <View style={styles.chatTopLinkTextCol}>
+            <Text style={styles.chatTopLinkTitle}>Chat</Text>
+            <Text style={styles.chatTopLinkSub} numberOfLines={2}>
+              Paths and rooms — open a space to connect
+            </Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textMuted} />
+        </Pressable>
       </View>
 
       <View style={styles.tabRow}>
@@ -1065,6 +1093,36 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: 12,
+  },
+  chatTopLinkWrap: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  chatTopLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  chatTopLinkTextCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  chatTopLinkTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  chatTopLinkSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 16,
   },
   tabRow: {
     flexDirection: 'row',
@@ -1781,7 +1839,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  chatModalSafetyBar: {
+    marginBottom: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
   },
   chatModalTitleRow: {
     flexDirection: 'row',
