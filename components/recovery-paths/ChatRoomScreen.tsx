@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
+  type KeyboardEvent,
   type ListRenderItem,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
@@ -445,6 +446,24 @@ export default function ChatRoomScreen() {
   const [reactionBarMessageId, setReactionBarMessageId] = useState<string | null>(null);
   const [replyDraftParentId, setReplyDraftParentId] = useState<string | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
+  const [keyboardBottomPad, setKeyboardBottomPad] = useState(0);
+
+  useEffect(() => {
+    const onShow = (e: KeyboardEvent) => {
+      setKeyboardBottomPad(e.endCoordinates.height);
+    };
+    const onHide = () => {
+      setKeyboardBottomPad(0);
+    };
+    const showEvt = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvt = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const subShow = Keyboard.addListener(showEvt, onShow);
+    const subHide = Keyboard.addListener(hideEvt, onHide);
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, []);
 
   useEffect(() => {
     setMessages(messageSeed);
@@ -544,12 +563,7 @@ export default function ChatRoomScreen() {
         </Text>
       </View>
       <ConnectSafetyGuidelinesStrip tone="dark" testID="recovery-path-chat-safety-bar" />
-      <KeyboardAvoidingView
-        style={styles.kavBody}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        enabled={Platform.OS === "ios"}
-        keyboardVerticalOffset={0}
-      >
+      <View style={[styles.kavBody, { paddingBottom: keyboardBottomPad }]}>
         <FlatList
           style={styles.chatList}
           data={threadGroups}
@@ -612,7 +626,7 @@ export default function ChatRoomScreen() {
             <Send size={22} color={input.trim() ? PREMIUM.text : PREMIUM.sendDisabled} />
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </View>
   );
 }

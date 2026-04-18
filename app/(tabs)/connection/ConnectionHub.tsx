@@ -11,23 +11,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
-  type StyleProp,
-  type ViewStyle,
 } from 'react-native';
 import { ScreenFlatList } from '../../../components/ScreenFlatList';
-import { ConnectSafetyGuidelinesStrip } from '../../../components/ConnectSafetyGuidelinesStrip';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
+import { RecoveryPathRoomsContent } from '../../../components/connection/RecoveryPathRoomsContent';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Heart, Shield, MessageCircle, Users, Phone, Plus, X,
-  Send, UserPlus, CircleDot, ChevronRight,
-  PhoneCall, Trash2, ToggleLeft, ToggleRight, Radio, BookOpen,
-  MessagesSquare,
+  Send, UserPlus, CircleDot,
+  PhoneCall, Trash2, ToggleLeft, ToggleRight, BookOpen,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
-import { arePeerPracticeFeaturesEnabled, isCommunityEnabled } from '../../../core/socialLiveConfig';
+import { spacing } from '../../../constants/theme';
+import { arePeerPracticeFeaturesEnabled } from '../../../core/socialLiveConfig';
 import { SupportResourcesContent } from '../support/index';
 import { useConnection } from '../../../providers/ConnectionProvider';
 import { TrustedContact, SafeRoom, RoomMessage } from '../../../types';
@@ -62,11 +60,10 @@ export default function ConnectionScreen() {
     setUserDisplayName,
     addTrustedContact, removeTrustedContact, updateContactAvailability,
     blockConnectionRoomAuthor, recordLocalUgcReport,
-    joinRoom, leaveRoom, sendRoomMessage,
+    leaveRoom, sendRoomMessage,
   } = useConnection();
 
   const peerPracticeEnabled = arePeerPracticeFeaturesEnabled();
-  const liveRecoveryRooms = isCommunityEnabled();
   const [activeTab, setActiveTab] = useState<ConnectionTab>('circle');
 
   React.useEffect(() => {
@@ -178,17 +175,6 @@ export default function ConnectionScreen() {
     setShowNamePrompt(false);
     setNameInput('');
   }, [nameInput, setUserDisplayName]);
-
-  const renderUgcSafetyStrip = useCallback(
-    (opts?: { title?: string; stripStyle?: StyleProp<ViewStyle> }) => (
-      <ConnectSafetyGuidelinesStrip
-        title={opts?.title}
-        style={opts?.stripStyle}
-        testID="connection-ugc-safety-strip"
-      />
-    ),
-    [],
-  );
 
   const activeRoom = useMemo(() => {
     if (!activeRoomId) return null;
@@ -348,91 +334,19 @@ export default function ConnectionScreen() {
     />
   );
 
-  const renderRoomItem = useCallback(({ item }: { item: SafeRoom }) => {
-    return (
-      <Pressable
-        style={({ pressed }) => [styles.roomCard, pressed && { opacity: 0.9 }]}
-        onPress={() => {
-          Haptics.selectionAsync();
-          if (!item.isJoined) {
-            if (!chatIdentityLabel && !displayName) {
-              setShowNamePrompt(true);
-              return;
-            }
-            joinRoom(item.id);
-          }
-          setActiveRoomId(item.id);
-        }}
-        testID={`room-${item.id}`}
-      >
-        <View style={styles.roomHeader}>
-          <View style={styles.roomIcon}>
-            <Users size={18} color={Colors.primary} />
-          </View>
-          <View style={styles.roomInfo}>
-            <Text style={styles.roomName}>{item.name}</Text>
-            <Text style={styles.roomMembers}>
-              {item.memberCount}/{item.maxMembers} members
-            </Text>
-          </View>
-          {item.isJoined ? (
-            <View style={styles.joinedBadge}>
-              <Text style={styles.joinedText}>Joined</Text>
-            </View>
-          ) : (
-            <View style={styles.joinBadge}>
-              <Text style={styles.joinText}>Join</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.roomDescription}>{item.description}</Text>
-        {item.messages.length > 0 && (
-          <View style={styles.roomPreview}>
-            <Text style={styles.roomPreviewAuthor}>
-              {item.messages[item.messages.length - 1].authorName}:
-            </Text>
-            <Text style={styles.roomPreviewText} numberOfLines={1}>
-              {item.messages[item.messages.length - 1].content}
-            </Text>
-          </View>
-        )}
-      </Pressable>
-    );
-  }, [chatIdentityLabel, displayName, joinRoom]);
-
   const renderRoomsTab = () => (
     <View style={styles.tabContent}>
-      {renderUgcSafetyStrip()}
-      <Pressable
-        style={({ pressed }) => [styles.recoveryRoomsBanner, pressed && { opacity: 0.9 }]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          router.push('/recovery-rooms' as any);
-        }}
-        testID="recovery-rooms-btn"
-      >
-        <View style={styles.recoveryRoomsBannerIcon}>
-          <Radio size={20} color="#FF6B6B" />
-        </View>
-        <View style={styles.recoveryRoomsBannerInfo}>
-          <Text style={styles.recoveryRoomsBannerTitle}>
-            {liveRecoveryRooms ? 'Recovery Rooms' : 'Recovery Rooms (practice)'}
-          </Text>
-          <Text style={styles.recoveryRoomsBannerDesc}>
-            {liveRecoveryRooms
-              ? 'Join scheduled small-group sessions. Use Report for safety issues. This is not crisis care and who is online varies.'
-              : 'On-device prompts and sample threads for reflection—not real-time moderated therapy or guaranteed live peers.'}
-          </Text>
-        </View>
-        <ChevronRight size={18} color={Colors.textMuted} />
-      </Pressable>
-      <ScreenFlatList
-        data={safeRooms}
-        renderItem={renderRoomItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
+      <ScreenScrollView
+        style={styles.roomsTabScroll}
+        contentContainerStyle={[
+          styles.roomsTabScrollContent,
+          { paddingBottom: insets.bottom + spacing.lg },
+        ]}
         showsVerticalScrollIndicator={false}
-      />
+        keyboardShouldPersistTaps="handled"
+      >
+        <RecoveryPathRoomsContent testID="connection-tab-rooms-recovery-paths" />
+      </ScreenScrollView>
     </View>
   );
 
@@ -681,10 +595,6 @@ export default function ConnectionScreen() {
                 )}
               </View>
             </View>
-            <ConnectSafetyGuidelinesStrip
-              testID="connection-practice-room-safety-bar"
-              style={{ marginHorizontal: 0, marginBottom: 10 }}
-            />
             <ScreenFlatList
               data={roomMessages}
               keyExtractor={item => item.id}
@@ -786,26 +696,6 @@ export default function ConnectionScreen() {
             only.
           </Text>
         ) : null}
-      </View>
-
-      <View style={styles.chatTopLinkWrap}>
-        <Pressable
-          style={({ pressed }) => [styles.chatTopLink, pressed && { opacity: 0.9 }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/(tabs)/connection/chat-paths' as never);
-          }}
-          testID="connection-chat-paths-btn"
-        >
-          <MessagesSquare size={18} color={Colors.primary} />
-          <View style={styles.chatTopLinkTextCol}>
-            <Text style={styles.chatTopLinkTitle}>Recovery Path Rooms</Text>
-            <Text style={styles.chatTopLinkSub} numberOfLines={2}>
-              Themed path rooms — one continuous chat per room
-            </Text>
-          </View>
-          <ChevronRight size={18} color={Colors.textMuted} />
-        </Pressable>
       </View>
 
       <View style={styles.tabRow}>
@@ -983,36 +873,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 12,
   },
-  chatTopLinkWrap: {
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  chatTopLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 0.5,
-    borderColor: Colors.border,
-  },
-  chatTopLinkTextCol: {
-    flex: 1,
-    minWidth: 0,
-  },
-  chatTopLinkTitle: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: Colors.text,
-  },
-  chatTopLinkSub: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 16,
-  },
   tabRow: {
     flexDirection: 'row',
     marginHorizontal: 16,
@@ -1043,6 +903,13 @@ const styles = StyleSheet.create({
   },
   tabContent: {
     flex: 1,
+  },
+  roomsTabScroll: {
+    flex: 1,
+  },
+  roomsTabScrollContent: {
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.xs,
   },
   listContent: {
     padding: 16,
