@@ -138,18 +138,18 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   cardHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
     marginBottom: 8,
   },
   roomName: {
-    flex: 1,
     color: PREMIUM.text,
     fontSize: 17,
     fontWeight: "700",
     letterSpacing: -0.2,
+    textAlign: "center",
+    width: "100%",
   },
   statusBadge: {
     paddingHorizontal: 8,

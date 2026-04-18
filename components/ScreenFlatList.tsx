@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useRef } from 'react';
-import { FlatList, type FlatListProps } from 'react-native';
+import { FlatList, Platform, type FlatListProps } from 'react-native';
 import { useScrollToTopOnFocus } from '../hooks/useScrollToTopOnFocus';
 
 /**
@@ -31,6 +31,7 @@ export const ScreenFlatList = forwardRef<FlatList<any>, FlatListProps<any>>(
         ref={setRef}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? false}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? 'handled'}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         {...rest}
       />
     );

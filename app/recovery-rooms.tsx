@@ -52,7 +52,7 @@ export default function RecoveryRoomsScreen() {
   const router = useRouter();
   const { hasFeature } = useSubscription();
   const {
-    rooms, joinedRooms, availableRooms, liveRooms,
+    rooms, joinedRooms, availableRooms,
     displayName, chatIdentityLabel, isAnonymousDefault,
     setRoomDisplayName, setAnonymousDefault,
     joinRoom, leaveRoom, topicLabels,
@@ -190,33 +190,6 @@ export default function RecoveryRoomsScreen() {
       );
     }
     return null;
-  };
-
-  const renderLiveBanner = () => {
-    if (socialMode !== 'live' || liveRooms.length === 0) return null;
-    return (
-      <View style={styles.liveBanner}>
-        <View style={styles.liveDotContainer}>
-          <View style={styles.liveDot} />
-          <View style={styles.liveDotPulse} />
-        </View>
-        <Text style={styles.liveBannerText}>
-          {liveRooms.length} live session{liveRooms.length > 1 ? 's' : ''} happening now
-        </Text>
-        <Pressable
-          style={styles.liveBannerAction}
-          onPress={() => {
-            Haptics.selectionAsync();
-            if (liveRooms[0]) {
-              handleEnterRoom(liveRooms[0]);
-            }
-          }}
-        >
-          <Text style={styles.liveBannerActionText}>Join</Text>
-          <ChevronRight size={14} color="#FFFFFF" />
-        </Pressable>
-      </View>
-    );
   };
 
   const renderTopicFilter = () => {
@@ -520,7 +493,6 @@ export default function RecoveryRoomsScreen() {
         </View>
         <ChevronRight size={16} color={Colors.textMuted} />
       </Pressable>
-      {renderLiveBanner()}
       {renderContent()}
 
       <SafeAreaView
@@ -727,58 +699,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700' as const,
     color: Colors.primary,
-  },
-  liveBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 77, 77, 0.08)',
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 77, 77, 0.2)',
-  },
-  liveDotContainer: {
-    width: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF4D4D',
-  },
-  liveDotPulse: {
-    position: 'absolute',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: 'rgba(255, 77, 77, 0.25)',
-  },
-  liveBannerText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: '#FF6B6B',
-  },
-  liveBannerAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: '#FF4D4D',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  liveBannerActionText: {
-    fontSize: 12,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
   },
   topicFilterRow: {
     paddingHorizontal: 0,

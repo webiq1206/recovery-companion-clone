@@ -35,9 +35,45 @@ export function formatAnonymousIdentityLabel(identity: AnonymousIdentity): strin
   return `${dayPart} · ${identity.role}`;
 }
 
-/** Ephemeral label for simulated peers (not persisted). */
+const HANDLE_ADJECTIVES = [
+  'Quiet',
+  'Steady',
+  'Gentle',
+  'Brave',
+  'Kind',
+  'Calm',
+  'Bright',
+  'Wild',
+] as const;
+
+const HANDLE_NOUNS = [
+  'River',
+  'Oak',
+  'Harbor',
+  'Summit',
+  'Path',
+  'Brook',
+  'Pine',
+  'Heron',
+  'Meadow',
+  'Cedar',
+] as const;
+
+/** Stable anonymous-style display name for chat (replaces "Day N · Role" in UI). */
+export function formatAnonymousChatHandle(identity: AnonymousIdentity): string {
+  const day = Math.max(1, Math.min(9999, Math.floor(identity.dayCount)));
+  const roleKey =
+    identity.role === 'Mentor' ? 3 : identity.role === 'Active' ? 2 : identity.role === 'New' ? 1 : 0;
+  const h = (day * 17 + roleKey * 31) % (HANDLE_ADJECTIVES.length * HANDLE_NOUNS.length);
+  const adj = HANDLE_ADJECTIVES[Math.floor(h / HANDLE_NOUNS.length) % HANDLE_ADJECTIVES.length];
+  const noun = HANDLE_NOUNS[h % HANDLE_NOUNS.length];
+  const suffix = String(day % 100).padStart(2, '0');
+  return `${adj}${noun}${suffix}`;
+}
+
+/** Ephemeral handle for simulated peers (not persisted). */
 export function generateRandomIdentityLabel(): string {
-  return formatAnonymousIdentityLabel(generateMockIdentity());
+  return formatAnonymousChatHandle(generateMockIdentity());
 }
 
 export async function loadOrCreateAnonymousIdentity(): Promise<AnonymousIdentity> {

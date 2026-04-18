@@ -213,7 +213,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   specialized: '#7E57C2',
 };
 
-export default function SupportScreen() {
+/** Same body as the Support tab route; embedded on Connection when Resources is selected. */
+export function SupportResourcesContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleCall = useCallback((dial: string, displayLabel?: string) => {
@@ -306,8 +307,7 @@ export default function SupportScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Support & Resources' }} />
+    <View style={styles.container} testID="support-resources-content">
       <ScreenScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -383,7 +383,20 @@ export default function SupportScreen() {
   );
 }
 
+export default function SupportScreen() {
+  return (
+    <View style={styles.routeRoot}>
+      <Stack.Screen options={{ title: 'Support & Resources' }} />
+      <SupportResourcesContent />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  routeRoot: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,

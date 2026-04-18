@@ -16,7 +16,7 @@ import {
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import {
   ANONYMOUS_CHAT_IDENTITY_QUERY_KEY,
-  formatAnonymousIdentityLabel,
+  formatAnonymousChatHandle,
   generateRandomIdentityLabel,
   loadOrCreateAnonymousIdentity,
 } from '../core/anonymousIdentity';
@@ -53,9 +53,9 @@ const SAMPLE_ROOMS: SafeRoom[] = [
     createdAt: '2026-02-10T08:00:00.000Z',
     lastActivity: '2026-02-16T07:30:00.000Z',
     messages: [
-      { id: 'rm_1', roomId: 'room_1', authorName: 'Day 45 · Active', content: 'Good morning everyone. Day 45 here. Feeling grateful today.', timestamp: '2026-02-16T07:15:00.000Z', isOwn: false },
-      { id: 'rm_2', roomId: 'room_1', authorName: 'Day 8 · New', content: 'Morning! Had a rough night but showing up anyway. That counts right?', timestamp: '2026-02-16T07:20:00.000Z', isOwn: false },
-      { id: 'rm_3', roomId: 'room_1', authorName: 'Day 112 · Mentor', content: 'It absolutely counts. Showing up is everything.', timestamp: '2026-02-16T07:25:00.000Z', isOwn: false },
+      { id: 'rm_1', roomId: 'room_1', authorName: 'SteadyRiver45', content: 'Good morning everyone. Day 45 here. Feeling grateful today.', timestamp: '2026-02-16T07:15:00.000Z', isOwn: false },
+      { id: 'rm_2', roomId: 'room_1', authorName: 'QuietOak08', content: 'Morning! Had a rough night but showing up anyway. That counts right?', timestamp: '2026-02-16T07:20:00.000Z', isOwn: false },
+      { id: 'rm_3', roomId: 'room_1', authorName: 'KindHarbor12', content: 'It absolutely counts. Showing up is everything.', timestamp: '2026-02-16T07:25:00.000Z', isOwn: false },
     ],
   },
   {
@@ -69,8 +69,8 @@ const SAMPLE_ROOMS: SafeRoom[] = [
     createdAt: '2026-02-08T10:00:00.000Z',
     lastActivity: '2026-02-16T06:00:00.000Z',
     messages: [
-      { id: 'rm_4', roomId: 'room_2', authorName: 'Day 19 · New', content: 'Having a hard moment right now. Trying to breathe through it.', timestamp: '2026-02-16T05:45:00.000Z', isOwn: false },
-      { id: 'rm_5', roomId: 'room_2', authorName: 'Day 64 · Mentor', content: 'You are not alone. This will pass. Focus on the next 5 minutes.', timestamp: '2026-02-16T05:50:00.000Z', isOwn: false },
+      { id: 'rm_4', roomId: 'room_2', authorName: 'BraveBrook19', content: 'Having a hard moment right now. Trying to breathe through it.', timestamp: '2026-02-16T05:45:00.000Z', isOwn: false },
+      { id: 'rm_5', roomId: 'room_2', authorName: 'CalmSummit64', content: 'You are not alone. This will pass. Focus on the next 5 minutes.', timestamp: '2026-02-16T05:50:00.000Z', isOwn: false },
     ],
   },
   {
@@ -84,8 +84,8 @@ const SAMPLE_ROOMS: SafeRoom[] = [
     createdAt: '2026-02-09T20:00:00.000Z',
     lastActivity: '2026-02-15T21:30:00.000Z',
     messages: [
-      { id: 'rm_6', roomId: 'room_3', authorName: 'Day 33 · Active', content: 'Made it through another day. Sending strength to everyone here.', timestamp: '2026-02-15T21:00:00.000Z', isOwn: false },
-      { id: 'rm_7', roomId: 'room_3', authorName: 'Day 270', content: 'Grateful for this space. Sleep well everyone.', timestamp: '2026-02-15T21:25:00.000Z', isOwn: false },
+      { id: 'rm_6', roomId: 'room_3', authorName: 'GentlePine33', content: 'Made it through another day. Sending strength to everyone here.', timestamp: '2026-02-15T21:00:00.000Z', isOwn: false },
+      { id: 'rm_7', roomId: 'room_3', authorName: 'WildHeron70', content: 'Grateful for this space. Sleep well everyone.', timestamp: '2026-02-15T21:25:00.000Z', isOwn: false },
     ],
   },
   {
@@ -99,8 +99,8 @@ const SAMPLE_ROOMS: SafeRoom[] = [
     createdAt: '2026-02-12T12:00:00.000Z',
     lastActivity: '2026-02-16T04:00:00.000Z',
     messages: [
-      { id: 'rm_8', roomId: 'room_4', authorName: 'Day 3 · New', content: 'Day 3 here. Hardest thing I have ever done but I am trying.', timestamp: '2026-02-16T03:45:00.000Z', isOwn: false },
-      { id: 'rm_9', roomId: 'room_4', authorName: 'Day 41 · Active', content: 'Day 3 is huge. You are doing incredible work just being here.', timestamp: '2026-02-16T03:55:00.000Z', isOwn: false },
+      { id: 'rm_8', roomId: 'room_4', authorName: 'BrightPath03', content: 'Day 3 here. Hardest thing I have ever done but I am trying.', timestamp: '2026-02-16T03:45:00.000Z', isOwn: false },
+      { id: 'rm_9', roomId: 'room_4', authorName: 'SteadyMeadow41', content: 'Day 3 is huge. You are doing incredible work just being here.', timestamp: '2026-02-16T03:55:00.000Z', isOwn: false },
     ],
   },
 ];
@@ -108,7 +108,7 @@ const SAMPLE_ROOMS: SafeRoom[] = [
 const SAMPLE_PEER_CHATS: PeerChat[] = [
   {
     id: 'peer_1',
-    anonymousName: 'Day 55 · Active',
+    anonymousName: 'KindRiver55',
     messages: [
       { id: 'pm_1', chatId: 'peer_1', content: 'Hey, just wanted to check in. How are you holding up?', isOwn: false, timestamp: '2026-02-15T14:00:00.000Z' },
       { id: 'pm_2', chatId: 'peer_1', content: 'Better today than yesterday. Thanks for asking.', isOwn: true, timestamp: '2026-02-15T14:05:00.000Z' },
@@ -215,7 +215,7 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
   });
 
   const chatIdentityLabel = chatIdentityQuery.data
-    ? formatAnonymousIdentityLabel(chatIdentityQuery.data)
+    ? formatAnonymousChatHandle(chatIdentityQuery.data)
     : '';
 
   const blockedPeerNamesQuery = useQuery({

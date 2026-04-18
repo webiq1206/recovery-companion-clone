@@ -5,13 +5,13 @@ import {
 } from 'react-native';
 import type { FlatList } from 'react-native';
 import { ScreenFlatList } from '../components/ScreenFlatList';
-import { ChatSafetyLinksBar } from '../components/ChatSafetyLinksBar';
+import { ConnectSafetyGuidelinesStrip } from '../components/ConnectSafetyGuidelinesStrip';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Redirect, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  Shield, Clock, Radio, X, Send, EyeOff, Eye,
-  Flag, Users, Calendar, ChevronDown, ChevronRight, AlertTriangle,
+  Shield, Radio, X, Send, EyeOff, Eye,
+  Flag, Users, ChevronDown, ChevronRight, AlertTriangle,
   Info, LogOut, MessageSquare, Heart, BookOpen,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -19,9 +19,7 @@ import Colors from '../constants/colors';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { textMayIndicateCrisis } from '../core/crisisContentHeuristics';
 import { useRecoveryRooms, TOPIC_LABELS } from '../providers/RecoveryRoomsProvider';
-import { RecoveryRoomMessage, RoomReport, ScheduledSession } from '../types';
-
-type SessionView = 'chat' | 'info' | 'schedule';
+import { RecoveryRoomMessage, RoomReport } from '../types';
 
 const REPORT_REASONS: { key: RoomReport['reason']; label: string }[] = [
   { key: 'inappropriate', label: 'Inappropriate Content' },
@@ -62,7 +60,7 @@ export default function RoomSessionScreen() {
     });
   }, [room, blockedAuthors, blockedUserIds]);
 
-  const [sessionView, setSessionView] = useState<SessionView>('chat');
+  const [showRoomInfoModal, setShowRoomInfoModal] = useState<boolean>(false);
   const [messageText, setMessageText] = useState<string>('');
   const [sendAnonymous, setSendAnonymous] = useState<boolean>(isAnonymousDefault);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
@@ -132,7 +130,7 @@ export default function RoomSessionScreen() {
   const handleMessageActions = useCallback(
     (message: RecoveryRoomMessage) => {
       if (message.isOwn || message.isReported) return;
-      const authorLabel = message.isAnonymous ? 'Anonymous' : message.authorName;
+      const authorLabel = message.authorName;
       Alert.alert('Safety: this message', `Participant: ${authorLabel}`, [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -239,22 +237,6 @@ export default function RoomSessionScreen() {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }, []);
 
-  const formatSessionTime = useCallback((dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffHrs = Math.floor(diffMs / 3600000);
-    if (diffMs < 0) return 'Now';
-    if (diffHrs < 1) return `In ${Math.max(1, Math.floor(diffMs / 60000))}m`;
-    if (diffHrs < 24) return `In ${diffHrs}h`;
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  }, []);
-
-  const activeSession = useMemo(() => {
-    if (!room) return null;
-    return room.scheduledSessions.find(s => s.isActive) ?? null;
-  }, [room]);
-
   if (!arePeerPracticeFeaturesEnabled()) {
     return <Redirect href={'/(tabs)/connection' as any} />;
   }
@@ -277,9 +259,7 @@ export default function RoomSessionScreen() {
       <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
         {!isOwn && (
           <View style={styles.messageAuthorRow}>
-            <Text style={styles.messageAuthor}>
-              {item.isAnonymous ? 'Anonymous' : item.authorName}
-            </Text>
+            <Text style={styles.messageAuthor}>{item.authorName}</Text>
           </View>
         )}
         <Pressable
@@ -306,27 +286,13 @@ export default function RoomSessionScreen() {
                 {item.content}
               </Text>
               <Text style={[styles.messageTime, isOwn ? styles.ownTime : styles.otherTime]}>
-                {formatTime(item.timestamp)}
-                {item.isAnonymous && isOwn && ' · Anonymous'}
+                {isOwn
+                  ? `${item.authorName} · ${formatTime(item.timestamp)}`
+                  : formatTime(item.timestamp)}
               </Text>
             </>
           )}
         </Pressable>
-      </View>
-    );
-  };
-
-  const renderSessionBanner = () => {
-    if (!activeSession) return null;
-    return (
-      <View style={styles.sessionBanner}>
-        <Radio size={14} color="#FF4D4D" />
-        <View style={styles.sessionBannerInfo}>
-          <Text style={styles.sessionBannerTitle}>{activeSession.title}</Text>
-          <Text style={styles.sessionBannerMeta}>
-            {activeSession.durationMinutes} min session
-          </Text>
-        </View>
       </View>
     );
   };
@@ -416,6 +382,7 @@ export default function RoomSessionScreen() {
           style={({ pressed }) => [styles.guidelinesCta, pressed && { opacity: 0.88 }]}
           onPress={() => {
             Haptics.selectionAsync();
+            setShowRoomInfoModal(false);
             router.push('/community-guidelines' as any);
           }}
         >
@@ -426,7 +393,10 @@ export default function RoomSessionScreen() {
 
       <Pressable
         style={({ pressed }) => [styles.leaveBtn, pressed && { opacity: 0.8 }]}
-        onPress={handleLeaveRoom}
+        onPress={() => {
+          setShowRoomInfoModal(false);
+          handleLeaveRoom();
+        }}
         testID="leave-room-btn"
       >
         <LogOut size={16} color={Colors.danger} />
@@ -435,36 +405,12 @@ export default function RoomSessionScreen() {
     </ScreenScrollView>
   );
 
-  const renderScheduleView = () => (
-    <ScreenScrollView contentContainerStyle={styles.infoContent} showsVerticalScrollIndicator={false}>
-      <Text style={styles.scheduleHeader}>Upcoming Sessions</Text>
-      {room.scheduledSessions.length === 0 ? (
-        <View style={styles.emptySchedule}>
-          <Calendar size={32} color={Colors.textMuted} />
-          <Text style={styles.emptyScheduleText}>No sessions scheduled yet</Text>
-        </View>
-      ) : (
-        room.scheduledSessions.map(session => (
-          <View key={session.id} style={styles.scheduleCard}>
-            <View style={styles.scheduleCardTop}>
-              {session.isActive && <Radio size={12} color="#FF4D4D" />}
-              <Text style={styles.scheduleCardTitle}>{session.title}</Text>
-            </View>
-            <Text style={styles.scheduleCardDesc}>{session.description}</Text>
-            <View style={styles.scheduleCardMeta}>
-              <Clock size={12} color={Colors.textMuted} />
-              <Text style={styles.scheduleCardMetaText}>
-                {formatSessionTime(session.scheduledAt)} · {session.durationMinutes}min
-                {session.attendeeCount > 0 ? ` · ${session.attendeeCount} attending` : ''}
-              </Text>
-            </View>
-          </View>
-        ))
-      )}
-    </ScreenScrollView>
-  );
-
   return (
+    <KeyboardAvoidingView
+      style={styles.keyboardRoot}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+    >
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -523,55 +469,22 @@ export default function RoomSessionScreen() {
           <Pressable
             onPress={() => {
               Haptics.selectionAsync();
-              setSessionView(sessionView === 'info' ? 'chat' : 'info');
+              setShowRoomInfoModal(true);
             }}
             hitSlop={8}
             testID="info-btn"
           >
-            <Info size={20} color={sessionView === 'info' ? Colors.primary : Colors.textSecondary} />
+            <Info size={20} color={showRoomInfoModal ? Colors.primary : Colors.textSecondary} />
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.viewTabs}>
-        {([
-          { key: 'chat' as const, label: 'Chat' },
-          { key: 'schedule' as const, label: 'Schedule' },
-          { key: 'info' as const, label: 'Info & Rules' },
-        ]).map(tab => {
-          const isActive = sessionView === tab.key;
-          return (
-            <Pressable
-              key={tab.key}
-              style={[styles.viewTab, isActive && styles.viewTabActive]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setSessionView(tab.key);
-              }}
-            >
-              <Text style={[styles.viewTabText, isActive && styles.viewTabTextActive]}>
-                {tab.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <ChatSafetyLinksBar
-        tone="light"
-        showBottomDivider={false}
+      <ConnectSafetyGuidelinesStrip
         testID="room-safety-guidelines-bar"
         style={styles.safetyBar}
       />
 
-      {sessionView === 'chat' && (
-        <KeyboardAvoidingView
-          style={styles.chatArea}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={0}
-        >
-          {renderSessionBanner()}
-
+        <View style={styles.chatArea}>
           {(socialMode === 'live' || socialMode === 'local_demo') && (
             <View
               style={[
@@ -619,8 +532,9 @@ export default function RoomSessionScreen() {
               <View style={styles.chatWelcome}>
                 <Shield size={20} color={Colors.primary} />
                 <Text style={styles.chatWelcomeText}>
-                  Welcome to {room.name}. Be kind. Long-press someone else’s message to report abuse, report a user, or
-                  block a user. Open the full Connect safety guidelines from the banner above or the book icon.
+                  Welcome to {room.name}—this is one ongoing thread for everyone in the room. Be kind. Long-press someone
+                  else’s message to report abuse, report a user, or block a user. Open the full Connect safety guidelines
+                  from the banner above or the book icon.
                 </Text>
                 <Pressable onPress={() => setShowRules(true)}>
                   <Text style={styles.chatWelcomeLink}>View room rules</Text>
@@ -663,11 +577,28 @@ export default function RoomSessionScreen() {
               <Send size={18} color={messageText.trim() ? '#FFFFFF' : Colors.textMuted} />
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      )}
+        </View>
 
-      {sessionView === 'info' && renderInfoView()}
-      {sessionView === 'schedule' && renderScheduleView()}
+      <Modal
+        visible={showRoomInfoModal}
+        animationType="slide"
+        presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : undefined}
+        onRequestClose={() => setShowRoomInfoModal(false)}
+      >
+        <View style={[styles.roomInfoModalRoot, { paddingTop: insets.top + 8 }]}>
+          <View style={styles.roomInfoModalHeader}>
+            <Text style={styles.roomInfoModalTitle}>About this room</Text>
+            <Pressable
+              onPress={() => setShowRoomInfoModal(false)}
+              hitSlop={12}
+              accessibilityLabel="Close room details"
+            >
+              <X size={24} color={Colors.textSecondary} />
+            </Pressable>
+          </View>
+          {renderInfoView()}
+        </View>
+      </Modal>
 
       <Modal visible={showReportUserModal} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
@@ -802,13 +733,33 @@ export default function RoomSessionScreen() {
         </View>
       </Modal>
     </Animated.View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardRoot: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  roomInfoModalRoot: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 16,
+  },
+  roomInfoModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  roomInfoModalTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
   },
   centered: {
     alignItems: 'center',
@@ -848,8 +799,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700' as const,
+    fontSize: 22,
+    fontWeight: '800' as const,
     color: Colors.text,
   },
   headerLive: {
@@ -899,12 +850,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   safetyBar: {
-    marginHorizontal: 16,
     marginBottom: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: 'hidden',
   },
   guidelinesCta: {
     flexDirection: 'row',

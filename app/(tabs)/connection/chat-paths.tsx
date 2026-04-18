@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, KeyboardAvoidingView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -61,20 +61,27 @@ export default function ConnectionChatPathsScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.root, { paddingTop: spacing.xs }]}>
-      <ScreenScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.lg }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.lead}>
-          Each path groups themed practice rooms. Tap a room to open the chat space.
-        </Text>
+    <KeyboardAvoidingView
+      style={styles.rootWrap}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 8 : 0}
+    >
+      <View style={[styles.root, { paddingTop: spacing.xs }]}>
+        <ScreenScrollView
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + spacing.lg }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.lead}>
+            Each path has themed rooms with one ongoing conversation. Open a room to read and post in the same thread
+            over time.
+          </Text>
 
-        {RECOVERY_PATHS.map((path) => (
-          <PathSection key={path.id} path={path} />
-        ))}
-      </ScreenScrollView>
-    </View>
+          {RECOVERY_PATHS.map((path) => (
+            <PathSection key={path.id} path={path} />
+          ))}
+        </ScreenScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -137,6 +144,9 @@ function PathSection({ path }: { path: RecoveryPathMeta }) {
 }
 
 const styles = StyleSheet.create({
+  rootWrap: {
+    flex: 1,
+  },
   root: {
     flex: 1,
     backgroundColor: Colors.background,

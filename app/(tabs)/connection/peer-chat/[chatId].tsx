@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,12 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
 } from 'react-native';
-import { Redirect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookOpen, Send, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../../constants/colors';
-import { ChatSafetyLinksBar } from '../../../../components/ChatSafetyLinksBar';
+import { ConnectSafetyGuidelinesStrip } from '../../../../components/ConnectSafetyGuidelinesStrip';
 import { arePeerPracticeFeaturesEnabled } from '../../../../core/socialLiveConfig';
 import { useConnection } from '../../../../providers/ConnectionProvider';
 import type { PeerMessage } from '../../../../types';
@@ -31,7 +31,6 @@ function formatShortTime(dateStr: string): string {
 
 export default function PeerChatScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
   const router = useRouter();
   const raw = useLocalSearchParams<{ chatId: string | string[] }>();
   const chatId = Array.isArray(raw.chatId) ? raw.chatId[0] : raw.chatId;
@@ -64,51 +63,6 @@ export default function PeerChatScreen() {
       router.back();
     }
   }, [chatId, chat, blocked, isLoading, router]);
-
-  useLayoutEffect(() => {
-    if (!chatId || !chat || blocked) return;
-    navigation.setOptions({
-      title: chat.anonymousName,
-      headerRight: () => (
-        <View style={styles.headerRight}>
-          <Pressable
-            onPress={() => {
-              Haptics.selectionAsync();
-              router.push('/community-guidelines' as never);
-            }}
-            hitSlop={10}
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.75 }]}
-          >
-            <BookOpen size={20} color={Colors.primary} />
-          </Pressable>
-          {chat.isActive ? (
-            <Pressable
-              onPress={() => {
-                Haptics.selectionAsync();
-                Alert.alert('End chat', 'Are you sure you want to end this chat?', [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'End',
-                    style: 'destructive',
-                    onPress: () => {
-                      endPeerChat(chat.id);
-                      router.back();
-                    },
-                  },
-                ]);
-              }}
-              hitSlop={10}
-              style={({ pressed }) => [styles.headerEndBtn, pressed && { opacity: 0.75 }]}
-            >
-              <Text style={styles.headerEndText}>End</Text>
-            </Pressable>
-          ) : (
-            <View style={{ width: 36 }} />
-          )}
-        </View>
-      ),
-    });
-  }, [navigation, chatId, chat, blocked, router, endPeerChat]);
 
   const messageById = useMemo(() => {
     const m = new Map<string, PeerMessage>();
@@ -238,7 +192,7 @@ export default function PeerChatScreen() {
                 {item.content}
               </Text>
               <Text style={[styles.timeText, item.isOwn ? styles.ownTime : styles.otherTime]}>
-                {formatShortTime(item.timestamp)}
+                {item.isOwn ? 'You' : chat?.anonymousName ?? 'Peer'} · {formatShortTime(item.timestamp)}
               </Text>
             </View>
             <View style={styles.reactionRow}>
@@ -310,9 +264,50 @@ export default function PeerChatScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 72 : 0}
     >
-      <ChatSafetyLinksBar tone="light" testID="peer-chat-safety-bar" />
+      <View style={[styles.peerChatHeader, { paddingTop: insets.top + 8 }]}>
+        <Text style={styles.peerChatTitle} numberOfLines={1}>
+          {chat.anonymousName}
+        </Text>
+        <View style={styles.peerChatHeaderActions}>
+          <Pressable
+            onPress={() => {
+              Haptics.selectionAsync();
+              router.push('/community-guidelines' as never);
+            }}
+            hitSlop={10}
+            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.75 }]}
+          >
+            <BookOpen size={20} color={Colors.primary} />
+          </Pressable>
+          {chat.isActive ? (
+            <Pressable
+              onPress={() => {
+                Haptics.selectionAsync();
+                Alert.alert('End chat', 'Are you sure you want to end this chat?', [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'End',
+                    style: 'destructive',
+                    onPress: () => {
+                      endPeerChat(chat.id);
+                      router.back();
+                    },
+                  },
+                ]);
+              }}
+              hitSlop={10}
+              style={({ pressed }) => [styles.headerEndBtn, pressed && { opacity: 0.75 }]}
+            >
+              <Text style={styles.headerEndText}>End</Text>
+            </Pressable>
+          ) : (
+            <View style={{ width: 36 }} />
+          )}
+        </View>
+      </View>
+      <ConnectSafetyGuidelinesStrip testID="peer-chat-safety-bar" />
       <FlatList
         data={listData}
         keyExtractor={(m) => m.id}
@@ -377,15 +372,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  centered: {
+  peerChatHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.cardBackground,
   },
-  headerRight: {
+  peerChatTitle: {
+    flex: 1,
+    fontSize: 22,
+    fontWeight: '800' as const,
+    color: Colors.text,
+  },
+  peerChatHeaderActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginRight: 4,
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerIconBtn: {
     padding: 6,

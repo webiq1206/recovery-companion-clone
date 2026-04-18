@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useRef } from 'react';
-import { ScrollView, type ScrollViewProps } from 'react-native';
+import { Platform, ScrollView, type ScrollViewProps } from 'react-native';
 import { useScrollToTopOnFocus } from '../hooks/useScrollToTopOnFocus';
 
 export type ScreenScrollViewProps = ScrollViewProps & {
@@ -37,6 +37,7 @@ export const ScreenScrollView = forwardRef<ScrollView, ScreenScrollViewProps>(fu
       ref={setRef}
       showsVerticalScrollIndicator={showsVerticalScrollIndicator ?? false}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps ?? 'handled'}
+      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       {...rest}
     />
   );

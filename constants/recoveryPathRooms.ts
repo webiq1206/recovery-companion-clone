@@ -9,8 +9,6 @@ export type DemoRoom = {
   description: string;
   activeUsers: number;
   status: RoomStatusBadge;
-  /** Optional overflow room id for future UI */
-  overflowRoomId?: string;
 };
 
 /** Path-keyed catalog; currently empty (no demo rooms surfaced in product UI). */
@@ -97,12 +95,3 @@ export function getCatalogOccupancyByRoomId(): Record<string, number> {
   return out;
 }
 
-/** Primary room that overflows into `overflowRoomId`, if any */
-export function findPrimaryRoomForOverflow(overflowRoomId: string): DemoRoom | null {
-  for (const path of Object.keys(PATH_DEMO_ROOMS) as RecoveryPathId[]) {
-    for (const r of PATH_DEMO_ROOMS[path]) {
-      if (r.overflowRoomId === overflowRoomId) return r;
-    }
-  }
-  return null;
-}

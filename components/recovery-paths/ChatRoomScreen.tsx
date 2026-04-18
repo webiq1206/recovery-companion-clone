@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -10,12 +10,12 @@ import {
   View,
   type ListRenderItem,
 } from "react-native";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Send, X } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { findDemoRoomById } from "../../constants/recoveryPathRooms";
-import { ChatSafetyLinksBar } from "../ChatSafetyLinksBar";
+import { ConnectSafetyGuidelinesStrip } from "../ConnectSafetyGuidelinesStrip";
 
 const PREMIUM = {
   bg: "#0b0d0f",
@@ -137,7 +137,7 @@ function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
   return [
     {
       id: "seed-1",
-      userTag: "Mentor",
+      userTag: "GuideHarbor",
       text: `Welcome to ${label}. Keep it kind, specific, and one-day-at-a-time.`,
       createdAt: t - 1000 * 60 * 12,
       isOwn: false,
@@ -148,7 +148,7 @@ function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
     },
     {
       id: "seed-1-r1",
-      userTag: "Day 4",
+      userTag: "QuietAsh04",
       text: "Thank you—keeping it short today.",
       createdAt: t - 1000 * 60 * 11,
       isOwn: false,
@@ -157,7 +157,7 @@ function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
     },
     {
       id: "seed-1-r2",
-      userTag: "Day 12",
+      userTag: "SteadyMoss12",
       text: "Same. One meeting at a time.",
       createdAt: t - 1000 * 60 * 10.5,
       isOwn: false,
@@ -175,7 +175,7 @@ function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
     },
     {
       id: "seed-1-r4",
-      userTag: "Mentor",
+      userTag: "GuideHarbor",
       text: "That’s exactly the energy we want.",
       createdAt: t - 1000 * 60 * 9.8,
       isOwn: false,
@@ -193,7 +193,7 @@ function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
     },
     {
       id: "seed-2",
-      userTag: "Day 12",
+      userTag: "SteadyMoss12",
       text: "First time speaking here. Rough morning but I didn’t use.",
       createdAt: t - 1000 * 60 * 9,
       isOwn: false,
@@ -204,7 +204,7 @@ function buildSeedMessages(roomName: string | undefined): RoomChatMessage[] {
     },
     {
       id: "seed-3",
-      userTag: "Day 4",
+      userTag: "QuietAsh04",
       text: "Proud of you for showing up. What helped most the first hour?",
       createdAt: t - 1000 * 60 * 8,
       isOwn: false,
@@ -436,7 +436,6 @@ function RoomThreadRow({
 
 export default function ChatRoomScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
   const raw = useLocalSearchParams<{ roomId?: string | string[] }>();
   const roomId = Array.isArray(raw.roomId) ? raw.roomId[0] : raw.roomId;
   const room = useMemo(() => findDemoRoomById(roomId), [roomId]);
@@ -453,12 +452,6 @@ export default function ChatRoomScreen() {
     setReplyDraftParentId(null);
     setExpandedThreads({});
   }, [messageSeed]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: room?.name ?? "Room",
-    });
-  }, [navigation, room?.name]);
 
   const byId = useMemo(() => buildMessageMap(messages), [messages]);
   const threadGroups = useMemo(() => buildThreadGroups(messages), [messages]);
@@ -543,50 +536,56 @@ export default function ChatRoomScreen() {
     setReplyDraftParentId(null);
   }, [input, replyDraftParentId]);
 
-  const keyboardOffset = Platform.OS === "ios" ? insets.top + 52 : 0;
-
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={keyboardOffset}
-    >
-      <ChatSafetyLinksBar tone="dark" testID="recovery-path-chat-safety-bar" />
-      <FlatList
-        style={styles.chatList}
-        data={threadGroups}
-        keyExtractor={(g) => g.rootId}
-        renderItem={renderItem}
-        inverted
-        keyboardShouldPersistTaps="handled"
-        onScrollBeginDrag={() => {
-          setReactionBarMessageId(null);
-        }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingTop: 10 + insets.bottom, paddingBottom: 8 },
-        ]}
-      />
-      {replyPreview ? (
-        <View style={styles.replyBanner}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.replyBannerLabel}>Replying to {replyPreview.userTag}</Text>
-            <Text style={styles.replyBannerText} numberOfLines={2}>
-              {replyPreview.text}
-            </Text>
+    <View style={styles.root}>
+      <View style={[styles.chatScreenTop, { paddingTop: insets.top + 8 }]}>
+        <Text style={styles.chatScreenTitle} numberOfLines={2}>
+          {room?.name ?? "Room"}
+        </Text>
+      </View>
+      <ConnectSafetyGuidelinesStrip tone="dark" testID="recovery-path-chat-safety-bar" />
+      <KeyboardAvoidingView
+        style={styles.kavBody}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        enabled={Platform.OS === "ios"}
+        keyboardVerticalOffset={0}
+      >
+        <FlatList
+          style={styles.chatList}
+          data={threadGroups}
+          keyExtractor={(g) => g.rootId}
+          renderItem={renderItem}
+          inverted
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          onScrollBeginDrag={() => {
+            setReactionBarMessageId(null);
+          }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingTop: 10 + insets.bottom, paddingBottom: 8 },
+          ]}
+        />
+        {replyPreview ? (
+          <View style={styles.replyBanner}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.replyBannerLabel}>Replying to {replyPreview.userTag}</Text>
+              <Text style={styles.replyBannerText} numberOfLines={2}>
+                {replyPreview.text}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => setReplyDraftParentId(null)}
+              hitSlop={10}
+              style={({ pressed }) => [styles.replyBannerClear, pressed && { opacity: 0.75 }]}
+              accessibilityLabel="Cancel reply"
+            >
+              <X size={18} color={PREMIUM.muted} />
+            </Pressable>
           </View>
-          <Pressable
-            onPress={() => setReplyDraftParentId(null)}
-            hitSlop={10}
-            style={({ pressed }) => [styles.replyBannerClear, pressed && { opacity: 0.75 }]}
-            accessibilityLabel="Cancel reply"
-          >
-            <X size={18} color={PREMIUM.muted} />
-          </Pressable>
-        </View>
-      ) : null}
-      <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+        ) : null}
+        <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
           <TextInput
             style={styles.input}
             placeholder={replyPreview ? "Write a reply…" : "Message"}
@@ -613,7 +612,8 @@ export default function ChatRoomScreen() {
             <Send size={22} color={input.trim() ? PREMIUM.text : PREMIUM.sendDisabled} />
           </Pressable>
         </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -621,6 +621,22 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: PREMIUM.bg,
+  },
+  chatScreenTop: {
+    paddingHorizontal: 14,
+    paddingBottom: 8,
+    alignItems: "center",
+  },
+  chatScreenTitle: {
+    fontSize: 22,
+    fontWeight: "800" as const,
+    color: PREMIUM.text,
+    letterSpacing: -0.3,
+    textAlign: "center",
+    width: "100%",
+  },
+  kavBody: {
+    flex: 1,
   },
   chatList: {
     flex: 1,

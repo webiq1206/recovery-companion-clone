@@ -12,7 +12,6 @@ export default function RecoveryPathsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Recovery paths",
           headerShown: false,
         }}
       />
@@ -25,7 +24,7 @@ export default function RecoveryPathsLayout() {
       <Stack.Screen
         name="chat-room"
         options={{
-          title: "Room",
+          headerShown: false,
         }}
       />
     </Stack>

@@ -13,7 +13,7 @@ import {
 import { getSocialPresentationMode, isCommunityEnabled, isLocalSocialDemoEnabled } from '../core/socialLiveConfig';
 import {
   ANONYMOUS_CHAT_IDENTITY_QUERY_KEY,
-  formatAnonymousIdentityLabel,
+  formatAnonymousChatHandle,
   generateRandomIdentityLabel,
   loadOrCreateAnonymousIdentity,
 } from '../core/anonymousIdentity';
@@ -91,9 +91,9 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
       },
     ],
     messages: [
-      { id: 'rrm_1', roomId: 'rr_1', authorName: 'Day 62 · Active', authorId: 'u_qr', content: 'Good morning everyone. Day 62 and feeling stronger.', timestamp: '2026-02-16T07:15:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
-      { id: 'rrm_2', roomId: 'rr_1', authorName: 'Day 11 · New', authorId: 'u_wb', content: 'Morning! Had some tough dreams last night but I am here. Showing up matters.', timestamp: '2026-02-16T07:22:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
-      { id: 'rrm_3', roomId: 'rr_1', authorName: 'Day 201', authorId: 'u_go', content: 'Showing up IS the win. Proud of both of you. Let us carry this energy forward today.', timestamp: '2026-02-16T07:30:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_1', roomId: 'rr_1', authorName: 'SteadyHarbor62', authorId: 'u_qr', content: 'Good morning everyone. Day 62 and feeling stronger.', timestamp: '2026-02-16T07:15:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_2', roomId: 'rr_1', authorName: 'QuietBrook11', authorId: 'u_wb', content: 'Morning! Had some tough dreams last night but I am here. Showing up matters.', timestamp: '2026-02-16T07:22:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_3', roomId: 'rr_1', authorName: 'CalmSummit01', authorId: 'u_go', content: 'Showing up IS the win. Proud of both of you. Let us carry this energy forward today.', timestamp: '2026-02-16T07:30:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Be kind and respectful at all times',
@@ -129,9 +129,9 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
       },
     ],
     messages: [
-      { id: 'rrm_4', roomId: 'rr_2', authorName: 'Anonymous', authorId: 'u_anon1', content: 'Really struggling right now. The pull is strong tonight.', timestamp: '2026-02-16T05:50:00.000Z', isOwn: false, isAnonymous: true, isReported: false, reportReason: '' },
-      { id: 'rrm_5', roomId: 'rr_2', authorName: 'Day 88 · Mentor', authorId: 'u_sh', content: 'You are here instead of there. That is already a victory. Breathe with us. 4 in, 7 hold, 8 out.', timestamp: '2026-02-16T05:52:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
-      { id: 'rrm_6', roomId: 'rr_2', authorName: 'Day 22 · Active', authorId: 'u_sw', content: 'I was where you are 3 weeks ago. It passed. It always passes. Stay with us.', timestamp: '2026-02-16T05:55:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_4', roomId: 'rr_2', authorName: 'HiddenPath03', authorId: 'u_anon1', content: 'Really struggling right now. The pull is strong tonight.', timestamp: '2026-02-16T05:50:00.000Z', isOwn: false, isAnonymous: true, isReported: false, reportReason: '' },
+      { id: 'rrm_5', roomId: 'rr_2', authorName: 'KindRiver88', authorId: 'u_sh', content: 'You are here instead of there. That is already a victory. Breathe with us. 4 in, 7 hold, 8 out.', timestamp: '2026-02-16T05:52:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_6', roomId: 'rr_2', authorName: 'BraveOak22', authorId: 'u_sw', content: 'I was where you are 3 weeks ago. It passed. It always passes. Stay with us.', timestamp: '2026-02-16T05:55:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'This is a crisis-safe space - be gentle',
@@ -177,8 +177,8 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
       },
     ],
     messages: [
-      { id: 'rrm_7', roomId: 'rr_3', authorName: 'Day 90 · Mentor', authorId: 'u_dr', content: 'Welcome to tonight\'s session. Let us begin by finding a comfortable position.', timestamp: '2026-02-15T21:00:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
-      { id: 'rrm_8', roomId: 'rr_3', authorName: 'Day 30 · Active', authorId: 'u_os', content: 'This is my favorite part of the day. Thank you for holding this space.', timestamp: '2026-02-15T21:02:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_7', roomId: 'rr_3', authorName: 'GentleHeron90', authorId: 'u_dr', content: 'Welcome to tonight\'s session. Let us begin by finding a comfortable position.', timestamp: '2026-02-15T21:00:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_8', roomId: 'rr_3', authorName: 'BrightMeadow30', authorId: 'u_os', content: 'This is my favorite part of the day. Thank you for holding this space.', timestamp: '2026-02-15T21:02:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Silence is welcome - you do not need to speak',
@@ -213,9 +213,9 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
       },
     ],
     messages: [
-      { id: 'rrm_9', roomId: 'rr_4', authorName: 'Anonymous', authorId: 'u_anon2', content: 'Day 5. I am scared but I am trying.', timestamp: '2026-02-16T04:10:00.000Z', isOwn: false, isAnonymous: true, isReported: false, reportReason: '' },
-      { id: 'rrm_10', roomId: 'rr_4', authorName: 'Day 120 · Active', authorId: 'u_bp', content: 'Day 5 is huge. Fear is normal. You are doing something incredibly brave right now.', timestamp: '2026-02-16T04:15:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
-      { id: 'rrm_11', roomId: 'rr_4', authorName: 'Day 28 · New', authorId: 'u_rs', content: 'I remember day 5. I am on day 28 now. It is so worth it. Keep going.', timestamp: '2026-02-16T04:20:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_9', roomId: 'rr_4', authorName: 'QuietCedar09', authorId: 'u_anon2', content: 'Day 5. I am scared but I am trying.', timestamp: '2026-02-16T04:10:00.000Z', isOwn: false, isAnonymous: true, isReported: false, reportReason: '' },
+      { id: 'rrm_10', roomId: 'rr_4', authorName: 'WildPath20', authorId: 'u_bp', content: 'Day 5 is huge. Fear is normal. You are doing something incredibly brave right now.', timestamp: '2026-02-16T04:15:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_11', roomId: 'rr_4', authorName: 'SteadyPine28', authorId: 'u_rs', content: 'I remember day 5. I am on day 28 now. It is so worth it. Keep going.', timestamp: '2026-02-16T04:20:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Zero judgment - everyone starts somewhere',
@@ -251,8 +251,8 @@ const SAMPLE_ROOMS: RecoveryRoom[] = [
       },
     ],
     messages: [
-      { id: 'rrm_12', roomId: 'rr_5', authorName: 'Day 45 · Mentor', authorId: 'u_kh', content: 'Tonight\'s theme: What does rebuilding trust look like for you?', timestamp: '2026-02-15T19:30:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
-      { id: 'rrm_13', roomId: 'rr_5', authorName: 'Day 76 · Active', authorId: 'u_gl', content: 'For me it is showing up consistently. Small promises kept. That is how trust comes back.', timestamp: '2026-02-15T19:35:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_12', roomId: 'rr_5', authorName: 'CalmHarbor45', authorId: 'u_kh', content: 'Tonight\'s theme: What does rebuilding trust look like for you?', timestamp: '2026-02-15T19:30:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
+      { id: 'rrm_13', roomId: 'rr_5', authorName: 'GentleSummit76', authorId: 'u_gl', content: 'For me it is showing up consistently. Small promises kept. That is how trust comes back.', timestamp: '2026-02-15T19:35:00.000Z', isOwn: false, isAnonymous: false, isReported: false, reportReason: '' },
     ],
     rules: [
       'Respect everyone\'s relationships - no unsolicited opinions',
@@ -463,7 +463,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
   });
 
   const chatIdentityLabel = chatIdentityQuery.data
-    ? formatAnonymousIdentityLabel(chatIdentityQuery.data)
+    ? formatAnonymousChatHandle(chatIdentityQuery.data)
     : '';
 
   useEffect(() => {
@@ -610,7 +610,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
       return;
     }
     const authorName = anonymous
-      ? 'Anonymous'
+      ? (chatIdentityQuery.data ? formatAnonymousChatHandle(chatIdentityQuery.data) : 'Anonymous')
       : isCommunityEnabled()
         ? (displayName || 'You')
         : (chatIdentityLabel || displayName || 'You');
@@ -667,7 +667,7 @@ export const [RecoveryRoomsProvider, useRecoveryRooms] = createContextHook(() =>
         return newRooms;
       });
     }, 2500 + Math.random() * 3500);
-  }, [rooms, displayName, chatIdentityLabel, userId, saveRoomsMutation]);
+  }, [rooms, displayName, chatIdentityLabel, userId, saveRoomsMutation, chatIdentityQuery.data]);
 
   const reportMessage = useCallback((roomId: string, messageId: string, reason: RoomReport['reason'], description: string) => {
     if (isCommunityEnabled()) {

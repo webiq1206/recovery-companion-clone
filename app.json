@@ -26,7 +26,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.webiq.recoverycompanion"
+      "package": "com.webiq.recoverycompanion",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

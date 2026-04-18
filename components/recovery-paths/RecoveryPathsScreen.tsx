@@ -141,9 +141,8 @@ export default function RecoveryPathsScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.headerKicker}>Recovery</Text>
-        <Text style={styles.headerTitle}>Paths</Text>
-        <Text style={styles.headerSubtitle}>Choose where you are—rooms match your stage.</Text>
+        <Text style={styles.headerTitle}>Choose your path</Text>
+        <Text style={styles.headerSubtitle}>Rooms match your stage.</Text>
       </View>
       <ScreenScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 28 }]}
@@ -165,14 +164,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 22,
     paddingBottom: 18,
-  },
-  headerKicker: {
-    color: PREMIUM.accent,
-    fontSize: 11,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    fontWeight: "600",
-    marginBottom: 6,
   },
   headerTitle: {
     color: PREMIUM.text,

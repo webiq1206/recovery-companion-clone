@@ -26,7 +26,7 @@ export default function ConnectionLayout() {
       <Stack.Screen
         name="chat-paths"
         options={{
-          title: "Chat",
+          title: "Recovery Path Rooms",
         }}
       />
       <Stack.Screen
@@ -38,7 +38,7 @@ export default function ConnectionLayout() {
       <Stack.Screen
         name="peer-chat/[chatId]"
         options={{
-          title: "Peer chat",
+          headerShown: false,
         }}
       />
       <Stack.Screen
