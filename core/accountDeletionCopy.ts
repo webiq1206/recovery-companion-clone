@@ -4,7 +4,7 @@
  */
 
 export const DELETE_ACCOUNT_INTRO =
-  'Recovery Companion does not create or host a server-side login or profile for you. Delete account permanently erases everything the app has stored on this device for your use of the app. Apple or Google may still hold subscription or purchase records tied to your store account—manage billing there.';
+  'RecoveryRoad does not create or host a server-side login or profile for you. Delete account permanently erases everything the app has stored on this device for your use of the app. Apple or Google may still hold subscription or purchase records tied to your store account—manage billing there.';
 
 export const DELETE_ACCOUNT_DATA_BULLETS: readonly string[] = [
   'Profile and onboarding (name, goals, sober date, recovery inputs, privacy toggles)',

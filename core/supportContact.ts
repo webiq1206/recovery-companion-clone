@@ -31,7 +31,7 @@ export function formatLegalDocumentContactFooter(): string {
   if (email) lines.push(`Email: ${email}`);
   if (/^https?:\/\//i.test(url)) lines.push(`Support website: ${url}`);
   lines.push(
-    'You can also use the developer support link on the Recovery Companion listing in the Apple App Store or Google Play.',
+    'You can also use the developer support link on the RecoveryRoad listing in the Apple App Store or Google Play.',
   );
   return lines.join('\n');
 }

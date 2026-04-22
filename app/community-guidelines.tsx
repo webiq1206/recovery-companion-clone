@@ -25,7 +25,7 @@ export default function CommunityGuidelinesScreen() {
       <ScreenScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator>
         <Text style={styles.calloutTitle}>User-generated content & safety</Text>
         <Text style={styles.calloutBody}>
-          Recovery Companion may include recovery rooms and other areas where you see messages from other people.
+          RecoveryRoad may include recovery rooms and other areas where you see messages from other people.
           You can <Text style={styles.em}>report abuse</Text>, <Text style={styles.em}>block users</Text>, and read
           these rules at any time. This screen is part of how we meet platform expectations for apps with social or
           support-style features.

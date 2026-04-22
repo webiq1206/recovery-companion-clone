@@ -6,19 +6,19 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
   {
     heading: 'Who we are',
     body:
-      'This Privacy Policy (“Policy”) describes how Recovery Companion (the publisher identified on your Apple App Store or Google Play download page) handles information when you use the Recovery Companion mobile application (“App”).\n\n' +
+      'This Privacy Policy (“Policy”) describes how RecoveryRoad (the publisher identified on your Apple App Store or Google Play download page) handles information when you use the RecoveryRoad mobile application (“App”).\n\n' +
       'By downloading or using the App, you agree to this Policy. If you do not agree, please uninstall the App and do not use it.',
   },
   {
     heading: 'Wellness support only',
     body:
-      'Recovery Companion is a self-help and wellness support tool. It is not medical advice, diagnosis, or treatment; not a medical device; not psychotherapy, telehealth, or crisis care; and not a substitute for qualified professionals or emergency services.\n\n' +
+      'RecoveryRoad is a self-help and wellness support tool. It is not medical advice, diagnosis, or treatment; not a medical device; not psychotherapy, telehealth, or crisis care; and not a substitute for qualified professionals or emergency services.\n\n' +
       'Nothing in this Policy changes the nature of the App.',
   },
   {
     heading: 'Accounts and where your recovery data lives',
     body:
-      'For everyday use, the App does not create a Recovery Companion–hosted cloud login, hosted recovery profile, or central account database operated by us.\n\n' +
+      'For everyday use, the App does not create a RecoveryRoad–hosted cloud login, hosted recovery profile, or central account database operated by us.\n\n' +
       'Your recovery-related content (such as check-ins, journal entries, plans, and preferences) is stored on your device unless a feature you actively use sends specific information elsewhere, as described below.\n\n' +
       'Delete account: Settings includes a flow labeled “Delete account.” That action permanently erases the categories of locally stored App data listed in the confirmation dialog on this device. It is how you remove your App data from the device; it is not a remote server “account deletion” for core journaling because those records are not stored on our servers by default.\n\n' +
       'Apple, Google, and (when enabled) RevenueCat may still retain purchase and billing records under your store account or pseudonymous billing identifier, as described in the Data sharing section.',
@@ -44,8 +44,8 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       'In the standard consumer configuration:\n\n' +
       '• We do not operate third-party advertising analytics (such as ad networks) inside this App.\n\n' +
       '• We do not use your recovery journal or check-ins for cross-app advertising “tracking” on behalf of advertisers.\n\n' +
-      '• We do not upload your recovery journal or check-in text to a Recovery Companion–operated cloud database for core features. (Optional online community or recovery-room features, when enabled in a given build, send only the content you submit to that feature to the configured operator’s servers.)\n\n' +
-      '• The App does not currently call a separate Recovery Companion HTTP API for syncing your journal; optional backend code may exist for future or custom integrations—if you enable such an integration, treat it as a separate disclosure.\n\n' +
+      '• We do not upload your recovery journal or check-in text to a RecoveryRoad–operated cloud database for core features. (Optional online community or recovery-room features, when enabled in a given build, send only the content you submit to that feature to the configured operator’s servers.)\n\n' +
+      '• The App does not currently call a separate RecoveryRoad HTTP API for syncing your journal; optional backend code may exist for future or custom integrations—if you enable such an integration, treat it as a separate disclosure.\n\n' +
       'If your organization ships a custom build with additional backends, those practices must be disclosed separately.',
   },
   {
@@ -141,7 +141,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
     body:
       'For privacy questions or requests regarding information we hold, contact us using:\n\n' +
       '• The support email or support website shown in the App’s Contact support entry when your publisher has configured them; and/or\n\n' +
-      '• The App Support link on the Recovery Companion page in the Apple App Store or Google Play.\n\n' +
+      '• The App Support link on the RecoveryRoad page in the Apple App Store or Google Play.\n\n' +
       'Publishers should ensure a working support email or website appears on the store listing and, when possible, inside the App’s Contact support entry so users can reach a real person or team.',
   },
 ];
@@ -150,7 +150,7 @@ export const TERMS_OF_SERVICE_SECTIONS: LegalSection[] = [
   {
     heading: 'Acceptance',
     body:
-      'By using Recovery Companion you agree to these terms and to the Community Guidelines if you use social or peer features. If you do not agree, do not use the app.',
+      'By using RecoveryRoad you agree to these terms and to the Community Guidelines if you use social or peer features. If you do not agree, do not use the app.',
   },
   {
     heading: 'Not medical or crisis care',
@@ -196,7 +196,7 @@ export const DATA_AND_SHARING_SECTIONS: LegalSection[] = [
   {
     heading: 'Deletion and “account”',
     body:
-      'There is no separate Recovery Companion cloud account to delete for core on-device use. The delete flow in Settings permanently removes locally stored App data on this device (see the confirmation list).\n\n' +
+      'There is no separate RecoveryRoad cloud account to delete for core on-device use. The delete flow in Settings permanently removes locally stored App data on this device (see the confirmation list).\n\n' +
       'Apple, Google, and RevenueCat (if enabled) may still hold purchase and entitlement records tied to your store account or pseudonymous billing ID.',
   },
   {
@@ -207,6 +207,6 @@ export const DATA_AND_SHARING_SECTIONS: LegalSection[] = [
   {
     heading: 'When you share from the app',
     body:
-      'Some workspace or provider screens let you copy or share a generated summary through your device’s share or clipboard. That action is entirely your choice; the recipient is whoever or whatever app you pick, not a hidden Recovery Companion server.',
+      'Some workspace or provider screens let you copy or share a generated summary through your device’s share or clipboard. That action is entirely your choice; the recipient is whoever or whatever app you pick, not a hidden RecoveryRoad server.',
   },
 ];

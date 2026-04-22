@@ -24,6 +24,7 @@ import { useSubscription } from '../../../providers/SubscriptionProvider';
 import { useNotifications } from '../../../providers/NotificationProvider';
 import { RecoveryStage, PrivacyControls, NotificationIntensityLevel } from '../../../types';
 import { ADDICTION_TYPES } from '../../../constants/milestones';
+import { BRAND } from '../../../constants/branding';
 import { NOTIFICATION_INTENSITY_CONFIG, NotificationIntensity } from '../../../constants/notifications';
 import { useWizardEngineHook } from '../../../hooks/useWizardEngine';
 import { resolveCanonicalRoute } from '../../../utils/legacyRoutes';
@@ -569,7 +570,9 @@ export default function ProfileScreen() {
             <BookOpen size={17} color={Colors.primary} />
           </View>
           <View style={styles.settingTextColumn}>
-            <Text style={styles.settingLabel}>How to Use Recovery Companion</Text>
+            <Text style={styles.settingLabel}>
+              How to Use {BRAND.appName}
+            </Text>
             <Text style={styles.settingValue}>Daily flow, stability readouts, and guides</Text>
           </View>
         </View>

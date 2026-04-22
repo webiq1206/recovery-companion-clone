@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Recovery Companion",
+    "name": "RecoveryRoad",
     "description": "Personal wellness and recovery support: check-ins, journaling, routines, trusted-circle connection tools, and self-guided exercises. Not medical advice, diagnosis, treatment, therapy, telehealth, or crisis care—use licensed professionals and emergency services when you need them. Subscriptions are billed through your app store.",
-    "slug": "recovery-companion",
+    "slug": "recoveryroad",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "recovery-companion",
+    "scheme": "recoveryroad",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "splash": {

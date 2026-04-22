@@ -1,5 +1,5 @@
 /**
- * Live social API for Recovery Companion (community + recovery rooms).
+ * Live social API for RecoveryRoad (community + recovery rooms).
  *
  * Run: `npm run social-server` from the repo root.
  *

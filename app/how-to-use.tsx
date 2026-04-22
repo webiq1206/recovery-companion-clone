@@ -31,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
+import { BRAND } from '../constants/branding';
 import { WellnessDisclaimerFooter } from '../components/WellnessDisclaimerFooter';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { useSubscription } from '../providers/SubscriptionProvider';
@@ -223,7 +224,7 @@ export default function HowToUseScreen() {
     <View style={styles.container}>
       <Stack.Screen
         options={{
-          title: 'How to Use Recovery Companion',
+          title: `How to Use ${BRAND.appName}`,
           headerStyle: { backgroundColor: Colors.background },
           headerTintColor: Colors.text,
         }}
@@ -237,10 +238,13 @@ export default function HowToUseScreen() {
           <View style={styles.heroIconBg}>
             <BookOpen size={28} color={Colors.primary} strokeWidth={1.5} />
           </View>
-          <Text style={styles.heroTitle}>How to Use{'\n'}Recovery Companion</Text>
+          <Text style={styles.heroTitle}>
+            How to Use{'\n'}
+            {BRAND.appName}
+          </Text>
           <Text style={styles.heroSubtitle}>
             Use it regularly and let Today be your home base. The bottom tabs support the rest of your week. This is a
-            wellness and self-help companion—not medical care or crisis services.
+            wellness and self-help app—not medical care or crisis services.
           </Text>
           <Text style={styles.heroNote}>
             The flow below is a rhythm you can adapt. Small, honest check-ins and actions add structure to your day.

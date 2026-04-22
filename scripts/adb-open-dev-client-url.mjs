@@ -1,15 +1,15 @@
 /**
  * When QR / "Open link" fails on Android, open the dev session via adb (USB debugging).
- * Copy the full line after "Metro waiting on" from the Expo terminal (starts with recovery-companion-clone://).
+ * Copy the full line after "Metro waiting on" from the Expo terminal (starts with recoveryroad://).
  *
- *   npm run android:open-dev-url -- "recovery-companion-clone://expo-development-client/?url=..."
+ *   npm run android:open-dev-url -- "recoveryroad://expo-development-client/?url=..."
  */
 import { spawn } from "node:child_process";
 
 const url = process.argv[2];
 if (!url || !url.includes("://")) {
   console.error(
-    'Usage: npm run android:open-dev-url -- "recovery-companion-clone://expo-development-client/?url=..."',
+    'Usage: npm run android:open-dev-url -- "recoveryroad://expo-development-client/?url=..."',
   );
   process.exit(1);
 }

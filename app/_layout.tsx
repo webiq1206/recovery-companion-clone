@@ -21,6 +21,7 @@ import ErrorBoundary from "../components/ErrorBoundary";
 import { CheckInReminderSync } from "../components/CheckInReminderSync";
 import LockScreen from "../components/LockScreen";
 import Colors from "../constants/colors";
+import { BRAND } from "../constants/branding";
 import {
   defaultStackScreenOptions,
   fadeAnimation,
@@ -86,7 +87,7 @@ function RootLayoutNav() {
             headerTintColor: Colors.text,
           }}
         />
-        <Stack.Screen name="how-to-use" options={{ title: 'How to Use Recovery Companion', animation: modalAnimation, animationDuration: modalAnimationDuration }} />
+        <Stack.Screen name="how-to-use" options={{ title: `How to Use ${BRAND.appName}`, animation: modalAnimation, animationDuration: modalAnimationDuration }} />
         <Stack.Screen name="why-stability-important" options={{ title: 'Why is Stability Important?', animation: modalAnimation, animationDuration: modalAnimationDuration }} />
         <Stack.Screen name="relapse-plan" options={{ title: 'Relapse Plan' }} />
         <Stack.Screen name="relapse-recovery" options={{ title: 'Log a Setback' }} />

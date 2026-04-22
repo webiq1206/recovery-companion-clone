@@ -163,7 +163,7 @@ export default function SettingsScreen() {
     if (Platform.OS === 'web') {
       Alert.alert(
         'Mobile app required',
-        'Restore purchases in the Recovery Companion iOS or Android app with the same store account you used to subscribe.',
+        'Restore purchases in the RecoveryRoad iOS or Android app with the same store account you used to subscribe.',
         [{ text: 'OK' }],
       );
       return;
@@ -566,7 +566,7 @@ export default function SettingsScreen() {
             const email = getSupportEmail();
             const url = getSupportUrl();
             if (email) {
-              void Linking.openURL(`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Recovery Companion support')}`);
+              void Linking.openURL(`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('RecoveryRoad support')}`);
               return;
             }
             if (/^https?:\/\//i.test(url)) {
@@ -866,7 +866,7 @@ export default function SettingsScreen() {
                   if (Platform.OS === 'web') return;
                   Alert.alert(
                     'Allow notifications',
-                    'We will show the system prompt next so you can receive reminders in Recovery Companion.',
+                    'We will show the system prompt next so you can receive reminders in RecoveryRoad.',
                     [
                       { text: 'Cancel', style: 'cancel' },
                       {
@@ -1023,7 +1023,7 @@ export default function SettingsScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.settingLabel, { color: Colors.danger }]}>Delete account</Text>
               <Text style={styles.settingValue}>
-                Permanently erase your on-device profile and all app data (no Recovery Companion
+                Permanently erase your on-device profile and all app data (no RecoveryRoad
                 cloud account)
               </Text>
             </View>

@@ -1,4 +1,4 @@
-# Recovery Companion — acceptance checklist
+# RecoveryRoad — acceptance checklist
 
 Use **fresh install**, **returning user**, and **cold restart after completing actions** as three personas. Mark pass/fail and note device/OS.
 

@@ -42,7 +42,7 @@ export default function SubscriptionPlansScreen() {
     if (Platform.OS === 'web') {
       Alert.alert(
         'Mobile app required',
-        'Restore purchases in the Recovery Companion iOS or Android app with the same store account you used to subscribe.',
+        'Restore purchases in the RecoveryRoad iOS or Android app with the same store account you used to subscribe.',
         [{ text: 'OK' }],
       );
       return;

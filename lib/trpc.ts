@@ -7,7 +7,7 @@ import type { AppRouter } from "../backend/trpc/app-router";
 /**
  * Typed tRPC client for optional operator / enterprise backends.
  *
- * **Shipping Recovery Companion screens do not call this client today**, so no HTTP
+ * **Shipping RecoveryRoad screens do not call this client today**, so no HTTP
  * traffic is sent to `EXPO_PUBLIC_API_BASE_URL` from the UI. If you wire procedures in
  * the app, set the env var and update App Store privacy answers, `docs/PRIVACY_POLICY.md`,
  * `constants/legalInAppCopy.ts`, and `public/privacy-policy.html` to describe what leaves the device.

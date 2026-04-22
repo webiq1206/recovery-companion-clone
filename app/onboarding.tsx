@@ -12,7 +12,7 @@ import { useSupportContacts } from '../core/domains/useSupportContacts';
 import { useAccountability } from '../core/domains/useAccountability';
 import { calculateRiskScore, calculateInterventionIntensity, calculateBaselineStability } from '../providers/RecoveryProvider';
 import { ADDICTION_TYPES } from '../constants/milestones';
-import { ONBOARDING_COPY } from '../constants/branding';
+import { ONBOARDING_COPY, BRAND } from '../constants/branding';
 import { RecoveryStage, RecoveryProfile, PrivacyControls } from '../types';
 import type { StruggleLevel, SleepQualityLevel, SupportAvailability } from '../types';
 import {
@@ -787,7 +787,7 @@ export default function OnboardingScreen() {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.heroAppName}>Recovery Companion</Text>
+          <Text style={styles.heroAppName}>{BRAND.appName}</Text>
           <Text style={styles.heroTitle}>{ONBOARDING_COPY.hero.title}</Text>
           <Text style={styles.heroSubtitle}>
             {ONBOARDING_COPY.hero.subtitle}

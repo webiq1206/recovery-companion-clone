@@ -1,8 +1,8 @@
-# Recovery Companion — Privacy Policy
+# RecoveryRoad — Privacy Policy
 
 **Last updated:** April 16, 2026
 
-This document is the same Privacy Policy shown inside the Recovery Companion app (Settings → Privacy Policy). The canonical text for the shipped app is maintained in `constants/legalInAppCopy.ts` (`PRIVACY_POLICY_SECTIONS`) so the in-app screen, this file, and the hosted HTML export stay aligned. After edits, update the **Last updated** date in `constants/legalInAppCopy.ts` and republish the web copy.
+This document is the same Privacy Policy shown inside the RecoveryRoad app (Settings → Privacy Policy). The canonical text for the shipped app is maintained in `constants/legalInAppCopy.ts` (`PRIVACY_POLICY_SECTIONS`) so the in-app screen, this file, and the hosted HTML export stay aligned. After edits, update the **Last updated** date in `constants/legalInAppCopy.ts` and republish the web copy.
 
 **Public URL (App Store Connect):** Host `public/privacy-policy.html` (or equivalent) at a stable `https://` URL and set `EXPO_PUBLIC_PRIVACY_POLICY_URL` in your production build so the in-app Privacy Policy screen can offer “Open published policy in browser.” Use the same URL in App Store Connect.
 
@@ -10,19 +10,19 @@ This document is the same Privacy Policy shown inside the Recovery Companion app
 
 ## Who we are
 
-This Privacy Policy (“Policy”) describes how Recovery Companion (the publisher identified on your Apple App Store or Google Play download page) handles information when you use the Recovery Companion mobile application (“App”).
+This Privacy Policy (“Policy”) describes how RecoveryRoad (the publisher identified on your Apple App Store or Google Play download page) handles information when you use the RecoveryRoad mobile application (“App”).
 
 By downloading or using the App, you agree to this Policy. If you do not agree, please uninstall the App and do not use it.
 
 ## Wellness support only
 
-Recovery Companion is a self-help and wellness support tool. It is not medical advice, diagnosis, or treatment; not a medical device; not psychotherapy, telehealth, or crisis care; and not a substitute for qualified professionals or emergency services.
+RecoveryRoad is a self-help and wellness support tool. It is not medical advice, diagnosis, or treatment; not a medical device; not psychotherapy, telehealth, or crisis care; and not a substitute for qualified professionals or emergency services.
 
 Nothing in this Policy changes the nature of the App.
 
 ## Accounts and where your recovery data lives
 
-For everyday use, the App does not create a Recovery Companion–hosted cloud login, hosted recovery profile, or central account database operated by us.
+For everyday use, the App does not create a RecoveryRoad–hosted cloud login, hosted recovery profile, or central account database operated by us.
 
 Your recovery-related content (such as check-ins, journal entries, plans, and preferences) is stored on your device unless a feature you actively use sends specific information elsewhere, as described below.
 
@@ -59,8 +59,8 @@ In the standard consumer configuration:
 
 - We do not operate third-party advertising analytics (such as ad networks) inside this App.
 - We do not use your recovery journal or check-ins for cross-app advertising “tracking” on behalf of advertisers.
-- We do not upload your recovery journal or check-in text to a Recovery Companion–operated cloud database for core features. (Optional online community or recovery-room features, when enabled in a given build, send only the content you submit to that feature to the configured operator’s servers.)
-- The App does not currently call a separate Recovery Companion HTTP API for syncing your journal; optional backend code may exist for future or custom integrations—if you enable such an integration, treat it as a separate disclosure.
+- We do not upload your recovery journal or check-in text to a RecoveryRoad–operated cloud database for core features. (Optional online community or recovery-room features, when enabled in a given build, send only the content you submit to that feature to the configured operator’s servers.)
+- The App does not currently call a separate RecoveryRoad HTTP API for syncing your journal; optional backend code may exist for future or custom integrations—if you enable such an integration, treat it as a separate disclosure.
 
 If your organization ships a custom build with additional backends, those practices must be disclosed separately.
 
@@ -166,7 +166,7 @@ We may update this Policy from time to time. We will change the “Last updated�
 For privacy questions or requests regarding information we hold, contact us using:
 
 - The support email or support website shown in the App’s Contact support entry when your publisher has configured them; and/or
-- The App Support link on the Recovery Companion page in the Apple App Store or Google Play.
+- The App Support link on the RecoveryRoad page in the Apple App Store or Google Play.
 
 Publishers should ensure a working support email or website appears on the store listing and, when possible, inside the App’s Contact support entry so users can reach a real person or team.
 

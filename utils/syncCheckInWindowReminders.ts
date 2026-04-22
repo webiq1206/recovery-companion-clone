@@ -169,7 +169,7 @@ export async function syncCheckInWindowReminders(
           identifier: id,
           content: {
             title: `Time for your ${PERIOD_LABEL[period]} check-in`,
-            body: "Take a minute to log how you're doing in Recovery Companion.",
+            body: "Take a minute to log how you're doing in RecoveryRoad.",
             sound: false,
             data: {
               type: CHECKIN_WINDOW_REMINDER_DATA_TYPE,

@@ -18,7 +18,7 @@ const STORAGE_KEY = 'subscription_state';
 const RC_USER_ID_KEY = 'rc_user_id';
 
 /** Must match the entitlement identifier in RevenueCat (and mirrored offering access). */
-export const REVENUECAT_PRO_ENTITLEMENT_ID = 'Recovery Companion Pro';
+export const REVENUECAT_PRO_ENTITLEMENT_ID = 'RecoveryRoad Pro';
 
 /**
  * RevenueCat **SDK** public API key (e.g. `appl_…` / `goog_…`). Same resolution in dev and release

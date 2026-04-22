@@ -467,7 +467,7 @@ export default function RecoveryRoomsScreen() {
           const url = getSupportUrl();
           if (email) {
             void Linking.openURL(
-              `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Recovery Companion — Connect / rooms')}`,
+              `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('RecoveryRoad — Connect / rooms')}`,
             );
             return;
           }

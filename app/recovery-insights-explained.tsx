@@ -145,7 +145,7 @@ export default function RecoveryInsightsExplainedScreen() {
 
         <View style={styles.spacer} />
         <Text style={styles.bodyText}>
-          Recovery Companion tracks four distinct reinforcement loops, each tied to a different aspect of your recovery. The stronger your loops become, the more natural and self-sustaining your recovery feels.
+          RecoveryRoad tracks four distinct reinforcement loops, each tied to a different aspect of your recovery. The stronger your loops become, the more natural and self-sustaining your recovery feels.
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>How loop scores are calculated</Text>
@@ -283,7 +283,7 @@ export default function RecoveryInsightsExplainedScreen() {
         <Text style={styles.bodyText}>
           {peerPractice
             ? "The Belonging Loop activates when you connect with others in your recovery community. Isolation is one of the biggest risks in recovery - this loop tracks how actively you're building and maintaining supportive connections."
-            : 'The Belonging Loop activates when you use connection tools in Recovery Companion—trusted circle reach-outs, accountability check-ins, and similar actions. Isolation is one of the biggest risks in recovery; this loop tracks how actively you are building supportive connections.'}
+            : 'The Belonging Loop activates when you use connection tools in RecoveryRoad—trusted circle reach-outs, accountability check-ins, and similar actions. Isolation is one of the biggest risks in recovery; this loop tracks how actively you are building supportive connections.'}
         </Text>
         <View style={styles.spacer} />
         <Text style={styles.subHeading}>What activates it</Text>

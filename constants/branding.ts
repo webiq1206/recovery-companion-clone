@@ -4,7 +4,7 @@ export const BRAND = {
   tagline: 'Wellness support for recovery and life goals',
   shortTagline: 'Reflect. Support yourself. Rebuild.',
   /** Matches App Store / Play listing name for consumer builds. */
-  appName: 'Recovery Companion',
+  appName: 'RecoveryRoad',
   mission: 'Self-help tools that support your recovery journey and help you rebuild—not just count days.',
 } as const;
 
@@ -177,4 +177,4 @@ export const MILESTONE_SHARE_MESSAGES: Record<number, { headline: string; body: 
   },
 };
 
-export const SHAREABLE_FOOTER = 'Recovery Companion — wellness and self-help tools for your journey';
+export const SHAREABLE_FOOTER = 'RecoveryRoad — wellness and self-help tools for your journey';

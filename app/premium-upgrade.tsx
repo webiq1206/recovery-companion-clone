@@ -321,7 +321,7 @@ export default function PremiumUpgradeScreen() {
     if (Platform.OS === 'web') {
       Alert.alert(
         'Mobile app required',
-        'Subscriptions are purchased through the App Store or Google Play in the Recovery Companion mobile app.',
+        'Subscriptions are purchased through the App Store or Google Play in the RecoveryRoad mobile app.',
         [{ text: 'OK' }],
       );
       return;
@@ -388,7 +388,7 @@ export default function PremiumUpgradeScreen() {
     if (Platform.OS === 'web') {
       Alert.alert(
         'Mobile app required',
-        'Restore purchases in the Recovery Companion iOS or Android app, signed into the same App Store or Google Play account you used to subscribe.',
+        'Restore purchases in the RecoveryRoad iOS or Android app, signed into the same App Store or Google Play account you used to subscribe.',
         [{ text: 'OK' }],
       );
       return;
@@ -527,7 +527,7 @@ export default function PremiumUpgradeScreen() {
               <Text style={styles.releaseBillingNoticeTitle}>Subscriptions</Text>
               <Text style={styles.releaseBillingNoticeBody}>
                 {Platform.OS === 'web'
-                  ? 'Subscribe in the Recovery Companion iOS or Android app with your App Store or Google Play account.'
+                  ? 'Subscribe in the RecoveryRoad iOS or Android app with your App Store or Google Play account.'
                   : 'We could not load subscription options right now. Check your internet connection, wait a moment, and open this screen again.'}
               </Text>
             </View>

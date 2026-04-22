@@ -1,6 +1,6 @@
-# Recovery Companion
+# RecoveryRoad
 
-Native iOS and Android app (Expo Router, React Native, TypeScript) for recovery support: check-ins, journaling, connection tools, accountability, and related flows. Configuration lives in [`app.json`](app.json) (Expo name **Recovery Companion**).
+Native iOS and Android app (Expo Router, React Native, TypeScript) for recovery support: check-ins, journaling, connection tools, accountability, and related flows. Configuration lives in [`app.json`](app.json) (Expo name **RecoveryRoad**).
 
 ## Requirements
 
@@ -43,7 +43,7 @@ Use **Expo Go** or a **development build** on device; this project uses native c
 
 The canonical policy text lives in **`constants/legalInAppCopy.ts`** (`PRIVACY_POLICY_SECTIONS`), surfaced in **Settings → Privacy Policy**, mirrored in [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md) and [`public/privacy-policy.html`](public/privacy-policy.html). **App Store Connect → App Privacy** must match that policy for the same binary (see [`docs/APP_STORE_PRIVACY_LABELS.md`](docs/APP_STORE_PRIVACY_LABELS.md)).
 
-- **No Recovery Companion cloud account:** The app does not create a separate server-side user account or hosted profile for you to sign into for core features.
+- **No RecoveryRoad cloud account:** The app does not create a separate server-side user account or hosted profile for you to sign into for core features.
 - **Data on your device:** Recovery information and preferences are stored on the device; deleting your “account” in Settings means **permanently erasing locally stored app data** on that device (see in-app delete confirmation for the full list).
 - **Store billing is separate:** Subscription or purchase history may still exist under your **Apple ID or Google account** and with **RevenueCat** when the SDK is configured; manage or cancel in App Store / Google Play settings.
 

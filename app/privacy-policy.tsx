@@ -31,7 +31,7 @@ export default function PrivacyPolicyScreen() {
   return (
     <LegalDocumentLayout
       title="Privacy Policy"
-      intro="This Privacy Policy is written for people who use Recovery Companion. It explains what we collect, why we collect it, where it is stored, who we share it with, how long we keep it, and how you can exercise your choices."
+      intro="This Privacy Policy is written for people who use RecoveryRoad. It explains what we collect, why we collect it, where it is stored, who we share it with, how long we keep it, and how you can exercise your choices."
       sections={PRIVACY_POLICY_SECTIONS}
       headerAccessory={headerAccessory}
     />
