@@ -3,28 +3,18 @@
  * that call fails and the dev-client QR still embeds http://127.0.0.1:8081.
  * Setting REACT_NATIVE_PACKAGER_HOSTNAME first matches Expo's own override
  * (see @expo/cli UrlCreator.getDefaultHostname).
+ *
+ * Run via `npm start` / `npm run start:lan` / `npm run start:dev-client` — not plain
+ * `npx expo start --lan`, or this file is never run and the QR URL may use 127.0.0.1.
  */
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import os from "node:os";
+import { pickBestLanIPv4 } from "./pick-lan-ipv4.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const expoCli = path.join(root, "node_modules", "expo", "bin", "cli");
 const forwarded = process.argv.slice(2);
-
-function pickLanIPv4() {
-  const nets = os.networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name] ?? []) {
-      const v4 = net.family === "IPv4" || net.family === 4;
-      if (v4 && !net.internal) {
-        return net.address;
-      }
-    }
-  }
-  return null;
-}
 
 /** Reject placeholders like 192.168.x.x from copy-pasted docs. */
 function isValidIPv4(address) {
@@ -57,7 +47,7 @@ const env = { ...process.env };
 
 if (!useTunnel && !useLocalhost) {
   const fromEnv = process.env.REACT_NATIVE_PACKAGER_HOSTNAME?.trim();
-  const picked = pickLanIPv4();
+  const picked = pickBestLanIPv4();
   let packagerIpv4 = null;
 
   if (fromEnv && isValidIPv4(fromEnv)) {

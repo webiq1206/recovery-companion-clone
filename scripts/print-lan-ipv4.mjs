@@ -1,13 +1,9 @@
-import os from "node:os";
+import { pickBestLanIPv4 } from "./pick-lan-ipv4.mjs";
 
-for (const name of Object.keys(os.networkInterfaces())) {
-  for (const net of os.networkInterfaces()[name] ?? []) {
-    const v4 = net.family === "IPv4" || net.family === 4;
-    if (v4 && !net.internal) {
-      console.log(net.address);
-      process.exit(0);
-    }
-  }
+const address = pickBestLanIPv4();
+if (address) {
+  console.log(address);
+} else {
+  console.error("No non-internal IPv4 found.");
+  process.exit(1);
 }
-console.error("No non-internal IPv4 found.");
-process.exit(1);
