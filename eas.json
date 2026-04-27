@@ -27,7 +27,10 @@
         "env": {
           "EXPO_USE_FAST_RESOLVER": "1",
           "EXPO_PUBLIC_INCLUDE_PROVIDER_SUITE": "0",
-          "EXPO_PUBLIC_COMMUNITY_ENABLED": "false"
+          "EXPO_PUBLIC_COMMUNITY_ENABLED": "false",
+          "EXPO_PUBLIC_PRIVACY_POLICY_URL": "https://recoveryroad.app/privacy",
+          "EXPO_PUBLIC_TERMS_URL": "https://recoveryroad.app/terms",
+          "EXPO_PUBLIC_SUPPORT_EMAIL": "support@recoveryroad.app"
         },
         "ios": {
           "resourceClass": "medium"
