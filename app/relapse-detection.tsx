@@ -635,7 +635,7 @@ export default function RelapseDetectionScreen() {
                   <Shield size={18} color="#E53935" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.relapsePlanTitle}>Open your coping plan</Text>
+                  <Text style={styles.relapsePlanTitle}>Open your Relapse Plan</Text>
                   <Text style={styles.relapsePlanSubtitle}>
                     Review reminders, triggers, and tools you chose—self-help only, not a treatment plan.
                   </Text>

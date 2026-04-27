@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, Stack } from 'expo-router';
@@ -111,7 +111,11 @@ export default function RelapsePlanScreen() {
   const progress = currentStep / 5;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 56 : 0}
+    >
       <Stack.Screen
         options={{
           title: 'Relapse Plan',
@@ -332,7 +336,7 @@ export default function RelapsePlanScreen() {
           <ChevronRight size={18} color="#FFFFFF" />
         </Pressable>
       </SafeAreaView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -531,10 +535,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
     paddingHorizontal: 20,
     paddingTop: 10,
     backgroundColor: Colors.background,

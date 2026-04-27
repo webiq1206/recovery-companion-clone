@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useRouter, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -11,6 +12,7 @@ import { MOOD_EMOJIS, MOOD_LABELS } from '../constants/milestones';
 import { JournalEntry } from '../types';
 
 export default function NewJournalScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { addJournalEntry } = useJournal();
   const { recordMicroWin } = useEngagement();
@@ -46,26 +48,31 @@ export default function NewJournalScreen() {
   }, [title, content, mood, addJournalEntry]);
 
   return (
-    <ScreenScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      style={styles.keyboardRoot}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 56 : 0}
     >
-      <Stack.Screen
-        options={{
-          title: 'New Entry',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.text,
-          headerRight: () => (
-            <Pressable onPress={handleSave} hitSlop={12}>
-              <Text style={styles.saveButton}>Save</Text>
-            </Pressable>
-          ),
-        }}
-      />
+      <ScreenScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingBottom: Math.max(40, insets.bottom + 32) }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Stack.Screen
+          options={{
+            title: 'New Entry',
+            headerStyle: { backgroundColor: Colors.background },
+            headerTintColor: Colors.text,
+            headerRight: () => (
+              <Pressable onPress={handleSave} hitSlop={12}>
+                <Text style={styles.saveButton}>Save</Text>
+              </Pressable>
+            ),
+          }}
+        />
 
-      <Text style={styles.label}>HOW ARE YOU FEELING?</Text>
+        <Text style={styles.label}>HOW ARE YOU FEELING?</Text>
       <View style={styles.moodRow}>
         {MOOD_EMOJIS.map((emoji, index) => (
           <Pressable
@@ -115,18 +122,22 @@ export default function NewJournalScreen() {
       >
         <Text style={styles.saveBtnText}>Save Entry</Text>
       </Pressable>
-    </ScreenScrollView>
+      </ScreenScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardRoot: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   content: {
     padding: 20,
-    paddingBottom: 40,
   },
   saveButton: {
     fontSize: 16,

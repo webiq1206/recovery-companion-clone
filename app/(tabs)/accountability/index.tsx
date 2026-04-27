@@ -10,9 +10,12 @@ import {
   Alert,
   Platform,
   InteractionManager,
+  ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Shield,
   Plus,
@@ -141,6 +144,8 @@ function getDriftAlerts(
 
 export default function AccountabilityScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const rawFromSetback = useLocalSearchParams<{ fromSetback?: string | string[] }>().fromSetback;
   const fromSetbackParam = Array.isArray(rawFromSetback) ? rawFromSetback[0] : rawFromSetback;
   const fromLogSetbackFlow = fromSetbackParam === '1' || fromSetbackParam === 'true';
@@ -175,6 +180,11 @@ export default function AccountabilityScreen() {
   const [partnerRelationship, setPartnerRelationship] = useState<AccountabilityPartner['relationship']>('friend');
 
   const [checkInNote, setCheckInNote] = useState<string>('');
+
+  const newContractPanelH = useMemo(
+    () => Math.min(windowHeight * 0.9, windowHeight - insets.top - 4),
+    [windowHeight, insets.top]
+  );
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -695,64 +705,97 @@ export default function AccountabilityScreen() {
       </ScreenScrollView>
 
       <Modal visible={showNewContract} animationType="slide" transparent testID="new-contract-modal">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>New Commitment</Text>
-              <Pressable onPress={() => setShowNewContract(false)} hitSlop={8}>
-                <X size={22} color={Colors.textSecondary} />
-              </Pressable>
-            </View>
-            <Text style={styles.modalSubtitle}>A promise to yourself. Not a rule - a choice.</Text>
-
-            <Text style={styles.inputLabel}>WHAT ARE YOU COMMITTING TO?</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Stay sober today"
-              placeholderTextColor={Colors.textMuted}
-              value={contractTitle}
-              onChangeText={setContractTitle}
-              maxLength={60}
-              testID="contract-title-input"
-            />
-
-            <Text style={styles.inputLabel}>WHY THIS MATTERS (OPTIONAL)</Text>
-            <TextInput
-              style={[styles.input, styles.inputMultiline]}
-              placeholder="Your reason..."
-              placeholderTextColor={Colors.textMuted}
-              value={contractDesc}
-              onChangeText={setContractDesc}
-              multiline
-              maxLength={200}
-              testID="contract-desc-input"
-            />
-
-            <Text style={styles.inputLabel}>CATEGORY</Text>
-            <View style={styles.categoryRow}>
-              {CATEGORIES.map(cat => (
-                <Pressable
-                  key={cat.key}
-                  style={[styles.categoryChip, contractCategory === cat.key && { backgroundColor: getCategoryColor(cat.key), borderColor: getCategoryColor(cat.key) }]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setContractCategory(cat.key);
-                  }}
-                  testID={`cat-${cat.key}`}
-                >
-                  <Text style={[styles.categoryChipText, contractCategory === cat.key && { color: Colors.white }]}>{cat.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [styles.createButton, pressed && { opacity: 0.85 }]}
-              onPress={handleCreateContract}
-              testID="create-contract"
+        <View style={styles.newContractTopRoot} accessibilityViewIsModal>
+          <View
+            style={[
+              styles.newContractTopPanel,
+              { height: newContractPanelH, paddingTop: insets.top + 8 },
+            ]}
+          >
+            <ScrollView
+              style={styles.newContractPanelScroll}
+              contentContainerStyle={[
+                styles.newContractPanelScrollContent,
+                { paddingBottom: insets.bottom + 20 },
+              ]}
+              showsVerticalScrollIndicator
+              bounces
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
             >
-              <Text style={styles.createButtonText}>Create Commitment</Text>
-            </Pressable>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>New Commitment</Text>
+                <Pressable onPress={() => setShowNewContract(false)} hitSlop={8}>
+                  <X size={22} color={Colors.textSecondary} />
+                </Pressable>
+              </View>
+              <Text style={styles.modalSubtitle}>A promise to yourself. Not a rule - a choice.</Text>
+
+              <Text style={styles.inputLabel}>WHAT ARE YOU COMMITTING TO?</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., Stay sober today"
+                placeholderTextColor={Colors.textMuted}
+                value={contractTitle}
+                onChangeText={setContractTitle}
+                maxLength={60}
+                testID="contract-title-input"
+              />
+
+              <Text style={styles.inputLabel}>WHY THIS MATTERS (OPTIONAL)</Text>
+              <TextInput
+                style={[styles.input, styles.inputMultiline]}
+                placeholder="Your reason..."
+                placeholderTextColor={Colors.textMuted}
+                value={contractDesc}
+                onChangeText={setContractDesc}
+                multiline
+                maxLength={200}
+                testID="contract-desc-input"
+              />
+
+              <Text style={styles.inputLabel}>CATEGORY</Text>
+              <View style={styles.categoryRow}>
+                {CATEGORIES.map(cat => (
+                  <Pressable
+                    key={cat.key}
+                    style={[
+                      styles.categoryChip,
+                      contractCategory === cat.key && {
+                        backgroundColor: getCategoryColor(cat.key),
+                        borderColor: getCategoryColor(cat.key),
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setContractCategory(cat.key);
+                    }}
+                    testID={`cat-${cat.key}`}
+                  >
+                    <Text style={[styles.categoryChipText, contractCategory === cat.key && { color: Colors.white }]}>
+                      {cat.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.createButton, pressed && { opacity: 0.85 }]}
+                onPress={handleCreateContract}
+                testID="create-contract"
+              >
+                <Text style={styles.createButtonText}>Create Commitment</Text>
+              </Pressable>
+            </ScrollView>
           </View>
+          <Pressable
+            style={styles.newContractScrim}
+            onPress={() => setShowNewContract(false)}
+            testID="new-contract-scrim"
+            accessibilityLabel="Close"
+            accessibilityRole="button"
+          />
         </View>
       </Modal>
 
@@ -802,64 +845,94 @@ export default function AccountabilityScreen() {
       </Modal>
 
       <Modal visible={showNewPartner} animationType="slide" transparent testID="new-partner-modal">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Partner</Text>
-              <Pressable onPress={() => setShowNewPartner(false)} hitSlop={8}>
-                <X size={22} color={Colors.textSecondary} />
-              </Pressable>
-            </View>
-            <Text style={styles.modalSubtitle}>Someone who walks beside you, not above you.</Text>
-
-            <Text style={styles.inputLabel}>NAME</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Their name"
-              placeholderTextColor={Colors.textMuted}
-              value={partnerName}
-              onChangeText={setPartnerName}
-              maxLength={40}
-              testID="partner-name-input"
-            />
-
-            <Text style={styles.inputLabel}>PHONE (OPTIONAL)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Phone number"
-              placeholderTextColor={Colors.textMuted}
-              value={partnerPhone}
-              onChangeText={setPartnerPhone}
-              keyboardType="phone-pad"
-              maxLength={20}
-              testID="partner-phone-input"
-            />
-
-            <Text style={styles.inputLabel}>RELATIONSHIP</Text>
-            <View style={styles.categoryRow}>
-              {RELATIONSHIP_OPTIONS.map(rel => (
-                <Pressable
-                  key={rel}
-                  style={[styles.categoryChip, partnerRelationship === rel && { backgroundColor: Colors.primary, borderColor: Colors.primary }]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setPartnerRelationship(rel);
-                  }}
-                  testID={`rel-${rel}`}
-                >
-                  <Text style={[styles.categoryChipText, partnerRelationship === rel && { color: Colors.white }]}>{rel}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [styles.createButton, pressed && { opacity: 0.85 }]}
-              onPress={handleAddPartner}
-              testID="create-partner"
+        <View style={styles.newContractTopRoot} accessibilityViewIsModal>
+          <View
+            style={[
+              styles.newContractTopPanel,
+              { height: newContractPanelH, paddingTop: insets.top + 8 },
+            ]}
+          >
+            <ScrollView
+              style={styles.newContractPanelScroll}
+              contentContainerStyle={[
+                styles.newContractPanelScrollContent,
+                { paddingBottom: insets.bottom + 20 },
+              ]}
+              showsVerticalScrollIndicator
+              bounces
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
             >
-              <Text style={styles.createButtonText}>Add Partner</Text>
-            </Pressable>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add Partner</Text>
+                <Pressable onPress={() => setShowNewPartner(false)} hitSlop={8}>
+                  <X size={22} color={Colors.textSecondary} />
+                </Pressable>
+              </View>
+              <Text style={styles.modalSubtitle}>Someone who walks beside you, not above you.</Text>
+
+              <Text style={styles.inputLabel}>NAME</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Their name"
+                placeholderTextColor={Colors.textMuted}
+                value={partnerName}
+                onChangeText={setPartnerName}
+                maxLength={40}
+                testID="partner-name-input"
+              />
+
+              <Text style={styles.inputLabel}>PHONE (OPTIONAL)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Phone number"
+                placeholderTextColor={Colors.textMuted}
+                value={partnerPhone}
+                onChangeText={setPartnerPhone}
+                keyboardType="phone-pad"
+                maxLength={20}
+                testID="partner-phone-input"
+              />
+
+              <Text style={styles.inputLabel}>RELATIONSHIP</Text>
+              <View style={styles.categoryRow}>
+                {RELATIONSHIP_OPTIONS.map(rel => (
+                  <Pressable
+                    key={rel}
+                    style={[
+                      styles.categoryChip,
+                      partnerRelationship === rel && { backgroundColor: Colors.primary, borderColor: Colors.primary },
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setPartnerRelationship(rel);
+                    }}
+                    testID={`rel-${rel}`}
+                  >
+                    <Text style={[styles.categoryChipText, partnerRelationship === rel && { color: Colors.white }]}>
+                      {rel}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.createButton, pressed && { opacity: 0.85 }]}
+                onPress={handleAddPartner}
+                testID="create-partner"
+              >
+                <Text style={styles.createButtonText}>Add Partner</Text>
+              </Pressable>
+            </ScrollView>
           </View>
+          <Pressable
+            style={styles.newContractScrim}
+            onPress={() => setShowNewPartner(false)}
+            testID="add-partner-scrim"
+            accessibilityLabel="Close"
+            accessibilityRole="button"
+          />
         </View>
       </Modal>
     </Animated.View>
@@ -1269,10 +1342,29 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
   },
-  modalOverlay: {
+  newContractTopRoot: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'flex-end',
+    flexDirection: 'column' as const,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  newContractTopPanel: {
+    width: '100%',
+    minHeight: 0,
+    backgroundColor: Colors.cardBackground,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
+    overflow: 'hidden' as const,
+  },
+  newContractPanelScroll: {
+    flex: 1,
+  },
+  newContractPanelScrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 4,
+  },
+  newContractScrim: {
+    flex: 1,
+    minHeight: 0,
   },
   modalContent: {
     backgroundColor: Colors.cardBackground,
@@ -1281,6 +1373,11 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 40,
     maxHeight: '85%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'flex-end',
   },
   modalHeader: {
     flexDirection: 'row',
