@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import { ScreenScrollView } from './ScreenScrollView';
 import Colors from '../constants/colors';
 import type { LegalSection } from '../constants/legalInAppCopy';
-import { IN_APP_LEGAL_LAST_UPDATED } from '../constants/legalInAppCopy';
+import { IN_APP_LEGAL_LAST_UPDATED, PRIVACY_POLICY_FOOTER_QUESTIONS_LINE } from '../constants/legalInAppCopy';
 import { formatLegalDocumentContactFooter } from '../core/supportContact';
 
 type Props = {
@@ -13,10 +13,21 @@ type Props = {
   intro?: string;
   /** Optional content below the intro (for example a link to the publicly hosted policy). */
   headerAccessory?: React.ReactNode;
+  /**
+   * 'support' appends env-based Contact footer (default). 'privacySite' matches the end of
+   * https://recoveryroad.app/privacy: lead line + PRIVACY_POLICY_FOOTER_QUESTIONS_LINE only.
+   */
+  documentEndMatter?: 'support' | 'privacySite';
 };
 
-export function LegalDocumentLayout({ title, sections, intro, headerAccessory }: Props) {
-  const footer = formatLegalDocumentContactFooter();
+export function LegalDocumentLayout({
+  title,
+  sections,
+  intro,
+  headerAccessory,
+  documentEndMatter = 'support',
+}: Props) {
+  const supportFooter = formatLegalDocumentContactFooter();
 
   return (
     <View style={styles.wrapper}>
@@ -40,7 +51,9 @@ export function LegalDocumentLayout({ title, sections, intro, headerAccessory }:
         ))}
         <View style={styles.sectionRule} />
         <Text style={styles.footerLead}>This document describes our practices as of the date shown above.</Text>
-        <Text style={styles.footerContact}>{footer}</Text>
+        <Text style={styles.footerContact}>
+          {documentEndMatter === 'privacySite' ? PRIVACY_POLICY_FOOTER_QUESTIONS_LINE : supportFooter}
+        </Text>
       </ScreenScrollView>
     </View>
   );
