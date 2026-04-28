@@ -35,7 +35,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
-import { getSupportEmail, getSupportUrl, hasConfiguredSupportContact } from '../core/supportContact';
+import { getSupportEmail, getSupportUrl } from '../core/supportContact';
 import { useUser } from '../core/domains/useUser';
 import { useAppMeta } from '../core/domains/useAppMeta';
 import { useEngagement } from '../providers/EngagementProvider';
@@ -80,6 +80,16 @@ export default function SettingsScreen() {
     promptForNotificationPermission,
   } = useNotifications();
   const { providerModeEnabled } = useProviderMode();
+
+  const supportEmail = getSupportEmail();
+  const supportUrl = getSupportUrl();
+  const supportUrlIsHttps = /^https?:\/\//i.test(supportUrl);
+  const supportContactSubtitle =
+    !supportEmail && !supportUrlIsHttps
+      ? 'Configure support email or URL for this build'
+      : supportEmail && supportUrlIsHttps
+        ? `${supportEmail}\n${supportUrl}`
+        : supportEmail || supportUrl;
 
   const privacyControls = profile.privacyControls ?? {
     isAnonymous: false,
@@ -154,6 +164,41 @@ export default function SettingsScreen() {
       },
     ]);
   }, [clearDiagnosticsCaches, queryClient]);
+
+  const handleContactSupport = useCallback(() => {
+    Haptics.selectionAsync();
+    if (supportEmail && supportUrlIsHttps) {
+      Alert.alert('Contact support', 'Choose email or our website contact page.', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Email',
+          onPress: () =>
+            void Linking.openURL(
+              `mailto:${supportEmail}?subject=${encodeURIComponent('RecoveryRoad support')}`,
+            ),
+        },
+        {
+          text: 'Website',
+          onPress: () => void Linking.openURL(supportUrl),
+        },
+      ]);
+      return;
+    }
+    if (supportEmail) {
+      void Linking.openURL(
+        `mailto:${supportEmail}?subject=${encodeURIComponent('RecoveryRoad support')}`,
+      );
+      return;
+    }
+    if (supportUrlIsHttps) {
+      void Linking.openURL(supportUrl);
+      return;
+    }
+    Alert.alert(
+      'Contact support',
+      'Add EXPO_PUBLIC_SUPPORT_EMAIL or EXPO_PUBLIC_SUPPORT_URL to your production build configuration so this button opens your team directly. For emergencies, contact local emergency services or call/text 988 in the U.S.',
+    );
+  }, [supportEmail, supportUrl, supportUrlIsHttps]);
 
   const handleRestorePurchases = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -510,23 +555,7 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>SUPPORT</Text>
         <Pressable
           style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
-          onPress={() => {
-            Haptics.selectionAsync();
-            const email = getSupportEmail();
-            const url = getSupportUrl();
-            if (email) {
-              void Linking.openURL(`mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('RecoveryRoad support')}`);
-              return;
-            }
-            if (/^https?:\/\//i.test(url)) {
-              void Linking.openURL(url);
-              return;
-            }
-            Alert.alert(
-              'Contact support',
-              'Add EXPO_PUBLIC_SUPPORT_EMAIL or EXPO_PUBLIC_SUPPORT_URL to your production build configuration so this button opens your team directly. For emergencies, contact local emergency services or call/text 988 in the U.S.',
-            );
-          }}
+          onPress={handleContactSupport}
           testID="settings-contact-support"
         >
           <View style={styles.settingLeft}>
@@ -535,11 +564,7 @@ export default function SettingsScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.settingLabel}>Report a problem / Contact support</Text>
-              <Text style={styles.settingValue}>
-                {hasConfiguredSupportContact()
-                  ? getSupportEmail() || getSupportUrl()
-                  : 'Configure support email or URL for this build'}
-              </Text>
+              <Text style={styles.settingValue}>{supportContactSubtitle}</Text>
             </View>
           </View>
           <ChevronRight size={16} color={Colors.textMuted} />
