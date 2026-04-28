@@ -32,12 +32,9 @@ import {
   Trash2,
   Eraser,
   FileText,
-  Share2,
-  Users,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
-import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { getSupportEmail, getSupportUrl, hasConfiguredSupportContact } from '../core/supportContact';
 import { useUser } from '../core/domains/useUser';
 import { useAppMeta } from '../core/domains/useAppMeta';
@@ -508,54 +505,6 @@ export default function SettingsScreen() {
             </View>
             <ChevronRight size={16} color={Colors.textMuted} />
           </Pressable>
-          <View style={styles.groupSeparator} />
-          <Pressable
-            style={({ pressed }) => [styles.groupRow, pressed && { opacity: 0.85 }]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              router.push('/data-and-sharing' as never);
-            }}
-            testID="settings-data-sharing"
-          >
-            <View style={styles.groupRowLeft}>
-              <View style={[styles.settingIcon, { backgroundColor: 'rgba(66,165,245,0.12)' }]}>
-                <Share2 size={17} color="#42A5F5" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingLabel}>Your data & sharing</Text>
-                <Text style={styles.settingValue}>
-                  {arePeerPracticeFeaturesEnabled()
-                    ? 'Local vs shared, deletion, Connect consent'
-                    : 'Local storage, deletion, and optional sharing controls'}
-                </Text>
-              </View>
-            </View>
-            <ChevronRight size={16} color={Colors.textMuted} />
-          </Pressable>
-          {arePeerPracticeFeaturesEnabled() ? (
-            <>
-              <View style={styles.groupSeparator} />
-              <Pressable
-                style={({ pressed }) => [styles.groupRow, pressed && { opacity: 0.85 }]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  router.push('/community-guidelines' as never);
-                }}
-                testID="settings-community-guidelines"
-              >
-                <View style={styles.groupRowLeft}>
-                  <View style={[styles.settingIcon, { backgroundColor: 'rgba(156,39,176,0.12)' }]}>
-                    <Users size={17} color="#9C27B0" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.settingLabel}>Connect safety guidelines</Text>
-                    <Text style={styles.settingValue}>UGC safety, report & block, moderation</Text>
-                  </View>
-                </View>
-                <ChevronRight size={16} color={Colors.textMuted} />
-              </Pressable>
-            </>
-          ) : null}
         </View>
 
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>SUPPORT</Text>
