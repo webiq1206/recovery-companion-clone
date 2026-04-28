@@ -296,9 +296,9 @@ export default function SecuritySettingsScreen() {
           <View style={[styles.rowIcon, { backgroundColor: 'rgba(76,175,80,0.12)' }]}>
             {settings.dataEncryptionEnabled ? <Eye size={18} color={Colors.success} /> : <EyeOff size={18} color={Colors.textMuted} />}
           </View>
-          <View>
+          <View style={styles.rowTextColumn}>
             <Text style={styles.rowTitle}>Data Encryption</Text>
-            <Text style={styles.rowSubtitle}>Encrypt stored recovery data</Text>
+            <Text style={styles.rowSubtitle}>For some security/diagnostics data</Text>
           </View>
         </View>
         <View style={[styles.toggle, settings.dataEncryptionEnabled && styles.toggleOn]}>
@@ -317,7 +317,7 @@ export default function SecuritySettingsScreen() {
           <View style={[styles.rowIcon, { backgroundColor: 'rgba(255,179,71,0.12)' }]}>
             <FileText size={18} color={Colors.accentWarm} />
           </View>
-          <View>
+          <View style={styles.rowTextColumn}>
             <Text style={styles.rowTitle}>Security audit log</Text>
             <Text style={styles.rowSubtitle}>Log sensitive actions in secure storage on this device only</Text>
           </View>
@@ -338,7 +338,7 @@ export default function SecuritySettingsScreen() {
           <View style={[styles.rowIcon, { backgroundColor: 'rgba(66,165,245,0.12)' }]}>
             <BarChart3 size={18} color="#42A5F5" />
           </View>
-          <View>
+          <View style={styles.rowTextColumn}>
             <Text style={styles.rowTitle}>Anonymized analytics buffer</Text>
             <Text style={styles.rowSubtitle}>
               When on, minimal security-related events are saved only on this device; nothing is uploaded to us
@@ -538,6 +538,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     flex: 1,
+    minWidth: 0,
+  },
+  rowTextColumn: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 8,
   },
   rowIcon: {
     width: 36,

@@ -146,7 +146,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
     body:
       'For privacy questions or requests regarding information we hold, contact us using:\n\n' +
       "• Email: support@recoveryroad.app\n\n" +
-      "• The support email or support website shown in the App's Contact support entry when your publisher has configured them; and/or\n\n" +
+      "• The support email or support website shown in the App's Contact support entry.\n\n" +
       '• The App Support link on the RecoveryRoad page in the Apple App Store or Google Play.',
   },
 ];

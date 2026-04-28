@@ -630,7 +630,7 @@ export default function SettingsScreen() {
             <View>
               <Text style={styles.settingLabel}>Security & Privacy</Text>
               <Text style={styles.settingValue}>
-                PIN, biometrics, encryption, audit log
+                PIN, security level, audit log
               </Text>
             </View>
           </View>
