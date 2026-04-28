@@ -205,6 +205,14 @@ export default function SettingsScreen() {
     void Linking.openURL(supportUrl);
   }, [supportUrl, supportUrlIsHttps]);
 
+  const openCommunityDeletionSupportEmail = useCallback(() => {
+    const addr = supportEmail || 'support@recoveryroad.app';
+    void Haptics.selectionAsync();
+    void Linking.openURL(
+      `mailto:${addr}?subject=${encodeURIComponent('RecoveryRoad — delete community account')}`,
+    );
+  }, [supportEmail]);
+
   const handleRestorePurchases = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === 'web') {
@@ -1059,28 +1067,40 @@ export default function SettingsScreen() {
         </Pressable>
 
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>ACCOUNT</Text>
-        <Pressable
-          style={styles.dangerRow}
-          onPress={handleDeleteAccount}
-          testID="settings-delete-account"
-        >
-          <View style={styles.settingLeft}>
-            <View
-              style={[
-                styles.settingIcon,
-                { backgroundColor: 'rgba(239,83,80,0.12)' },
-              ]}
+        <View style={styles.deleteAccountBlock}>
+          <Pressable
+            style={({ pressed }) => [styles.deleteAccountTitlePress, pressed && { opacity: 0.85 }]}
+            onPress={handleDeleteAccount}
+            accessibilityRole="button"
+            accessibilityLabel="Delete account"
+            testID="settings-delete-account"
+          >
+            <View style={styles.settingLeft}>
+              <View
+                style={[
+                  styles.settingIcon,
+                  { backgroundColor: 'rgba(239,83,80,0.12)' },
+                ]}
+              >
+                <Trash2 size={17} color={Colors.danger} />
+              </View>
+              <Text style={[styles.settingLabel, { color: Colors.danger, flex: 1 }]}>Delete account</Text>
+            </View>
+          </Pressable>
+          <Text style={styles.deleteAccountDescription}>
+            If you created an account for use of the live community chat rooms, and you would like all of your
+            account information permanently deleted, please submit an email to{' '}
+            <Text
+              style={styles.deleteAccountEmailLink}
+              accessibilityRole="link"
+              accessibilityLabel={`Email ${supportEmail || 'support@recoveryroad.app'}`}
+              onPress={openCommunityDeletionSupportEmail}
             >
-              <Trash2 size={17} color={Colors.danger} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.settingLabel, { color: Colors.danger }]}>Delete account</Text>
-              <Text style={styles.settingValue}>
-                If you created an account for use of the live community chat rooms, and you would like all of your account information permanently deleted, please submit an email to support@recoveryroad.app asking us to do so.
-              </Text>
-            </View>
-          </View>
-        </Pressable>
+              {supportEmail || 'support@recoveryroad.app'}
+            </Text>{' '}
+            asking us to do so.
+          </Text>
+        </View>
 
         <View style={{ height: 40 }} />
       </ScreenScrollView>
@@ -1192,6 +1212,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.danger + '20',
     marginBottom: 8,
+  },
+  deleteAccountBlock: {
+    backgroundColor: Colors.danger + '08',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: Colors.danger + '20',
+    marginBottom: 8,
+  },
+  deleteAccountTitlePress: {
+    alignSelf: 'stretch',
+    marginBottom: 10,
+  },
+  deleteAccountDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: Colors.textSecondary,
+  },
+  deleteAccountEmailLink: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '600' as const,
+    color: Colors.primary,
+    textDecorationLine: 'underline',
   },
   intensityContainer: {
     flexDirection: 'row',
