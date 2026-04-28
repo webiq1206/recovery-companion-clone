@@ -30,6 +30,7 @@
           "EXPO_PUBLIC_COMMUNITY_ENABLED": "false",
           "EXPO_PUBLIC_PRIVACY_POLICY_URL": "https://recoveryroad.app/privacy",
           "EXPO_PUBLIC_TERMS_OF_SERVICE_URL": "https://recoveryroad.app/terms",
+          "EXPO_PUBLIC_SUPPORT_URL": "https://recoveryroad.app/contact",
           "EXPO_PUBLIC_SUPPORT_EMAIL": "support@recoveryroad.app"
         },
         "ios": {
