@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Pressable, Alert, Modal } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { Shield, Lock, Fingerprint, Eye, EyeOff, FileText, BarChart3, ChevronRight, Trash2, ShieldCheck, ShieldAlert, ShieldOff, Clock, Activity, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
 import Colors from '../constants/colors';
 import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { useSecurity } from '../providers/SecurityProvider';
@@ -11,7 +10,6 @@ import { SecurityLevel, AuditLogEntry } from '../types';
 import LockScreen from '../components/LockScreen';
 
 export default function SecuritySettingsScreen() {
-  const router = useRouter();
   const {
     settings,
     biometricAvailable,
@@ -400,24 +398,6 @@ export default function SecuritySettingsScreen() {
           </Text>
         </View>
       </View>
-
-      <Pressable
-        style={({ pressed }) => [styles.settingRow, { marginTop: 12 }, pressed && { opacity: 0.85 }]}
-        onPress={() => router.push('/settings' as any)}
-      >
-        <View style={styles.rowLeft}>
-          <View style={[styles.rowIcon, { backgroundColor: 'rgba(239,83,80,0.12)' }]}>
-            <Trash2 size={18} color={Colors.danger} />
-          </View>
-          <View>
-            <Text style={styles.rowTitle}>Remove all app data</Text>
-            <Text style={styles.rowSubtitle}>
-              Use Settings, Account — delete everything on this device (no separate cloud login).
-            </Text>
-          </View>
-        </View>
-        <ChevronRight size={18} color={Colors.textMuted} />
-      </Pressable>
 
       <Modal
         visible={showAuditLog}

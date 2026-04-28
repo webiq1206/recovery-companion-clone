@@ -109,6 +109,39 @@ export default function SettingsScreen() {
     [privacyControls, updateProfile],
   );
 
+  const executeFullLocalReset = useCallback(async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    await resetAllData();
+    queryClient.clear();
+    router.replace('/onboarding' as any);
+  }, [resetAllData, queryClient, router]);
+
+  const handleRemoveAppData = useCallback(() => {
+    Alert.alert('Remove all app data?', formatDeleteAccountDetailsMessage(), [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Continue',
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert(
+            'Erase everything on this device?',
+            'You will set up the app again from the beginning.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Remove all data',
+                style: 'destructive',
+                onPress: () => {
+                  void executeFullLocalReset();
+                },
+              },
+            ],
+          );
+        },
+      },
+    ]);
+  }, [executeFullLocalReset]);
+
   const handleDeleteAccount = useCallback(() => {
     Alert.alert('Delete account?', formatDeleteAccountDetailsMessage(), [
       { text: 'Cancel', style: 'cancel' },
@@ -124,11 +157,8 @@ export default function SettingsScreen() {
               {
                 text: 'Delete account',
                 style: 'destructive',
-                onPress: async () => {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                  await resetAllData();
-                  queryClient.clear();
-                  router.replace('/onboarding' as any);
+                onPress: () => {
+                  void executeFullLocalReset();
                 },
               },
             ],
@@ -136,7 +166,7 @@ export default function SettingsScreen() {
         },
       },
     ]);
-  }, [resetAllData, queryClient, router]);
+  }, [executeFullLocalReset]);
 
   const handleClearLocalDiagnostics = useCallback(() => {
     Alert.alert('Reset local diagnostics?', formatClearLocalDiagnosticsMessage(), [
@@ -975,11 +1005,11 @@ export default function SettingsScreen() {
           </>
         )}
 
-        <Text style={[styles.sectionLabel, { marginTop: 28 }]}>ACCOUNT</Text>
+        <Text style={[styles.sectionLabel, { marginTop: 28 }]}>LOCAL DATA</Text>
         <Pressable
           style={styles.dangerRow}
-          onPress={handleDeleteAccount}
-          testID="settings-delete-account"
+          onPress={handleRemoveAppData}
+          testID="settings-remove-all-app-data"
         >
           <View style={styles.settingLeft}>
             <View
@@ -991,10 +1021,10 @@ export default function SettingsScreen() {
               <Trash2 size={17} color={Colors.danger} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.settingLabel, { color: Colors.danger }]}>Delete account</Text>
+              <Text style={[styles.settingLabel, { color: Colors.danger }]}>Remove all app data</Text>
               <Text style={styles.settingValue}>
-                Permanently erase your on-device profile and all app data (no RecoveryRoad
-                cloud account)
+                Permanently erase your on-device profile and all app data (no RecoveryRoad cloud
+                account)
               </Text>
             </View>
           </View>
@@ -1022,6 +1052,31 @@ export default function SettingsScreen() {
               <Text style={styles.settingValue}>
                 Clear caches, prediction buffers, and on-device logs—does not remove journal,
                 check-ins, or profile
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+
+        <Text style={[styles.sectionLabel, { marginTop: 28 }]}>ACCOUNT</Text>
+        <Pressable
+          style={styles.dangerRow}
+          onPress={handleDeleteAccount}
+          testID="settings-delete-account"
+        >
+          <View style={styles.settingLeft}>
+            <View
+              style={[
+                styles.settingIcon,
+                { backgroundColor: 'rgba(239,83,80,0.12)' },
+              ]}
+            >
+              <Trash2 size={17} color={Colors.danger} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.settingLabel, { color: Colors.danger }]}>Delete account</Text>
+              <Text style={styles.settingValue}>
+                Permanently erase your on-device profile and all app data (no RecoveryRoad
+                cloud account)
               </Text>
             </View>
           </View>
