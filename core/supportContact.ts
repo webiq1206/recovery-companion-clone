@@ -4,6 +4,8 @@
  *
  * For App Store Connect, set the same public privacy policy URL you host (HTTPS):
  * `EXPO_PUBLIC_PRIVACY_POLICY_URL` (optional; enables an in-app “open in browser” link).
+ *
+ * Optional public Terms of Service URL: `EXPO_PUBLIC_TERMS_OF_SERVICE_URL` (enables the same on the Terms screen).
  */
 export function getSupportEmail(): string {
   return (process.env.EXPO_PUBLIC_SUPPORT_EMAIL || '').trim();
@@ -16,6 +18,11 @@ export function getSupportUrl(): string {
 /** Public HTTPS URL where this Privacy Policy is hosted (for App Store Connect and in-app link). */
 export function getPrivacyPolicyPublicUrl(): string {
   return (process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || '').trim();
+}
+
+/** Public HTTPS URL where these Terms of Service are hosted (for in-app link). */
+export function getTermsOfServicePublicUrl(): string {
+  return (process.env.EXPO_PUBLIC_TERMS_OF_SERVICE_URL || '').trim();
 }
 
 export function hasConfiguredSupportContact(): boolean {

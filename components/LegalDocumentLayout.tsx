@@ -16,8 +16,9 @@ type Props = {
   /**
    * 'support' appends env-based Contact footer (default). 'privacySite' matches the end of
    * https://recoveryroad.app/privacy: lead line + PRIVACY_POLICY_FOOTER_QUESTIONS_LINE only.
+   * 'termsSite' matches https://recoveryroad.app/terms (effective-date lead + same Questions line).
    */
-  documentEndMatter?: 'support' | 'privacySite';
+  documentEndMatter?: 'support' | 'privacySite' | 'termsSite';
 };
 
 export function LegalDocumentLayout({
@@ -28,6 +29,14 @@ export function LegalDocumentLayout({
   documentEndMatter = 'support',
 }: Props) {
   const supportFooter = formatLegalDocumentContactFooter();
+  const footerLead =
+    documentEndMatter === 'termsSite'
+      ? 'These terms are effective as of the date shown above.'
+      : 'This document describes our practices as of the date shown above.';
+  const footerContact =
+    documentEndMatter === 'privacySite' || documentEndMatter === 'termsSite'
+      ? PRIVACY_POLICY_FOOTER_QUESTIONS_LINE
+      : supportFooter;
 
   return (
     <View style={styles.wrapper}>
@@ -50,10 +59,8 @@ export function LegalDocumentLayout({
           </View>
         ))}
         <View style={styles.sectionRule} />
-        <Text style={styles.footerLead}>This document describes our practices as of the date shown above.</Text>
-        <Text style={styles.footerContact}>
-          {documentEndMatter === 'privacySite' ? PRIVACY_POLICY_FOOTER_QUESTIONS_LINE : supportFooter}
-        </Text>
+        <Text style={styles.footerLead}>{footerLead}</Text>
+        <Text style={styles.footerContact}>{footerContact}</Text>
       </ScreenScrollView>
     </View>
   );
