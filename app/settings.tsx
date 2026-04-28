@@ -84,12 +84,7 @@ export default function SettingsScreen() {
   const supportEmail = getSupportEmail();
   const supportUrl = getSupportUrl();
   const supportUrlIsHttps = /^https?:\/\//i.test(supportUrl);
-  const supportContactSubtitle =
-    !supportEmail && !supportUrlIsHttps
-      ? 'Configure support email or URL for this build'
-      : supportEmail && supportUrlIsHttps
-        ? `${supportEmail}\n${supportUrl}`
-        : supportEmail || supportUrl;
+  const hasSupportContact = supportEmail.length > 0 || supportUrlIsHttps;
 
   const privacyControls = profile.privacyControls ?? {
     isAnonymous: false,
@@ -165,40 +160,19 @@ export default function SettingsScreen() {
     ]);
   }, [clearDiagnosticsCaches, queryClient]);
 
-  const handleContactSupport = useCallback(() => {
-    Haptics.selectionAsync();
-    if (supportEmail && supportUrlIsHttps) {
-      Alert.alert('Contact support', 'Choose email or our website contact page.', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Email',
-          onPress: () =>
-            void Linking.openURL(
-              `mailto:${supportEmail}?subject=${encodeURIComponent('RecoveryRoad support')}`,
-            ),
-        },
-        {
-          text: 'Website',
-          onPress: () => void Linking.openURL(supportUrl),
-        },
-      ]);
-      return;
-    }
-    if (supportEmail) {
-      void Linking.openURL(
-        `mailto:${supportEmail}?subject=${encodeURIComponent('RecoveryRoad support')}`,
-      );
-      return;
-    }
-    if (supportUrlIsHttps) {
-      void Linking.openURL(supportUrl);
-      return;
-    }
-    Alert.alert(
-      'Contact support',
-      'Add EXPO_PUBLIC_SUPPORT_EMAIL or EXPO_PUBLIC_SUPPORT_URL to your production build configuration so this button opens your team directly. For emergencies, contact local emergency services or call/text 988 in the U.S.',
+  const openSupportEmail = useCallback(() => {
+    if (!supportEmail) return;
+    void Haptics.selectionAsync();
+    void Linking.openURL(
+      `mailto:${supportEmail}?subject=${encodeURIComponent('RecoveryRoad support')}`,
     );
-  }, [supportEmail, supportUrl, supportUrlIsHttps]);
+  }, [supportEmail]);
+
+  const openSupportWebsite = useCallback(() => {
+    if (!supportUrlIsHttps) return;
+    void Haptics.selectionAsync();
+    void Linking.openURL(supportUrl);
+  }, [supportUrl, supportUrlIsHttps]);
 
   const handleRestorePurchases = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -553,22 +527,44 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>SUPPORT</Text>
-        <Pressable
-          style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
-          onPress={handleContactSupport}
-          testID="settings-contact-support"
-        >
+        <View style={styles.settingRow} testID="settings-contact-support">
           <View style={styles.settingLeft}>
             <View style={[styles.settingIcon, { backgroundColor: 'rgba(46,196,182,0.12)' }]}>
               <MessageCircle size={17} color={Colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.settingLabel}>Report a problem / Contact support</Text>
-              <Text style={styles.settingValue}>{supportContactSubtitle}</Text>
+              {hasSupportContact ? (
+                <View style={styles.supportLinksColumn}>
+                  {supportEmail ? (
+                    <Pressable
+                      onPress={openSupportEmail}
+                      hitSlop={6}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Email ${supportEmail}`}
+                    >
+                      <Text style={styles.supportLinkText}>{supportEmail}</Text>
+                    </Pressable>
+                  ) : null}
+                  {supportUrlIsHttps ? (
+                    <Pressable
+                      onPress={openSupportWebsite}
+                      hitSlop={6}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Open contact page ${supportUrl}`}
+                    >
+                      <Text style={styles.supportLinkText}>{supportUrl}</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : (
+                <Text style={styles.settingValue}>
+                  Configure EXPO_PUBLIC_SUPPORT_EMAIL or EXPO_PUBLIC_SUPPORT_URL for this build.
+                </Text>
+              )}
             </View>
           </View>
-          <ChevronRight size={16} color={Colors.textMuted} />
-        </Pressable>
+        </View>
 
         {/* Security */}
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>SECURITY</Text>
@@ -1119,6 +1115,17 @@ const styles = StyleSheet.create({
   settingValue: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  supportLinksColumn: {
+    marginTop: 6,
+    gap: 10,
+    alignSelf: 'stretch',
+  },
+  supportLinkText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.primary,
+    textDecorationLine: 'underline',
   },
   dangerRow: {
     flexDirection: 'row',
