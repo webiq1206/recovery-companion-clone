@@ -6,6 +6,10 @@
 export const DELETE_ACCOUNT_INTRO =
   'RecoveryRoad does not create or host a server-side login or profile for you. Delete account permanently erases everything the app has stored on this device for your use of the app. Apple or Google may still hold subscription or purchase records tied to your store account—manage billing there.';
 
+/** Same scope as delete account; wording matches the “Remove all app data” entry point. */
+export const REMOVE_ALL_APP_DATA_INTRO =
+  'RecoveryRoad does not create or host a server-side login or profile for you. Remove all app data permanently erases everything the app has stored on this device for your use of the app. Apple or Google may still hold subscription or purchase records tied to your store account—manage billing there.';
+
 export const DELETE_ACCOUNT_DATA_BULLETS: readonly string[] = [
   'Profile and onboarding (name, goals, sober date, recovery inputs, privacy toggles)',
   'Daily check-ins, near-miss events, progress stats, and relapse timeline',
@@ -21,6 +25,11 @@ export const DELETE_ACCOUNT_DATA_BULLETS: readonly string[] = [
 export function formatDeleteAccountDetailsMessage(): string {
   const bullets = DELETE_ACCOUNT_DATA_BULLETS.map((line) => `• ${line}`).join('\n');
   return `${DELETE_ACCOUNT_INTRO}\n\nThis removes:\n${bullets}\n\nThis cannot be undone. You will set up the app again from the beginning.`;
+}
+
+export function formatRemoveAllAppDataDetailsMessage(): string {
+  const bullets = DELETE_ACCOUNT_DATA_BULLETS.map((line) => `• ${line}`).join('\n');
+  return `${REMOVE_ALL_APP_DATA_INTRO}\n\nThis removes:\n${bullets}\n\nThis cannot be undone. You will set up the app again from the beginning.`;
 }
 
 export const CLEAR_LOCAL_DIAGNOSTICS_INTRO =

@@ -50,6 +50,7 @@ import {
 import {
   formatClearLocalDiagnosticsMessage,
   formatDeleteAccountDetailsMessage,
+  formatRemoveAllAppDataDetailsMessage,
 } from '../core/accountDeletionCopy';
 
 const ANONYMOUS_NAMES = [
@@ -117,7 +118,7 @@ export default function SettingsScreen() {
   }, [resetAllData, queryClient, router]);
 
   const handleRemoveAppData = useCallback(() => {
-    Alert.alert('Remove all app data?', formatDeleteAccountDetailsMessage(), [
+    Alert.alert('Remove all app data?', formatRemoveAllAppDataDetailsMessage(), [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Continue',
@@ -1075,8 +1076,7 @@ export default function SettingsScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.settingLabel, { color: Colors.danger }]}>Delete account</Text>
               <Text style={styles.settingValue}>
-                Permanently erase your on-device profile and all app data (no RecoveryRoad
-                cloud account)
+                If you created an account for use of the live community chat rooms, and you would like all of your account information permanently deleted, please submit an email to support@recoveryroad.app asking us to do so.
               </Text>
             </View>
           </View>
