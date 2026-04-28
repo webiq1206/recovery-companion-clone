@@ -855,7 +855,6 @@ export interface SecuritySettings {
   securityLevel: SecurityLevel;
   dataEncryptionEnabled: boolean;
   auditLoggingEnabled: boolean;
-  anonymizedAnalyticsEnabled: boolean;
   screenCaptureBlocked: boolean;
   lastAuthAt: string;
   failedAttempts: number;
@@ -890,21 +889,12 @@ export interface AuditLogEntry {
   success: boolean;
 }
 
-export interface AnonymizedEvent {
-  id: string;
-  category: 'engagement' | 'feature_use' | 'session' | 'milestone' | 'error';
-  action: string;
-  timestamp: string;
-  metadata: Record<string, string | number | boolean>;
-}
-
 export interface SecurityState {
   settings: SecuritySettings;
   isAuthenticated: boolean;
   isLocked: boolean;
   sessionId: string;
   auditLog: AuditLogEntry[];
-  analyticsEvents: AnonymizedEvent[];
 }
 
 export type EnterpriseRole = 'org_admin' | 'clinical_director' | 'therapist' | 'case_manager' | 'billing_admin' | 'viewer';

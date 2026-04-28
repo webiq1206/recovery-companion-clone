@@ -18,7 +18,7 @@ export const DELETE_ACCOUNT_DATA_BULLETS: readonly string[] = [
   'Connection, community, and recovery-room content stored on this device',
   'Cached subscription entitlement (you can restore purchases after reinstall)',
   'Engagement and notification preferences, scheduled local reminders, and reminder counters',
-  'App PIN/biometric lock, security settings, on-device audit log, and anonymized analytics buffer',
+  'App PIN/biometric lock, security settings, and on-device audit log',
   'Optional provider or workspace demo data (only if that build option was enabled on this device)',
 ];
 
@@ -36,7 +36,7 @@ export const CLEAR_LOCAL_DIAGNOSTICS_INTRO =
   'This clears on-device diagnostics, prediction caches, and wizard engagement memory. It does not delete your profile, check-ins, journal, pledges, contacts, or community content.';
 
 export const CLEAR_LOCAL_DIAGNOSTICS_BULLETS: readonly string[] = [
-  'Security audit log and anonymized analytics buffer',
+  'Security audit log',
   'Risk, retention, and stage-detection caches',
   'Behavioral notification counters and background session timing',
   'Wizard / quick-start engagement history used to tune prompts',

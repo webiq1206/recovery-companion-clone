@@ -39,7 +39,6 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       '• A pseudonymous app user identifier is created and stored on your device for native in-app purchases when the subscription SDK is configured. It is used with Apple, Google, and RevenueCat as described under Purchases.\n' +
       '• If live community or recovery rooms are enabled for your build, the App uses a stable per-install identifier stored in the device keychain (or equivalent secure storage) and a session token stored on-device to communicate with that service. Optional linking may send the same pseudonymous purchase identifier to that service so sessions can be re-associated after reinstall, as documented for operators.\n\n' +
       'Subscription and purchase data. Product identifiers, prices shown at purchase, entitlement state, and renewal timing as returned by the app stores and (when configured) RevenueCat, cached on your device so the App can unlock features.\n\n' +
-      'Optional on-device security diagnostics. If you turn on the "anonymized analytics buffer" in Security settings, the App stores security-related event metadata only on your device in protected storage. The App does not upload that buffer to us.\n\n' +
       'Motion data (shake gesture). The App may read short accelerometer samples on the device to detect an optional shake gesture that opens crisis resources. Those samples are used transiently for gesture detection; they are not written to your journal and are not sent to our servers by this App.\n\n' +
       'Information you deliberately send elsewhere. If you use your device Share sheet, copy to clipboard, or similar flows from supported screens, information goes only to the destination you choose.',
   },
@@ -59,7 +58,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       'We use the information above only as needed to:\n\n' +
       '• Provide app functionality, including saving your entries locally, showing progress views, and running reminders you request.\n\n' +
       '• Personalize prompts, reminders, and on-device insights based on your stored preferences and history.\n\n' +
-      '• Operate security features you enable, such as app lock, audit logging, and the optional on-device diagnostics buffer.\n\n' +
+      '• Operate security features you enable, such as app lock and audit logging.\n\n' +
       '• Validate subscriptions and unlock paid features through Apple, Google, and (when configured) RevenueCat.\n\n' +
       '• Deliver optional community or recovery-room features when that mode is enabled, including moderation and safety workflows run by the configured API operator.\n\n' +
       '• Comply with law if we reasonably believe we must, for information actually in our possession (most journal content remains on your device unless you transmitted it to a third party or optional backend).\n\n' +

@@ -43,7 +43,6 @@ export const ACCOUNT_DELETION_EXTRA_ASYNC_STORAGE_KEYS: readonly string[] = [
   'ro_provider_mode_enabled',
   'ro_security_settings',
   'ro_audit_log',
-  'ro_analytics_events',
   'ro_background_time',
 ];
 
@@ -57,7 +56,6 @@ export function getAllAccountDeletionAsyncStorageKeys(): string[] {
  */
 export const LOCAL_DIAGNOSTICS_CACHE_ASYNC_STORAGE_KEYS: readonly string[] = [
   'ro_audit_log',
-  'ro_analytics_events',
   'ro_background_time',
   'risk_prediction_data',
   'retention_data',

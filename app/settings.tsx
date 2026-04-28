@@ -179,7 +179,6 @@ export default function SettingsScreen() {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           await clearDiagnosticsCaches();
           await queryClient.invalidateQueries({ queryKey: ['audit_log'] });
-          await queryClient.invalidateQueries({ queryKey: ['analytics_events'] });
           await queryClient.invalidateQueries({ queryKey: ['behavioral_notifications'] });
           await queryClient.invalidateQueries({ queryKey: ['retention'] });
           await queryClient.invalidateQueries({ queryKey: ['stageDetection'] });

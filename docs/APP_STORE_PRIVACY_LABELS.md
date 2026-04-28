@@ -10,7 +10,7 @@ Use this checklist so **App Store Connect → App Privacy** matches the shipped 
 - **Contact info:** Support contacts and similar fields typed into the App remain on-device unless a feature transmits them—declare off-device **Contact Info** only if you actually send it to a server.
 - **Identifiers:** If live social is **disabled**, the App does not send `clientBindingId` / session tokens to your social API—no off-device **Device ID** for that purpose. If live social is **enabled**, declare identifiers as collected for app functionality / account security per Apple’s categories.
 - **User content:** Declare **Other User Content** (or applicable types) **only** when live social is enabled and users can post or message on the server.
-- **Usage / diagnostics:** The optional “anonymized analytics buffer” in Security settings is **on-device only**—do not declare off-device **Analytics** for that buffer unless you add upload code.
+- **Usage / diagnostics:** Security audit entries (when audit logging is enabled) stay **on-device**—do not declare off-device **Analytics** for them unless you add upload code. Optional local diagnostics caches cleared via Settings → Reset local diagnostics are also on-device only.
 - **Device motion:** Shake-to-crisis uses the accelerometer **on-device only**—typically **Data Not Collected** off-device for Device Motion unless you transmit samples.
 
 ## Optional live social (State B)

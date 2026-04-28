@@ -47,8 +47,6 @@ Depending on how you use the App, we process the following categories of informa
 
 **Subscription and purchase data.** Product identifiers, prices shown at purchase, entitlement state, and renewal timing as returned by the app stores and (when configured) RevenueCat, cached on your device so the App can unlock features.
 
-**Optional on-device security diagnostics.** If you turn on the “anonymized analytics buffer” in Security settings, the App stores security-related event metadata only on your device in protected storage. The App does not upload that buffer to us.
-
 **Motion data (shake gesture).** The App may read short accelerometer samples on the device to detect an optional shake gesture that opens crisis resources. Those samples are used transiently for gesture detection; they are not written to your journal and are not sent to our servers by this App.
 
 **Information you deliberately send elsewhere.** If you use your device Share sheet, copy to clipboard, or similar flows from supported screens, information goes only to the destination you choose.
@@ -70,7 +68,7 @@ We use the information above only as needed to:
 
 - Provide app functionality, including saving your entries locally, showing progress views, and running reminders you request.
 - Personalize prompts, reminders, and on-device insights based on your stored preferences and history.
-- Operate security features you enable, such as app lock, audit logging, and the optional on-device diagnostics buffer.
+- Operate security features you enable, such as app lock and audit logging.
 - Validate subscriptions and unlock paid features through Apple, Google, and (when configured) RevenueCat.
 - Deliver optional community or recovery-room features when that mode is enabled, including moderation and safety workflows run by the configured API operator.
 - Comply with law if we reasonably believe we must, for information actually in our possession (most journal content remains on your device unless you transmitted it to a third party or optional backend).

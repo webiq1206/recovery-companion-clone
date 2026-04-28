@@ -45,7 +45,6 @@
     <li>If live community or recovery rooms are enabled for your build, the App uses a stable per-install identifier stored in the device keychain (or equivalent secure storage) and a session token stored on-device to communicate with that service. Optional linking may send the same pseudonymous purchase identifier to that service so sessions can be re-associated after reinstall, as documented for operators.</li>
   </ul>
   <p><strong>Subscription and purchase data.</strong> Product identifiers, prices shown at purchase, entitlement state, and renewal timing as returned by the app stores and (when configured) RevenueCat, cached on your device so the App can unlock features.</p>
-  <p><strong>Optional on-device security diagnostics.</strong> If you turn on the &ldquo;anonymized analytics buffer&rdquo; in Security settings, the App stores security-related event metadata only on your device in protected storage. The App does not upload that buffer to us.</p>
   <p><strong>Motion data (shake gesture).</strong> The App may read short accelerometer samples on the device to detect an optional shake gesture that opens crisis resources. Those samples are used transiently for gesture detection; they are not written to your journal and are not sent to our servers by this App.</p>
   <p><strong>Information you deliberately send elsewhere.</strong> If you use your device Share sheet, copy to clipboard, or similar flows from supported screens, information goes only to the destination you choose.</p>
 
@@ -62,7 +61,7 @@
   <ul>
     <li>Provide app functionality, including saving your entries locally, showing progress views, and running reminders you request.</li>
     <li>Personalize prompts, reminders, and on-device insights based on your stored preferences and history.</li>
-    <li>Operate security features you enable, such as app lock, audit logging, and the optional on-device diagnostics buffer.</li>
+    <li>Operate security features you enable, such as app lock and audit logging.</li>
     <li>Validate subscriptions and unlock paid features through Apple, Google, and (when configured) RevenueCat.</li>
     <li>Deliver optional community or recovery-room features when that mode is enabled, including moderation and safety workflows run by the configured API operator.</li>
     <li>Comply with law if we reasonably believe we must, for information actually in our possession (most journal content remains on your device unless you transmitted it to a third party or optional backend).</li>

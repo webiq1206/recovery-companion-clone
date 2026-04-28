@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, Modal } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
-import { Shield, Lock, Fingerprint, Eye, EyeOff, FileText, BarChart3, ChevronRight, Trash2, ShieldCheck, ShieldAlert, ShieldOff, Clock, Activity, X } from 'lucide-react-native';
+import { Shield, Lock, Fingerprint, Eye, EyeOff, FileText, ChevronRight, Trash2, ShieldCheck, ShieldAlert, ShieldOff, Clock, Activity, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
 import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
@@ -21,10 +21,8 @@ export default function SecuritySettingsScreen() {
     updateSecurityLevel,
     toggleEncryption,
     toggleAuditLogging,
-    toggleAnalytics,
     lockApp,
     clearAuditLog,
-    clearAnalytics,
   } = useSecurity();
 
   const [showPinSetup, setShowPinSetup] = useState<boolean>(false);
@@ -324,29 +322,6 @@ export default function SecuritySettingsScreen() {
         </View>
         <View style={[styles.toggle, settings.auditLoggingEnabled && styles.toggleOn]}>
           <View style={[styles.toggleThumb, settings.auditLoggingEnabled && styles.toggleThumbOn]} />
-        </View>
-      </Pressable>
-
-      <Pressable
-        style={styles.settingRow}
-        onPress={() => {
-          Haptics.selectionAsync();
-          toggleAnalytics(!settings.anonymizedAnalyticsEnabled);
-        }}
-      >
-        <View style={styles.rowLeft}>
-          <View style={[styles.rowIcon, { backgroundColor: 'rgba(66,165,245,0.12)' }]}>
-            <BarChart3 size={18} color="#42A5F5" />
-          </View>
-          <View style={styles.rowTextColumn}>
-            <Text style={styles.rowTitle}>Anonymized analytics buffer</Text>
-            <Text style={styles.rowSubtitle}>
-              When on, minimal security-related events are saved only on this device; nothing is uploaded to us
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.toggle, settings.anonymizedAnalyticsEnabled && styles.toggleOn]}>
-          <View style={[styles.toggleThumb, settings.anonymizedAnalyticsEnabled && styles.toggleThumbOn]} />
         </View>
       </Pressable>
 

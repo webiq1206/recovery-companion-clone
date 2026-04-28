@@ -25,9 +25,9 @@ import { DEFAULT_PROFILE } from '../../../core/persistence';
 import { removePIN, secureDelete } from '../../../utils/secureStorage';
 
 /** Keys passed to `secureSet` / `secureSetJSON` (data lives under `secure_` + key in AsyncStorage). */
-const SECURE_ACCOUNT_DATA_KEYS = ['ro_security_settings', 'ro_audit_log', 'ro_analytics_events'] as const;
+const SECURE_ACCOUNT_DATA_KEYS = ['ro_security_settings', 'ro_audit_log'] as const;
 
-const SECURE_DIAGNOSTICS_KEYS = ['ro_audit_log', 'ro_analytics_events'] as const;
+const SECURE_DIAGNOSTICS_KEYS = ['ro_audit_log'] as const;
 
 type AppMetaState = {
   /** Full local wipe: recovery data, persisted app store, subscriptions cache, social demo state, security prefs, scheduled notifications, PIN. */
