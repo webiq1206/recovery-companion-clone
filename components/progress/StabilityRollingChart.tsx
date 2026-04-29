@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 import Colors from '../../constants/colors';
 import { computeTrailingAverage3 } from '../../utils/progressStabilitySeries';
 
@@ -86,6 +87,7 @@ export function StabilityRollingChart({
   windowDays,
 }: StabilityRollingChartProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const n = dates.length;
 
   const smoothed = useMemo(() => computeTrailingAverage3(scores), [scores]);
@@ -123,6 +125,15 @@ export function StabilityRollingChart({
       useNativeDriver: false,
     }).start();
   }, [windowDays, dates, scores, fadeAnim]);
+
+  useEffect(() => {
+    setSelectedPointIndex(null);
+  }, [windowDays, dates, scores]);
+
+  const onPointPress = useCallback((index: number) => {
+    void Haptics.selectionAsync();
+    setSelectedPointIndex((prev) => (prev === index ? null : index));
+  }, []);
 
   if (n < 2 || validCount < 2) {
     return (
@@ -174,16 +185,45 @@ export function StabilityRollingChart({
             const cy = yAt(v);
             if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
             const isToday = i === n - 1;
+            const displayVal = String(Math.round(v));
+            const selected = selectedPointIndex === i;
             return (
-              <Circle
-                key={`dot-${dates[i]}`}
-                cx={cx}
-                cy={cy}
-                r={isToday ? 5 : 4}
-                fill={isToday ? color : 'transparent'}
-                stroke={color}
-                strokeWidth={2}
-              />
+              <G
+                key={`dot-${dates[i]}-${i}`}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`Stability data point ${displayVal}. Tap again to hide value.`}
+              >
+                <Circle
+                  cx={cx}
+                  cy={cy}
+                  r={isToday ? 5 : 4}
+                  fill={isToday ? color : 'transparent'}
+                  stroke={color}
+                  strokeWidth={selected ? 2.5 : 2}
+                />
+                {selected ? (
+                  <SvgText
+                    x={cx}
+                    y={cy - 14}
+                    fill={Colors.text}
+                    fontSize={11}
+                    fontWeight="600"
+                    textAnchor="middle"
+                    pointerEvents="none"
+                  >
+                    {displayVal}
+                  </SvgText>
+                ) : null}
+                {/* Hit target last so it stays above the label; SvgText otherwise steals touches */}
+                <Circle
+                  cx={cx}
+                  cy={cy}
+                  r={16}
+                  fill="transparent"
+                  onPress={() => onPointPress(i)}
+                />
+              </G>
             );
           })}
           {dates.map((dateStr, i) =>

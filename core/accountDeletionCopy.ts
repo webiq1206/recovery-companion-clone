@@ -15,7 +15,7 @@ export const DELETE_ACCOUNT_DATA_BULLETS: readonly string[] = [
   'Daily check-ins, near-miss events, progress stats, and relapse timeline',
   'Journal, pledges, workbook answers, emergency contacts, and media you saved in the app',
   'Rebuild and accountability data stored locally',
-  'Connection, community, and recovery-room content stored on this device',
+  'Connection hub content stored on this device (trusted contacts and similar local-only items)',
   'Cached subscription entitlement (you can restore purchases after reinstall)',
   'Engagement and notification preferences, scheduled local reminders, and reminder counters',
   'App PIN/biometric lock, security settings, and on-device audit log',
@@ -33,7 +33,7 @@ export function formatRemoveAllAppDataDetailsMessage(): string {
 }
 
 export const CLEAR_LOCAL_DIAGNOSTICS_INTRO =
-  'This clears on-device diagnostics, prediction caches, and wizard engagement memory. It does not delete your profile, check-ins, journal, pledges, contacts, or community content.';
+  'This clears on-device diagnostics, prediction caches, and wizard engagement memory. It does not delete your profile, check-ins, journal, pledges, contacts, or locally saved connection details.';
 
 export const CLEAR_LOCAL_DIAGNOSTICS_BULLETS: readonly string[] = [
   'Security audit log',

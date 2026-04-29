@@ -14,24 +14,21 @@ import {
 } from 'react-native';
 import { ScreenFlatList } from '../../../components/ScreenFlatList';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
-import { RecoveryPathRoomsContent } from '../../../components/connection/RecoveryPathRoomsContent';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import {
-  Heart, Shield, MessageCircle, Users, Phone, Plus, X,
+  Heart, Shield, Phone, Plus, X,
   Send, UserPlus, CircleDot,
   PhoneCall, Trash2, ToggleLeft, ToggleRight, BookOpen,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../../constants/colors';
 import { spacing } from '../../../constants/theme';
-import { arePeerPracticeFeaturesEnabled } from '../../../core/socialLiveConfig';
 import { SupportResourcesContent } from '../support/index';
 import { useConnection } from '../../../providers/ConnectionProvider';
-import { TrustedContact, SafeRoom, RoomMessage } from '../../../types';
+import { TrustedContact } from '../../../types';
 import { useHydrateToolUsageStore, useToolUsageStore } from '../../../features/tools/state/useToolUsageStore';
 
-type ConnectionTab = 'circle' | 'resources' | 'rooms';
+type ConnectionTab = 'circle' | 'resources';
 
 const ROLE_LABELS: Record<TrustedContact['role'], string> = {
   friend: 'Friend',
@@ -51,32 +48,19 @@ const ROLE_COLORS: Record<TrustedContact['role'], string> = {
 
 export default function ConnectionScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   useHydrateToolUsageStore();
   const logToolUsage = useToolUsageStore.use.logToolUsage();
   const {
-    trustedContacts, safeRooms, displayName, chatIdentityLabel,
-    blockedRoomAuthors,
+    trustedContacts, displayName, chatIdentityLabel,
     setUserDisplayName,
     addTrustedContact, removeTrustedContact, updateContactAvailability,
-    blockConnectionRoomAuthor, recordLocalUgcReport,
-    leaveRoom, sendRoomMessage,
   } = useConnection();
 
-  const peerPracticeEnabled = arePeerPracticeFeaturesEnabled();
   const [activeTab, setActiveTab] = useState<ConnectionTab>('circle');
-
-  React.useEffect(() => {
-    if (!peerPracticeEnabled && activeTab === 'rooms') {
-      setActiveTab('circle');
-    }
-  }, [peerPracticeEnabled, activeTab]);
   const [showAddContact, setShowAddContact] = useState<boolean>(false);
   const [contactName, setContactName] = useState<string>('');
   const [contactPhone, setContactPhone] = useState<string>('');
   const [contactRole, setContactRole] = useState<TrustedContact['role']>('friend');
-  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
-  const [messageText, setMessageText] = useState<string>('');
   const [showNamePrompt, setShowNamePrompt] = useState<boolean>(false);
   const [nameInput, setNameInput] = useState<string>('');
 
@@ -160,15 +144,6 @@ export default function ConnectionScreen() {
     ]);
   }, [removeTrustedContact]);
 
-  const handleSendMessage = useCallback(() => {
-    if (!messageText.trim()) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (activeRoomId) {
-      sendRoomMessage(activeRoomId, messageText.trim());
-    }
-    setMessageText('');
-  }, [messageText, activeRoomId, sendRoomMessage]);
-
   const handleSetName = useCallback(() => {
     if (!nameInput.trim()) return;
     setUserDisplayName(nameInput.trim());
@@ -176,26 +151,9 @@ export default function ConnectionScreen() {
     setNameInput('');
   }, [nameInput, setUserDisplayName]);
 
-  const activeRoom = useMemo(() => {
-    if (!activeRoomId) return null;
-    return safeRooms.find(r => r.id === activeRoomId) ?? null;
-  }, [activeRoomId, safeRooms]);
-
   const availableContacts = useMemo(() => {
     return trustedContacts.filter(c => c.isAvailable);
   }, [trustedContacts]);
-
-  const formatTime = useCallback((dateStr: string) => {
-    const now = new Date();
-    const date = new Date(dateStr);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin < 1) return 'now';
-    if (diffMin < 60) return `${diffMin}m`;
-    const diffHrs = Math.floor(diffMin / 60);
-    if (diffHrs < 24) return `${diffHrs}h`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }, []);
 
   const renderInstantReach = () => (
     <Animated.View style={[styles.reachSection, { transform: [{ scale: pulseAnim }] }]}>
@@ -332,22 +290,6 @@ export default function ConnectionScreen() {
         ) : null
       }
     />
-  );
-
-  const renderRoomsTab = () => (
-    <View style={styles.tabContent}>
-      <ScreenScrollView
-        style={styles.roomsTabScroll}
-        contentContainerStyle={[
-          styles.roomsTabScrollContent,
-          { paddingBottom: insets.bottom + spacing.lg },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <RecoveryPathRoomsContent testID="connection-tab-rooms-recovery-paths" />
-      </ScreenScrollView>
-    </View>
   );
 
   const renderSponsorTab = () => null;
@@ -547,168 +489,18 @@ export default function ConnectionScreen() {
   );
   */
 
-  const renderRoomModal = () => {
-    const room = activeRoom;
-    if (!room) return null;
-    const roomMessages = room.messages.filter(
-      m => m.isOwn || !blockedRoomAuthors.includes(m.authorName),
-    );
-    return (
-      <Modal visible={!!activeRoomId} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={[styles.chatModal, { paddingBottom: insets.bottom + 10 }]}>
-            <View style={styles.chatModalHeader}>
-              <Pressable onPress={() => { setActiveRoomId(null); setMessageText(''); }} hitSlop={12}>
-                <X size={22} color={Colors.textSecondary} />
-              </Pressable>
-              <View style={styles.chatModalTitleRow}>
-                <Text style={styles.chatModalTitle}>{room.name}</Text>
-                <Text style={styles.roomMembersBadge}>{room.memberCount} here</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Pressable
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    router.push('/community-guidelines' as any);
-                  }}
-                  hitSlop={12}
-                >
-                  <BookOpen size={20} color={Colors.primary} />
-                </Pressable>
-                {room.isJoined ? (
-                  <Pressable
-                    onPress={() => {
-                      Alert.alert('Leave Room', 'Leave this room?', [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Leave', style: 'destructive', onPress: () => { leaveRoom(room.id); setActiveRoomId(null); } },
-                      ]);
-                    }}
-                    hitSlop={12}
-                  >
-                    <Text style={styles.endChatText}>Leave</Text>
-                  </Pressable>
-                ) : (
-                  <View style={{ width: 28 }} />
-                )}
-              </View>
-            </View>
-            <ScreenFlatList
-              data={roomMessages}
-              keyExtractor={item => item.id}
-              style={styles.messageList}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }: { item: RoomMessage }) => (
-                <Pressable
-                  delayLongPress={400}
-                  onLongPress={() => {
-                    if (item.isOwn) return;
-                    Alert.alert('Message options', 'Practice room on this device only.', [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Report',
-                        onPress: () => {
-                          recordLocalUgcReport({
-                            scope: 'connection_room',
-                            contextId: room.id,
-                            authorLabel: item.authorName,
-                            contentPreview: item.content.slice(0, 200),
-                          });
-                          Alert.alert(
-                            'Report saved',
-                            'This practice room is stored only on your device. For live spaces with server-side reporting, blocking, and moderator review, use Recovery Rooms when your organization has configured the social backend.',
-                          );
-                        },
-                      },
-                      {
-                        text: 'Block author',
-                        style: 'destructive',
-                        onPress: () => {
-                          Alert.alert(
-                            `Block ${item.authorName}?`,
-                            'Their practice messages will be hidden on this device.',
-                            [
-                              { text: 'Cancel', style: 'cancel' },
-                              {
-                                text: 'Block',
-                                style: 'destructive',
-                                onPress: () => blockConnectionRoomAuthor(item.authorName),
-                              },
-                            ],
-                          );
-                        },
-                      },
-                    ]);
-                  }}
-                >
-                  <View style={[styles.roomMessageContainer, item.isOwn && styles.roomMessageOwn]}>
-                    {!item.isOwn && (
-                      <Text style={styles.roomMessageAuthor}>{item.authorName}</Text>
-                    )}
-                    <View style={[styles.messageBubble, item.isOwn ? styles.ownBubble : styles.otherBubble]}>
-                      <Text style={[styles.messageText, item.isOwn ? styles.ownMessageText : styles.otherMessageText]}>
-                        {item.content}
-                      </Text>
-                      <Text style={[styles.messageTime, item.isOwn ? styles.ownMessageTime : styles.otherMessageTime]}>
-                        {formatTime(item.timestamp)}
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
-              )}
-            />
-            {room.isJoined && (
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.chatInput}
-                  placeholder="Share with the group..."
-                  placeholderTextColor={Colors.textMuted}
-                  value={messageText}
-                  onChangeText={setMessageText}
-                  maxLength={500}
-                  testID="room-input"
-                />
-                <Pressable
-                  style={[styles.sendBtn, !messageText.trim() && styles.sendBtnDisabled]}
-                  onPress={handleSendMessage}
-                  disabled={!messageText.trim()}
-                >
-                  <Send size={18} color={messageText.trim() ? Colors.white : Colors.textMuted} />
-                </Pressable>
-              </View>
-            )}
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
-  };
-
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <View style={styles.headerArea}>
         <Text style={styles.headerWarmText}>You are not alone</Text>
-        {!peerPracticeEnabled ? (
-          <Text style={styles.headerHint}>
-            Resources lists national helplines. Rooms appear when live social is enabled for this
-            build, or when local demo is allowed. This store-style build shows Circle and Resources
-            only.
-          </Text>
-        ) : null}
       </View>
 
       <View style={styles.tabRow}>
-        {(peerPracticeEnabled
-          ? ([
-              { key: 'circle' as const, label: 'Circle', icon: Shield },
-              { key: 'resources' as const, label: 'Resources', icon: BookOpen },
-              { key: 'rooms' as const, label: 'Rooms', icon: Users },
-            ] as const)
-          : ([
-              { key: 'circle' as const, label: 'Circle', icon: Shield },
-              { key: 'resources' as const, label: 'Resources', icon: BookOpen },
-            ] as const)
+        {(
+          [
+            { key: 'circle' as const, label: 'Circle', icon: Shield },
+            { key: 'resources' as const, label: 'Resources', icon: BookOpen },
+          ] as const
         ).map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -737,12 +529,9 @@ export default function ConnectionScreen() {
           <SupportResourcesContent />
         </View>
       )}
-      {activeTab === 'rooms' && renderRoomsTab()}
-
-      {renderRoomModal()}
 
       {/*
-      Sponsor chat modal (disabled — needs sponsor state wired back in)
+      Sponsor messaging modal (disabled — needs sponsor state wired back in)
       <Modal visible={showSponsorChat} animationType="slide" transparent>
         ...
       </Modal>
@@ -817,7 +606,7 @@ export default function ConnectionScreen() {
           <View style={[styles.namePromptModal, { paddingBottom: insets.bottom + 20 }]}>
             <Text style={styles.namePromptTitle}>Choose a Display Name</Text>
             <Text style={styles.namePromptSubtext}>
-              This is how others will see you in rooms and chats. You can use a nickname.
+              This is how your name appears when you reach out from Connect. You can use a nickname.
             </Text>
             <TextInput
               style={styles.formInput}

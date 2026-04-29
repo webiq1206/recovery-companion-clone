@@ -35,6 +35,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
+import { isCommunityFeatureEnabled } from '../core/communityFeaturesArchived';
 import { getSupportEmail, getSupportUrl } from '../core/supportContact';
 import { useUser } from '../core/domains/useUser';
 import { useAppMeta } from '../core/domains/useAppMeta';
@@ -204,11 +205,11 @@ export default function SettingsScreen() {
     void Linking.openURL(supportUrl);
   }, [supportUrl, supportUrlIsHttps]);
 
-  const openCommunityDeletionSupportEmail = useCallback(() => {
+  const openAccountDeletionSupportEmail = useCallback(() => {
     const addr = supportEmail || 'support@recoveryroad.app';
     void Haptics.selectionAsync();
     void Linking.openURL(
-      `mailto:${addr}?subject=${encodeURIComponent('RecoveryRoad — delete community account')}`,
+      `mailto:${addr}?subject=${encodeURIComponent('RecoveryRoad — account data deletion request')}`,
     );
   }, [supportEmail]);
 
@@ -444,7 +445,7 @@ export default function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.settingLabel}>Share Progress</Text>
                 <Text style={styles.settingValue}>
-                  Let community see your milestones
+                  Let approved contacts see your milestones
                 </Text>
               </View>
             </View>
@@ -487,38 +488,42 @@ export default function SettingsScreen() {
             />
           </View>
 
-          <View style={styles.groupSeparator} />
+          {isCommunityFeatureEnabled ? (
+            <>
+              <View style={styles.groupSeparator} />
 
-          <View style={styles.groupRow}>
-            <View style={styles.groupRowLeft}>
-              <View
-                style={[
-                  styles.settingIcon,
-                  { backgroundColor: 'rgba(156,39,176,0.12)' },
-                ]}
-              >
-                <MessageCircle size={17} color="#9C27B0" />
+              <View style={styles.groupRow}>
+                <View style={styles.groupRowLeft}>
+                  <View
+                    style={[
+                      styles.settingIcon,
+                      { backgroundColor: 'rgba(156,39,176,0.12)' },
+                    ]}
+                  >
+                    <MessageCircle size={17} color="#9C27B0" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.settingLabel}>Direct messages</Text>
+                    <Text style={styles.settingValue}>
+                      Allow peers to message you
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={privacyControls.allowCommunityMessages}
+                  onValueChange={() =>
+                    handleTogglePrivacy('allowCommunityMessages')
+                  }
+                  trackColor={{ false: Colors.surface, true: Colors.primary + '40' }}
+                  thumbColor={
+                    privacyControls.allowCommunityMessages
+                      ? Colors.primary
+                      : Colors.textMuted
+                  }
+                />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingLabel}>Community Messages</Text>
-                <Text style={styles.settingValue}>
-                  Allow peers to message you
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={privacyControls.allowCommunityMessages}
-              onValueChange={() =>
-                handleTogglePrivacy('allowCommunityMessages')
-              }
-              trackColor={{ false: Colors.surface, true: Colors.primary + '40' }}
-              thumbColor={
-                privacyControls.allowCommunityMessages
-                  ? Colors.primary
-                  : Colors.textMuted
-              }
-            />
-          </View>
+            </>
+          ) : null}
         </View>
 
         <Text style={[styles.sectionLabel, { marginTop: 28 }]}>LEGAL & DATA</Text>
@@ -1087,17 +1092,16 @@ export default function SettingsScreen() {
             </View>
           </Pressable>
           <Text style={styles.deleteAccountDescription}>
-            If you created an account for use of the live community chat rooms, and you would like all of your
-            account information permanently deleted, please submit an email to{' '}
+            If you also need operator-held social data removed beyond what this device stores, email{' '}
             <Text
               style={styles.deleteAccountEmailLink}
               accessibilityRole="link"
               accessibilityLabel={`Email ${supportEmail || 'support@recoveryroad.app'}`}
-              onPress={openCommunityDeletionSupportEmail}
+              onPress={openAccountDeletionSupportEmail}
             >
               {supportEmail || 'support@recoveryroad.app'}
             </Text>{' '}
-            asking us to do so.
+            with your request.
           </Text>
         </View>
 

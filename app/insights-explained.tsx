@@ -82,7 +82,7 @@ export default function InsightsExplainedScreen() {
           </View>
           <View style={styles.rangeRow}>
             <View style={[styles.rangeDot, { backgroundColor: Colors.accentWarm }]} />
-            <Text style={styles.rangeText}><Text style={styles.rangeBold}>0–49</Text> - Room to grow, keep showing up</Text>
+            <Text style={styles.rangeText}><Text style={styles.rangeBold}>0–49</Text> - Space to grow, keep showing up</Text>
           </View>
         </View>
       </ExplainerCard>

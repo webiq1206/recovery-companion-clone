@@ -490,7 +490,7 @@ export const [ConnectionProvider, useConnection] = createContextHook(() => {
     if (!allowInSlidingWindow(localReportTimesRef, PRACTICE_REPORT_BURST)) {
       Alert.alert(
         'Report limit',
-        'You have submitted many practice reports recently. Try again later, or use Recovery Rooms with your configured backend for full moderation intake.',
+        'You have submitted many practice reports recently. Try again later, or contact support if your organization provides a moderated intake channel.',
       );
       return;
     }

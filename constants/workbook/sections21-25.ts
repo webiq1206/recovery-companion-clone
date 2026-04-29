@@ -37,7 +37,7 @@ export const WORKBOOK_SECTIONS_21_25: WorkbookSection[] = [
     questions: [
       { id: 's22q1', type: 'reflection', question: 'How can your recovery story help someone else?' },
       { id: 's22q2', type: 'journaling', question: 'Write about a time when someone in recovery helped you. How did it impact you?' },
-      { id: 's22q3', type: 'assignment', question: 'Identify 3 ways you can give back to the recovery community this month.' },
+      { id: 's22q3', type: 'assignment', question: 'Identify 3 ways you can give back to people walking similar paths this month.' },
       { id: 's22q4', type: 'reflection', question: 'What does being a mentor or sponsor mean to you? Are you ready for that role?' },
       { id: 's22q5', type: 'exercise', question: 'Perform 3 acts of kindness this week. Write about each one and how it made you feel.' },
       { id: 's22q6', type: 'reflection', question: 'How does helping others strengthen your own recovery?' },
@@ -79,7 +79,7 @@ export const WORKBOOK_SECTIONS_21_25: WorkbookSection[] = [
       { id: 's23q14', type: 'reflection', question: 'What fears do you have about the future? How can you address them now?' },
       { id: 's23q15', type: 'journaling', question: 'Write about the difference between surviving and thriving. Which one are you doing?' },
       { id: 's23q16', type: 'exercise', question: 'Set one audacious goal that excites and scares you. Write a plan to achieve it.' },
-      { id: 's23q17', type: 'reflection', question: 'How will you stay connected to your recovery community long-term?' },
+      { id: 's23q17', type: 'reflection', question: 'How will you stay connected to supportive people and routines long-term?' },
       { id: 's23q18', type: 'assignment', question: 'Plan your recovery anniversary celebration. What milestones will you mark and how?' },
       { id: 's23q19', type: 'reflection', question: 'What wisdom do you want to pass on to future generations about addiction and recovery?' },
       { id: 's23q20', type: 'journaling', question: 'Write your recovery manifesto - a declaration of who you are and what you stand for.' },

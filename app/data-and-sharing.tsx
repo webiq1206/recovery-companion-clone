@@ -5,7 +5,7 @@ import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 
 export default function DataAndSharingScreen() {
   const intro = arePeerPracticeFeaturesEnabled()
-    ? 'What stays on your device, what you can choose to share in live Connect spaces, and how those optional features relate to consent.'
+    ? 'What stays on your device, what you can choose to share when optional social features are enabled, and how those optional features relate to consent.'
     : 'What stays on your device, what you can export or share manually, and how your privacy choices work in this self-contained build.';
 
   return (

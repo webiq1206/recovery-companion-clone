@@ -735,7 +735,7 @@ export default function OnboardingScreen() {
               <Text style={styles.privacySectionTitle}>Privacy Controls</Text>
               <Text style={styles.privacyExplainer}>
                 {connectLiveFeaturesEnabled
-                  ? 'These choices apply if you use live Connect spaces (for example recovery rooms). You can change them anytime in Settings. Review the Privacy Policy, Terms, and how local vs shared data works using the links below.'
+                  ? 'These choices apply if you use optional operator-hosted social features offered from Connect. You can change them anytime in Settings. Review the Privacy Policy, Terms, and how local vs shared data works using the links below.'
                   : 'Most recovery data stays on this device. You can change privacy choices anytime in Settings. Review the Privacy Policy, Terms, and how local data works using the links below.'}
               </Text>
               <LegalDocLinksRow compact />

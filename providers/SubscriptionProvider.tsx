@@ -113,7 +113,7 @@ const FEATURE_LABELS: Record<PremiumFeature, { title: string; description: strin
       'Optional summaries you choose to share with people you trust. Available only in builds that include care-partner tools; not a medical record.',
   },
   recovery_rooms: {
-    title: 'Recovery Rooms',
+    title: 'Guided group-style practice',
     description:
       'On-device practice scenarios inspired by group support—not a substitute for live moderated clinical groups.',
   },

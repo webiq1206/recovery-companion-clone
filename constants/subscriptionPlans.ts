@@ -83,7 +83,7 @@ export const PREMIUM_FEATURE_CARDS: PremiumMarketingCard[] = [
   },
   {
     icon: Users,
-    title: 'Recovery Rooms',
+    title: 'Guided group-style practice',
     desc: 'Practice small-group-style prompts and journaling on your device (not live telehealth or moderated therapy).',
     color: '#C07CE0',
     featureKey: 'recovery_rooms',
@@ -148,7 +148,7 @@ export const TIER_COMPARISON_ROWS: TierComparisonRow[] = [
   },
   {
     id: 'connection',
-    label: 'Connection hub & community (core)',
+    label: 'Connection hub (core)',
     freemium: true,
     premium: true,
   },
@@ -166,7 +166,7 @@ export const TIER_COMPARISON_ROWS: TierComparisonRow[] = [
   },
   {
     id: 'rooms',
-    label: 'Recovery Rooms (small groups)',
+    label: 'Guided group-style practice (small groups)',
     freemium: false,
     premium: true,
   },

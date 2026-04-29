@@ -84,7 +84,7 @@ const HELP_CENTERS: HelpCenter[] = [
   {
     id: '6',
     name: 'Narcotics Anonymous (NA)',
-    description: 'Community-based recovery program for people struggling with drug addiction.',
+    description: 'Peer-led recovery program for people struggling with drug addiction.',
     phone: '',
     website: 'https://www.na.org',
     available: 'Business hours; meetings 24/7',

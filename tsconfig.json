@@ -8,6 +8,7 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "utils/mergeProfile.test.ts"
+    "utils/mergeProfile.test.ts",
+    "archived/**/*"
   ]
 }

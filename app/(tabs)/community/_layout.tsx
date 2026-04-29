@@ -1,20 +1,9 @@
-import { defaultStackScreenOptions } from "../../../constants/theme";
-import { Redirect, Stack } from "expo-router";
-import { getStrictRedirectTarget } from "../../../utils/legacyRoutes";
+import { Stack } from 'expo-router';
 
-export default function CommunityLayout() {
-  const strictTarget = getStrictRedirectTarget("/(tabs)/community");
-  if (strictTarget) {
-    return <Redirect href={strictTarget as any} />;
-  }
-
+export default function CommunityTabLayout() {
   return (
-    <Stack
-      screenOptions={{
-        ...defaultStackScreenOptions,
-      }}
-    >
-      <Stack.Screen name="index" options={{ title: "Connection" }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
     </Stack>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from "react";
 import { Animated, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Anchor,
@@ -125,23 +126,30 @@ function PathCard({
 
 export default function RecoveryPathsScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
-  const onPathPress = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, []);
+  const navigateToRooms = useCallback(
+    (pathId: RecoveryPathId) => {
+      router.push({
+        pathname: "/recovery-paths/room-list",
+        params: { pathId },
+      });
+    },
+    [router],
+  );
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Choose your path</Text>
-        <Text style={styles.headerSubtitle}>Stages suggest where to focus next.</Text>
+        <Text style={styles.headerSubtitle}>Rooms match your stage.</Text>
       </View>
       <ScreenScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 28 }]}
         showsVerticalScrollIndicator={false}
       >
         {RECOVERY_PATHS.map((path) => (
-          <PathCard key={path.id} path={path} onPress={onPathPress} />
+          <PathCard key={path.id} path={path} onPress={() => navigateToRooms(path.id)} />
         ))}
       </ScreenScrollView>
     </View>

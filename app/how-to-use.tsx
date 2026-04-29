@@ -143,7 +143,7 @@ function buildDailySteps(options: {
     : 'The Rebuild tab hosts Life Rebuild Programs (Premium). On the free tier you will see how to unlock them—keep momentum with Today, Progress, and Journal until you choose to upgrade.';
 
   const connectDescription = options.peerPractice
-    ? 'Use the Connect tab for your trusted circle, support resources, and recovery-room style prompts when your build includes them—wellness practice only, not live therapy or crisis care.'
+    ? 'Use the Connect tab for your trusted circle, support resources, and optional guided group-style prompts when your build includes them—wellness practice only, not live therapy or crisis care.'
     : 'Use the Connect tab for your trusted circle and support resources—quick reach-outs buffer stress and isolation.';
 
   const accountabilityDescription = options.advancedAccountability

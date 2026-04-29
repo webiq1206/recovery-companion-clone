@@ -7,6 +7,8 @@
  * Dev bundles may use `http://` for LAN testing. See `docs/LIVE_SOCIAL.md`.
  */
 
+import { isCommunityFeatureEnabled } from './communityFeaturesArchived';
+
 declare const __DEV__: boolean;
 
 function readLiveSocialApiUrlRaw(): string {
@@ -39,6 +41,7 @@ export function isLiveSocialMode(): boolean {
  * Set `EXPO_PUBLIC_COMMUNITY_ENABLED=false` to force-disable even when a URL is present.
  */
 export function isCommunityEnabled(): boolean {
+  if (!isCommunityFeatureEnabled) return false;
   const v = process.env.EXPO_PUBLIC_COMMUNITY_ENABLED?.trim().toLowerCase();
   if (v === '0' || v === 'false' || v === 'off') return false;
   if (!isLiveSocialMode()) return false;
@@ -83,6 +86,7 @@ export function getSocialPresentationMode(): SocialPresentationMode {
  * `EXPO_PUBLIC_ALLOW_LOCAL_SOCIAL_DEMO` is not `false` (unusual for production).
  */
 export function arePeerPracticeFeaturesEnabled(): boolean {
+  if (!isCommunityFeatureEnabled) return false;
   if (isCommunityEnabled()) return true;
   if (typeof __DEV__ === 'boolean' && __DEV__) return true;
   return isLocalSocialDemoEnabled();

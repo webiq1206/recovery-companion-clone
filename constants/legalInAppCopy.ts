@@ -37,7 +37,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       'App usage and preferences. Settings such as notification preferences, engagement or streak data stored for reminders, optional security preferences, optional app lock (PIN) configuration, and related app state.\n\n' +
       'Device and session identifiers (limited contexts).\n' +
       '• A pseudonymous app user identifier is created and stored on your device for native in-app purchases when the subscription SDK is configured. It is used with Apple, Google, and RevenueCat as described under Purchases.\n' +
-      '• If live community or recovery rooms are enabled for your build, the App uses a stable per-install identifier stored in the device keychain (or equivalent secure storage) and a session token stored on-device to communicate with that service. Optional linking may send the same pseudonymous purchase identifier to that service so sessions can be re-associated after reinstall, as documented for operators.\n\n' +
+      '• If optional operator-hosted social features are enabled for your build, the App uses a stable per-install identifier stored in the device keychain (or equivalent secure storage) and a session token stored on-device to communicate with that service. Optional linking may send the same pseudonymous purchase identifier to that service so sessions can be re-associated after reinstall, as documented for operators.\n\n' +
       'Subscription and purchase data. Product identifiers, prices shown at purchase, entitlement state, and renewal timing as returned by the app stores and (when configured) RevenueCat, cached on your device so the App can unlock features.\n\n' +
       'Motion data (shake gesture). The App may read short accelerometer samples on the device to detect an optional shake gesture that opens crisis resources. Those samples are used transiently for gesture detection; they are not written to your journal and are not sent to our servers by this App.\n\n' +
       'Information you deliberately send elsewhere. If you use your device Share sheet, copy to clipboard, or similar flows from supported screens, information goes only to the destination you choose.',
@@ -48,7 +48,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       'In the standard consumer configuration:\n\n' +
       '• We do not operate third-party advertising analytics (such as ad networks) inside this App.\n\n' +
       '• We do not use your recovery journal or check-ins for cross-app advertising "tracking" on behalf of advertisers.\n\n' +
-      "• We do not upload your recovery journal or check-in text to a RecoveryRoad-operated cloud database for core features. (Optional online community or recovery-room features, when enabled in a given build, send only the content you submit to that feature to the configured operator's servers.)\n\n" +
+      "• We do not upload your recovery journal or check-in text to a RecoveryRoad-operated cloud database for core features. (Optional operator-hosted social features, when enabled in a given build, send only the content you submit to that feature to the configured operator's servers.)\n\n" +
       '• The App does not currently call a separate RecoveryRoad HTTP API for syncing your journal; optional backend code may exist for future or custom integrations — if you enable such an integration, treat it as a separate disclosure.\n\n' +
       'If your organization ships a custom build with additional backends, those practices must be disclosed separately.',
   },
@@ -60,7 +60,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       '• Personalize prompts, reminders, and on-device insights based on your stored preferences and history.\n\n' +
       '• Operate security features you enable, such as app lock and audit logging.\n\n' +
       '• Validate subscriptions and unlock paid features through Apple, Google, and (when configured) RevenueCat.\n\n' +
-      '• Deliver optional community or recovery-room features when that mode is enabled, including moderation and safety workflows run by the configured API operator.\n\n' +
+      '• Deliver optional operator-hosted social features when that mode is enabled, including moderation and safety workflows run by the configured API operator.\n\n' +
       '• Comply with law if we reasonably believe we must, for information actually in our possession (most journal content remains on your device unless you transmitted it to a third party or optional backend).\n\n' +
       'We do not sell your personal information as a product.',
   },
@@ -69,7 +69,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
     body:
       'On your device. Most App data — including journal entries, check-ins, profile fields, and engagement history — is stored in the application sandbox (AsyncStorage or equivalent) on your phone or tablet. Some sensitive values (such as optional PIN-related material and parts of security diagnostics) use the operating system\'s secure storage (for example iOS Keychain / Android Keystore) where supported. Certain values may additionally be encrypted at the application layer before being written to local storage.\n\n' +
       'On servers. By default, your full recovery journal is not stored on servers we operate for routine personal use of the App.\n\n' +
-      "When live community or recovery rooms are enabled for the version of the App you are using (the publisher configures this at release), posts, comments, room messages, moderation reports, and related profile fields you submit are transmitted over HTTPS to and stored by that service's operator under their infrastructure and retention rules.\n\n" +
+      "When optional operator-hosted social features are enabled for the version of the App you are using (the publisher configures this at release), posts, comments, moderated conversation content, moderation reports, and related profile fields you submit are transmitted over HTTPS to and stored by that service's operator under their infrastructure and retention rules.\n\n" +
       'Platform backups. iCloud Backup, Google backup, or computer backups may copy App data according to your device settings. We do not control those backups.',
   },
   {
@@ -84,7 +84,7 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
       'We disclose information only as described here:\n\n' +
       'Apple and Google. In-app purchases, receipts, and platform services are processed by Apple and/or Google. They receive billing and account information under their own policies.\n\n' +
       'RevenueCat, Inc. When the App is built with a RevenueCat SDK key, RevenueCat receives subscription-related data (such as product identifiers and transaction status) and the pseudonymous on-device app user ID used to tie entitlements across installs. RevenueCat does not receive your recovery journal text from us as part of that integration.\n\n' +
-      'Optional live social API operator. When live community or recovery rooms are enabled, the operator of the configured API receives the content you submit, session tokens, identifiers needed for moderation and safety, and related technical metadata sent over HTTPS.\n\n' +
+      'Optional live social API operator. When optional operator-hosted social features are enabled, the operator of the configured API receives the content you submit, session tokens, identifiers needed for moderation and safety, and related technical metadata sent over HTTPS.\n\n' +
       'Share sheet and clipboard. When you export or share content, it goes to the app or person you select; we do not receive a hidden copy on our servers.\n\n' +
       'Legal requests. We may disclose information we hold if required by applicable law, regulation, legal process, or governmental request, where permitted.\n\n' +
       'We do not intentionally disclose your on-device recovery journal to advertisers.',
@@ -101,11 +101,11 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
     heading: 'Your rights and controls',
     body:
       '• Access and correction: You can review and update most information inside the App.\n\n' +
-      '• Privacy toggles: Where implemented, Settings and onboarding include controls (for example around peer visibility or community participation).\n\n' +
+      '• Privacy toggles: Where implemented, Settings and onboarding include controls (for example around peer visibility or participation in optional social features).\n\n' +
       '• Deletion: Use Settings → Delete account to erase locally stored App data on this device as described in the confirmation list. You may reinstall later; Apple/Google/RevenueCat purchase history may still allow "Restore purchases."\n\n' +
       '• Uninstalling the App removes the application and its sandbox data from the device in the usual way your platform handles uninstall; backups may persist until rotated by your backup settings.\n\n' +
       '• Store- and processor-held data: For data held only by Apple, Google, or RevenueCat, use their account tools and privacy portals.\n\n' +
-      '• Live social data: For data on the optional community server, you can request to have all information tied to your account deleted by emailing us at support@recoveryroad.app.',
+      '• Live social data: For data on the optional operator-hosted social service, you can request to have all information tied to your account deleted by emailing us at support@recoveryroad.app.',
   },
   {
     heading: 'Security',
@@ -272,14 +272,14 @@ export const DATA_AND_SHARING_SECTIONS: LegalSection[] = [
   {
     heading: 'What can be shared (your consent)',
     body:
-      'Switches under Privacy & Identity (in Settings and during onboarding) control whether you allow progress or mood signals to be visible to peers, and whether community messages are allowed, where implemented.\n\n' +
+      'Switches under Privacy & Identity (in Settings and during onboarding) control whether you allow progress or mood signals to be visible to peers, and whether direct messages from peers are allowed, where implemented.\n\n' +
       'Anonymous mode uses a display label instead of your name where that mode applies. It does not erase data already stored on your device.',
   },
   {
-    heading: 'Community, recovery rooms, and optional API',
+    heading: 'Operator-hosted social features (when enabled)',
     body:
-      'Recovery rooms and community features are governed by the Community Guidelines. When the App is built with a live community API configured, content you post, messages you send, and moderation reports are transmitted to that HTTPS API for delivery, display, and safety review.\n\n' +
-      'When that API is not configured in a production store build, those features do not send your community or room content to that backend.',
+      'Optional operator-hosted social features are governed by the Connect safety guidelines document when that document is included in your build. When the App is built with a live social API configured, content you post, messages you send, and moderation reports are transmitted to that HTTPS API for delivery, display, and safety review.\n\n' +
+      'When that API is not configured in a production store build, those features do not send your social content to that backend.',
   },
   {
     heading: 'Deletion and “account”',
