@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "icon": "./assets/images/app-icon.png",
-      "bundleIdentifier": "com.webiq.recoverycompanion",
+      "bundleIdentifier": "com.webiq.recoveryroad",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -36,7 +36,10 @@
     "plugins": [
       "expo-router",
       "expo-dev-client",
-      ["expo-build-properties", {}],
+      [
+        "expo-build-properties",
+        {}
+      ],
       [
         "expo-notifications",
         {
@@ -49,6 +52,7 @@
       "typedRoutes": false
     },
     "extra": {
+      "router": {},
       "eas": {
         "projectId": "38901d38-0795-42dc-8334-1e49110fecda"
       }
