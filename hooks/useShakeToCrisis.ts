@@ -6,7 +6,7 @@ import { useRelapse } from '../core/domains/useRelapse';
 import { isExpoGo } from '../utils/runtime';
 
 /** Higher threshold reduces accidental triggers (walking, commuting). */
-const SHAKE_THRESHOLD = 3.6;
+const SHAKE_THRESHOLD = 7.0;
 const SHAKE_COOLDOWN_MS = 2000;
 
 /**

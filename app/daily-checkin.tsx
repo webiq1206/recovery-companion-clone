@@ -43,7 +43,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDER_WIDTH = SCREEN_WIDTH - 80;
 const THUMB_SIZE = 28;
 /** Lower = thumb moves less per pixel of finger travel (finer control). */
-const SLIDER_DAMPING = 0.22;
+const SLIDER_DAMPING = 0.50;
 
 const METRIC_ICONS: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
   heart: Heart,
