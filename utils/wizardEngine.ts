@@ -326,12 +326,16 @@ function buildSetupProgress(input: WizardEngineInput): WizardPlan['setupProgress
   if (input.hasRebuildConfigured) completedIds.add('rebuild-plan');
   if (input.hasAccountabilityConfigured) completedIds.add('accountability');
 
-  const remaining = SETUP_STEPS.filter((s) => !completedIds.has(s.id));
+  const applicableSteps = input.hasPremiumSubscription
+    ? SETUP_STEPS
+    : SETUP_STEPS.filter((s) => s.id !== 'rebuild-plan');
+
+  const remaining = applicableSteps.filter((s) => !completedIds.has(s.id));
   if (remaining.length === 0) return null;
 
   return {
-    completedSteps: SETUP_STEPS.length - remaining.length,
-    totalSteps: SETUP_STEPS.length,
+    completedSteps: applicableSteps.length - remaining.length,
+    totalSteps: applicableSteps.length,
     nextStep: remaining[0],
     remainingSteps: remaining,
   };

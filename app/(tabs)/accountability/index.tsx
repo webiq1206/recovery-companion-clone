@@ -386,27 +386,70 @@ export default function AccountabilityScreen() {
         { key: 'contracts' as const, label: 'Commitments', icon: FileText },
         { key: 'partners' as const, label: 'Partners', icon: Users },
         { key: 'alerts' as const, label: 'Alerts', icon: Bell, badge: driftAlerts.length },
-      ]).map(tab => (
-        <Pressable
-          key={tab.key}
-          style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-          onPress={() => {
-            Haptics.selectionAsync();
-            setActiveTab(tab.key);
-          }}
-          testID={`tab-${tab.key}`}
-        >
-          <View style={styles.tabInner}>
-            <tab.icon size={16} color={activeTab === tab.key ? Colors.white : Colors.textSecondary} />
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
-            {tab.badge && tab.badge > 0 ? (
-              <View style={styles.tabBadge}>
-                <Text style={styles.tabBadgeText}>{tab.badge}</Text>
-              </View>
-            ) : null}
-          </View>
-        </Pressable>
-      ))}
+      ]).map(tab => {
+        const isPartners = tab.key === 'partners';
+        const isAlerts = tab.key === 'alerts';
+        const stackIconLabel = isPartners || isAlerts;
+        return (
+          <Pressable
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() => {
+              Haptics.selectionAsync();
+              setActiveTab(tab.key);
+            }}
+            testID={`tab-${tab.key}`}
+          >
+            <View
+              style={[
+                styles.tabInner,
+                stackIconLabel && styles.tabInnerStacked,
+                isAlerts && styles.tabInnerAlerts,
+              ]}
+            >
+              <tab.icon
+                size={stackIconLabel ? 18 : 16}
+                color={activeTab === tab.key ? Colors.white : Colors.textSecondary}
+              />
+              {isAlerts ? (
+                <View style={styles.tabAlertsTitleRow}>
+                  <Text
+                    style={[
+                      styles.tabText,
+                      styles.tabTextStacked,
+                      activeTab === tab.key && styles.tabTextActive,
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                  {tab.badge && tab.badge > 0 ? (
+                    <View style={styles.tabBadge}>
+                      <Text style={styles.tabBadgeText}>{tab.badge}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : (
+                <>
+                  <Text
+                    style={[
+                      styles.tabText,
+                      isPartners && styles.tabTextStacked,
+                      activeTab === tab.key && styles.tabTextActive,
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                  {tab.badge && tab.badge > 0 ? (
+                    <View style={styles.tabBadge}>
+                      <Text style={styles.tabBadgeText}>{tab.badge}</Text>
+                    </View>
+                  ) : null}
+                </>
+              )}
+            </View>
+          </Pressable>
+        );
+      })}
     </View>
   );
 
@@ -1027,7 +1070,9 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
+    minWidth: 0,
     paddingVertical: 10,
+    paddingHorizontal: 4,
     borderRadius: 12,
     backgroundColor: Colors.cardBackground,
     borderWidth: 1,
@@ -1041,12 +1086,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    flexWrap: 'wrap',
+    gap: 4,
+    paddingHorizontal: 2,
+  },
+  tabInnerStacked: {
+    flexDirection: 'column',
+    gap: 4,
+    flexWrap: 'nowrap',
+  },
+  tabInnerAlerts: {
+    alignItems: 'center',
+  },
+  tabAlertsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    maxWidth: '100%',
   },
   tabText: {
-    fontSize: 12,
+    flexShrink: 1,
+    fontSize: 11,
     fontWeight: '600' as const,
     color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  tabTextStacked: {
+    flexShrink: 0,
+    maxWidth: '100%',
   },
   tabTextActive: {
     color: Colors.white,

@@ -849,7 +849,9 @@ export default function OnboardingScreen() {
       </View>
 
       <Animated.View style={[styles.stepContainer, { opacity: fadeAnim }]}>
-        {renderStep()}
+        <View key={currentStepId ?? `onboarding-step-${step}`} style={styles.stepScrollMount}>
+          {renderStep()}
+        </View>
       </Animated.View>
 
       <View style={styles.bottomRow}>
@@ -934,6 +936,10 @@ const styles = StyleSheet.create({
     textAlign: 'right' as const,
   },
   stepContainer: {
+    flex: 1,
+  },
+  /** Remount per step so scroll positions reset to top when advancing onboarding. */
+  stepScrollMount: {
     flex: 1,
   },
   stepContent: {

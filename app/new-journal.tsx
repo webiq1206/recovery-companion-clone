@@ -11,6 +11,9 @@ import { useRetention } from '../providers/RetentionProvider';
 import { MOOD_EMOJIS, MOOD_LABELS } from '../constants/milestones';
 import { JournalEntry } from '../types';
 
+/** Extra scroll padding so fields and actions stay reachable above the software keyboard. */
+const KEYBOARD_SCROLL_PADDING = 280;
+
 export default function NewJournalScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -53,75 +56,80 @@ export default function NewJournalScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 56 : 0}
     >
+      <Stack.Screen
+        options={{
+          title: 'New Entry',
+          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: Colors.text,
+          headerRight: () => (
+            <Pressable onPress={handleSave} hitSlop={12}>
+              <Text style={styles.saveButton}>Save</Text>
+            </Pressable>
+          ),
+        }}
+      />
       <ScreenScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: Math.max(40, insets.bottom + 32) }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            flexGrow: 1,
+            paddingBottom: Math.max(insets.bottom + KEYBOARD_SCROLL_PADDING, 320),
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator
       >
-        <Stack.Screen
-          options={{
-            title: 'New Entry',
-            headerStyle: { backgroundColor: Colors.background },
-            headerTintColor: Colors.text,
-            headerRight: () => (
-              <Pressable onPress={handleSave} hitSlop={12}>
-                <Text style={styles.saveButton}>Save</Text>
-              </Pressable>
-            ),
-          }}
+        <Text style={styles.label}>HOW ARE YOU FEELING?</Text>
+        <View style={styles.moodRow}>
+          {MOOD_EMOJIS.map((emoji, index) => (
+            <Pressable
+              key={index}
+              style={[styles.moodBtn, mood === index + 1 && styles.moodBtnSelected]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setMood(index + 1);
+              }}
+            >
+              <Text style={styles.moodEmoji}>{emoji}</Text>
+              <Text style={[styles.moodLabel, mood === index + 1 && styles.moodLabelActive]}>
+                {MOOD_LABELS[index]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Text style={styles.label}>TITLE</Text>
+        <TextInput
+          style={styles.titleInput}
+          placeholder="Give your entry a title"
+          placeholderTextColor={Colors.textMuted}
+          value={title}
+          onChangeText={setTitle}
+          maxLength={100}
+          testID="journal-title"
         />
 
-        <Text style={styles.label}>HOW ARE YOU FEELING?</Text>
-      <View style={styles.moodRow}>
-        {MOOD_EMOJIS.map((emoji, index) => (
-          <Pressable
-            key={index}
-            style={[styles.moodBtn, mood === index + 1 && styles.moodBtnSelected]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setMood(index + 1);
-            }}
-          >
-            <Text style={styles.moodEmoji}>{emoji}</Text>
-            <Text style={[styles.moodLabel, mood === index + 1 && styles.moodLabelActive]}>
-              {MOOD_LABELS[index]}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+        <Text style={styles.label}>YOUR THOUGHTS</Text>
+        <TextInput
+          style={styles.contentInput}
+          placeholder="Write about your day, feelings, challenges, or victories..."
+          placeholderTextColor={Colors.textMuted}
+          value={content}
+          onChangeText={setContent}
+          multiline
+          textAlignVertical="top"
+          maxLength={2000}
+          testID="journal-content"
+        />
 
-      <Text style={styles.label}>TITLE</Text>
-      <TextInput
-        style={styles.titleInput}
-        placeholder="Give your entry a title"
-        placeholderTextColor={Colors.textMuted}
-        value={title}
-        onChangeText={setTitle}
-        maxLength={100}
-        testID="journal-title"
-      />
-
-      <Text style={styles.label}>YOUR THOUGHTS</Text>
-      <TextInput
-        style={styles.contentInput}
-        placeholder="Write about your day, feelings, challenges, or victories..."
-        placeholderTextColor={Colors.textMuted}
-        value={content}
-        onChangeText={setContent}
-        multiline
-        textAlignVertical="top"
-        maxLength={2000}
-        testID="journal-content"
-      />
-
-      <Pressable
-        style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
-        onPress={handleSave}
-        testID="save-journal"
-      >
-        <Text style={styles.saveBtnText}>Save Entry</Text>
-      </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
+          onPress={handleSave}
+          testID="save-journal"
+        >
+          <Text style={styles.saveBtnText}>Save Entry</Text>
+        </Pressable>
       </ScreenScrollView>
     </KeyboardAvoidingView>
   );

@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenScrollView } from '../../components/ScreenScrollView';
 import { useRouter, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '../../constants/colors';
@@ -9,6 +10,9 @@ import { useEngagement } from '../../providers/EngagementProvider';
 import { useRetention } from '../../providers/RetentionProvider';
 import type { JournalEntry } from '../../types';
 import { useToolUsageStore } from '../../features/tools/state/useToolUsageStore';
+
+/** Extra scroll padding so Save Entry stays reachable above the software keyboard. */
+const KEYBOARD_SCROLL_PADDING = 280;
 
 export default function QuickJournalToolScreen() {
   const insets = useSafeAreaInsets();
@@ -59,21 +63,26 @@ export default function QuickJournalToolScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: Colors.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
-      <View
-        style={[
-          styles.container,
-          { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 20 },
+      <Stack.Screen
+        options={{
+          title: 'Quick journal',
+          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: Colors.text,
+        }}
+      />
+      <ScreenScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: 12,
+            paddingBottom: insets.bottom + KEYBOARD_SCROLL_PADDING,
+          },
         ]}
       >
-        <Stack.Screen
-          options={{
-            title: 'Quick journal',
-            headerStyle: { backgroundColor: Colors.background },
-            headerTintColor: Colors.text,
-          }}
-        />
-
         <View style={styles.card}>
           <Text style={styles.label}>ONE SHORT ENTRY</Text>
           <Text style={styles.title}>Get it out of your head</Text>
@@ -109,24 +118,21 @@ export default function QuickJournalToolScreen() {
               disabled={!content.trim()}
               testID="quick-journal-save"
             >
-              <Text style={styles.saveButtonText}>
-                {content.trim() ? 'Save entry' : 'Write a few words'}
-              </Text>
+              <Text style={styles.saveButtonText}>Save Entry</Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </ScreenScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
   },
   card: {
-    flex: 1,
     borderRadius: 20,
     padding: 20,
     backgroundColor: Colors.cardBackground,
@@ -171,7 +177,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   input: {
-    flex: 1,
+    minHeight: 200,
     borderRadius: 14,
     padding: 14,
     backgroundColor: Colors.background,
@@ -180,13 +186,13 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 15,
     lineHeight: 22,
-    marginBottom: 12,
+    marginTop: 14,
+    marginBottom: 16,
   },
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
   },
   charCount: {
     fontSize: 12,

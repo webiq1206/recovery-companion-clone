@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, type ComponentType } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -88,6 +88,53 @@ const TRIGGERS: { id: TriggerId; label: string }[] = [
   { id: 'bored', label: 'Bored / unstructured time' },
   { id: 'other', label: 'Something else' },
 ];
+
+type LucideIcon = ComponentType<{ size: number; color: string }>;
+
+function SetbackSuggestedActionCard({
+  icon: Icon,
+  title,
+  subtitle,
+  actionLabel,
+  onPress,
+  testID,
+}: {
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  /** Second line under “Open” (e.g. “Quick journal”). */
+  actionLabel: string;
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeaderRow}>
+        <View style={styles.cardIcon}>
+          <Icon size={20} color={Colors.primary} />
+        </View>
+        <View style={styles.cardTextColumn}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <Text style={styles.cardSubtitle}>{subtitle}</Text>
+        </View>
+      </View>
+      <Pressable
+        style={({ pressed }) => [styles.cardCta, pressed && styles.cardCtaPressed]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }}
+        testID={testID}
+      >
+        <View style={styles.cardCtaLabelStack}>
+          <Text style={styles.cardCtaOpenWord}>Open</Text>
+          <Text style={styles.cardCtaActionName}>{actionLabel}</Text>
+        </View>
+        <ArrowRight size={18} color={Colors.primary} style={styles.cardCtaArrow} />
+      </Pressable>
+    </View>
+  );
+}
 
 const EMOTIONS: { id: EmotionId; label: string }[] = [
   { id: 'ashamed', label: 'Ashamed' },
@@ -429,99 +476,47 @@ export default function RelapseRecoveryScreen() {
             <Text style={[styles.sectionLabel, { marginTop: 28 }]}>
               Recovery steps for the next hour
             </Text>
-            <View style={styles.card}>
-              <View style={styles.cardIcon}>
-                <Target size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.cardTextWrap}>
-                <Text style={styles.cardTitle}>Quick journal entry</Text>
-                <Text style={styles.cardSubtitle}>
-                  Capture your thoughts about your setback in one short entry.
-                </Text>
-              </View>
-              <Pressable
-                style={({ pressed }) => [styles.cardCta, pressed && styles.cardCtaPressed]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/tools/quick-journal' as any);
-                }}
-                testID="relapse-recovery-quick-journal"
-              >
-                <Text style={styles.cardCtaLabel}>Open quick journal</Text>
-                <ArrowRight size={16} color={Colors.primary} />
-              </Pressable>
-            </View>
+            <SetbackSuggestedActionCard
+              icon={Target}
+              title="Quick journal entry"
+              subtitle="Capture your thoughts about your setback in one short entry."
+              actionLabel="Quick journal"
+              onPress={() => router.push('/tools/quick-journal' as any)}
+              testID="relapse-recovery-quick-journal"
+            />
 
             {isPremium ? (
-              <View style={styles.card}>
-                <View style={styles.cardIcon}>
-                  <Brain size={20} color={Colors.primary} />
-                </View>
-                <View style={styles.cardTextWrap}>
-                  <Text style={styles.cardTitle}>Rebuild protection</Text>
-                  <Text style={styles.cardSubtitle}>
-                    Spend a few minutes in Rebuild to reinforce routines and coping skills.
-                  </Text>
-                </View>
-                <Pressable
-                  style={({ pressed }) => [styles.cardCta, pressed && styles.cardCtaPressed]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push({ pathname: '/rebuild', params: { fromSetback: '1' } } as any);
-                  }}
-                  testID="relapse-recovery-rebuild"
-                >
-                  <Text style={styles.cardCtaLabel}>Go to Rebuild</Text>
-                  <ArrowRight size={16} color={Colors.primary} />
-                </Pressable>
-              </View>
+              <SetbackSuggestedActionCard
+                icon={Brain}
+                title="Rebuild protection"
+                subtitle="Spend a few minutes in Rebuild to reinforce routines and coping skills."
+                actionLabel="Rebuild"
+                onPress={() =>
+                  router.push({ pathname: '/rebuild', params: { fromSetback: '1' } } as any)
+                }
+                testID="relapse-recovery-rebuild"
+              />
             ) : null}
 
-            <View style={styles.card}>
-              <View style={styles.cardIcon}>
-                <Shield size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.cardTextWrap}>
-                <Text style={styles.cardTitle}>Ground yourself</Text>
-                <Text style={styles.cardSubtitle}>
-                  Pause, regroup, and calm yourself.
-                </Text>
-              </View>
-              <Pressable
-                style={({ pressed }) => [styles.cardCta, pressed && styles.cardCtaPressed]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/crisis-mode' as any);
-                }}
-                testID="relapse-recovery-support"
-              >
-                <Text style={styles.cardCtaLabel}>Open grounding exercise</Text>
-                <ArrowRight size={16} color={Colors.primary} />
-              </Pressable>
-            </View>
+            <SetbackSuggestedActionCard
+              icon={Shield}
+              title="Ground yourself"
+              subtitle="Pause, regroup, and calm yourself."
+              actionLabel="Grounding exercise"
+              onPress={() => router.push('/crisis-mode' as any)}
+              testID="relapse-recovery-support"
+            />
 
-            <View style={styles.card}>
-              <View style={styles.cardIcon}>
-                <Users size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.cardTextWrap}>
-                <Text style={styles.cardTitle}>Be accountable</Text>
-                <Text style={styles.cardSubtitle}>
-                  Contact accountability partner and review commitments.
-                </Text>
-              </View>
-              <Pressable
-                style={({ pressed }) => [styles.cardCta, pressed && styles.cardCtaPressed]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push({ pathname: '/accountability', params: { fromSetback: '1' } } as any);
-                }}
-                testID="relapse-recovery-accountability"
-              >
-                <Text style={styles.cardCtaLabel}>Open accountability</Text>
-                <ArrowRight size={16} color={Colors.primary} />
-              </Pressable>
-            </View>
+            <SetbackSuggestedActionCard
+              icon={Users}
+              title="Be accountable"
+              subtitle="Contact accountability partner and review commitments."
+              actionLabel="Accountability"
+              onPress={() =>
+                router.push({ pathname: '/accountability', params: { fromSetback: '1' } } as any)
+              }
+              testID="relapse-recovery-accountability"
+            />
           </>
         ) : (
           <View>
@@ -692,47 +687,72 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: Colors.border,
+    gap: 12,
+  },
+  cardHeaderRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   cardIcon: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  cardTextWrap: {
+  cardTextColumn: {
     flex: 1,
+    minWidth: 0,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: Colors.text,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 13,
     color: Colors.textSecondary,
+    lineHeight: 18,
   },
   cardCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 999,
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
     backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 10,
   },
   cardCtaPressed: {
-    opacity: 0.9,
+    opacity: 0.92,
   },
-  cardCtaLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+  cardCtaLabelStack: {
+    flex: 1,
+    minWidth: 0,
+  },
+  cardCtaOpenWord: {
+    fontSize: 11,
+    fontWeight: '700',
     color: Colors.primary,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  cardCtaActionName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  cardCtaArrow: {
+    flexShrink: 0,
   },
 });
 

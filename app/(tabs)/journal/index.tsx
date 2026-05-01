@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { ScreenFlatList } from '../../../components/ScreenFlatList';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
@@ -9,7 +9,7 @@ import { Alert } from 'react-native';
 import Colors from '../../../constants/colors';
 import { useJournal } from '../../../core/domains/useJournal';
 import { useUser } from '../../../core/domains/useUser';
-import { useWorkbook } from '../../../core/domains/useWorkbook';
+import { useHydrateWorkbookStore, useWorkbookStore } from '../../../features/workbook/state/useWorkbookStore';
 import { useSubscription } from '../../../providers/SubscriptionProvider';
 import { MOOD_EMOJIS } from '../../../constants/milestones';
 import { WORKBOOK_SECTIONS } from '../../../constants/workbook';
@@ -22,9 +22,10 @@ type TabMode = 'journal' | 'workbook';
 
 export default function JournalWorkbookScreen() {
   const router = useRouter();
+  useHydrateWorkbookStore();
   const { journal, deleteJournalEntry } = useJournal();
   const { daysSober } = useUser();
-  const { getSectionProgress } = useWorkbook();
+  const workbookAnswers = useWorkbookStore.use.workbookAnswers();
   const { hasFeature } = useSubscription();
   const [activeTab, setActiveTab] = useState<TabMode>('journal');
 
@@ -127,18 +128,19 @@ export default function JournalWorkbookScreen() {
     </View>
   ), []);
 
-  const totalWorkbookProgress = useMemo(() => {
-    const sections = hasPremium
-      ? WORKBOOK_SECTIONS
-      : WORKBOOK_SECTIONS.slice(0, FREE_EXERCISE_COUNT);
-    let total = 0;
-    let completed = 0;
-    sections.forEach(section => {
-      total += section.questions.length;
-      completed += Math.round(getSectionProgress(section.id, section.questions.length) * section.questions.length);
-    });
-    return total > 0 ? completed / total : 0;
-  }, [getSectionProgress, hasPremium]);
+  const sectionsForProgress = hasPremium
+    ? WORKBOOK_SECTIONS
+    : WORKBOOK_SECTIONS.slice(0, FREE_EXERCISE_COUNT);
+  let workbookTotalQuestions = 0;
+  let workbookAnsweredQuestions = 0;
+  sectionsForProgress.forEach((section) => {
+    const n = section.questions.length;
+    workbookTotalQuestions += n;
+    const done = workbookAnswers.filter((a) => a.sectionId === section.id).length;
+    workbookAnsweredQuestions += Math.min(n, done);
+  });
+  const totalWorkbookProgress =
+    workbookTotalQuestions > 0 ? workbookAnsweredQuestions / workbookTotalQuestions : 0;
 
   return (
     <View style={styles.container}>
@@ -220,9 +222,15 @@ export default function JournalWorkbookScreen() {
             const isPremiumTier = index >= FREE_EXERCISE_COUNT;
             const isMilestoneLocked = daysSober < section.unlockMilestoneDays;
             const isLocked = isMilestoneLocked || (isPremiumTier && !hasPremium);
-            const progress =
-              isPremiumTier && !hasPremium ? 0 : getSectionProgress(section.id, section.questions.length);
-            const answeredCount = Math.round(progress * section.questions.length);
+            const nQuestions = section.questions.length;
+            const answeredCount =
+              isPremiumTier && !hasPremium
+                ? 0
+                : Math.min(
+                    nQuestions,
+                    workbookAnswers.filter((a) => a.sectionId === section.id).length
+                  );
+            const progress = nQuestions > 0 ? answeredCount / nQuestions : 0;
 
             return (
               <Pressable
