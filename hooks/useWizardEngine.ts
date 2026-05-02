@@ -72,11 +72,18 @@ export interface WizardEngineResult {
   clearRecentCompletion: () => void;
 }
 
+/**
+ * Plain `YYYY-MM-DD` keys compare as-is. ISO instants map through `getGuidanceDateKey` (local, 5am
+ * boundary) so they match the home “today” key — not UTC `split('T')[0]` (tool usage, rebuild, etc.).
+ */
 function getDateKey(dateValue: string | undefined | null): string {
   if (!dateValue) return '';
-  // Supports both `YYYY-MM-DD` and ISO timestamps like `2026-03-20T12:34:56.000Z`.
-  // We intentionally avoid `new Date(dateValue)` to prevent timezone-induced date shifts.
-  return dateValue.includes('T') ? dateValue.split('T')[0] : dateValue;
+  if (dateValue.includes('T')) {
+    const d = new Date(dateValue);
+    if (Number.isNaN(d.getTime())) return '';
+    return getGuidanceDateKey(d);
+  }
+  return dateValue;
 }
 
 export function useWizardEngineHook(): WizardEngineResult {

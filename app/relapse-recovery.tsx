@@ -165,6 +165,7 @@ export default function RelapseRecoveryScreen() {
   const [selectedEmotion, setSelectedEmotion] = useState<EmotionId | null>(null);
   const [hasLogged, setHasLogged] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const scrollToStepsAfterSubmitRef = useRef(false);
 
   const canSubmit = useMemo(
     () =>
@@ -222,12 +223,8 @@ export default function RelapseRecoveryScreen() {
     // Central app store: enrich relapse logs for progress views.
     logRelapseToCentralStore(details);
 
+    scrollToStepsAfterSubmitRef.current = true;
     setHasLogged(true);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      });
-    });
   };
 
   const handleClose = () => {
@@ -254,30 +251,30 @@ export default function RelapseRecoveryScreen() {
           A setback is data, not a verdict. Let&apos;s understand what happened and choose the next right step.
         </Text>
 
-        <Text style={styles.sectionLabel}>What happened</Text>
-        <View style={styles.pillGrid}>
-          {WHAT_HAPPENED.map((item) => {
-            const active = item.id === selectedWhatHappened;
-            return (
-              <Pressable
-                key={item.id}
-                style={({ pressed }) => [
-                  styles.pill,
-                  active && styles.pillActive,
-                  pressed && styles.pillPressed,
-                ]}
-                onPress={() => setSelectedWhatHappened(item.id)}
-                testID={`relapse-what-${item.id}`}
-              >
-                <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+            <Text style={styles.sectionLabel}>What happened</Text>
+            <View style={styles.pillGrid}>
+              {WHAT_HAPPENED.map((item) => {
+                const active = item.id === selectedWhatHappened;
+                return (
+                  <Pressable
+                    key={item.id}
+                    style={({ pressed }) => [
+                      styles.pill,
+                      active && styles.pillActive,
+                      pressed && styles.pillPressed,
+                    ]}
+                    onPress={() => setSelectedWhatHappened(item.id)}
+                    testID={`relapse-what-${item.id}`}
+                  >
+                    <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
-        <Text style={[styles.sectionLabel, { marginTop: 24 }]}>When</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 24 }]}>When</Text>
         <View style={styles.pillGrid}>
           {WHEN_OPTIONS.map((item) => {
             const active = item.id === selectedWhen;
@@ -471,89 +468,101 @@ export default function RelapseRecoveryScreen() {
           })}
         </View>
 
-        {hasLogged ? (
-          <>
-            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>
-              Recovery steps for the next hour
-            </Text>
-            <SetbackSuggestedActionCard
-              icon={Target}
-              title="Quick journal entry"
-              subtitle="Capture your thoughts about your setback in one short entry."
-              actionLabel="Quick journal"
-              onPress={() => router.push('/tools/quick-journal' as any)}
-              testID="relapse-recovery-quick-journal"
-            />
-
-            {isPremium ? (
-              <SetbackSuggestedActionCard
-                icon={Brain}
-                title="Rebuild protection"
-                subtitle="Spend a few minutes in Rebuild to reinforce routines and coping skills."
-                actionLabel="Rebuild"
-                onPress={() =>
-                  router.push({ pathname: '/rebuild', params: { fromSetback: '1' } } as any)
-                }
-                testID="relapse-recovery-rebuild"
-              />
+            {!hasLogged ? (
+              <View>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    !canSubmit && styles.primaryButtonDisabled,
+                    canSubmit && pressed && styles.primaryButtonPressed,
+                  ]}
+                  disabled={!canSubmit}
+                  onPress={handleSubmit}
+                  testID="relapse-recovery-submit"
+                >
+                  <Text
+                    style={[styles.primaryButtonText, !canSubmit && styles.primaryButtonTextDisabled]}
+                  >
+                    Log this and suggest steps
+                  </Text>
+                </Pressable>
+                {!canSubmit && (
+                  <Text style={styles.submitHint}>Select an option in each section to continue.</Text>
+                )}
+              </View>
             ) : null}
 
-            <SetbackSuggestedActionCard
-              icon={Shield}
-              title="Ground yourself"
-              subtitle="Pause, regroup, and calm yourself."
-              actionLabel="Grounding exercise"
-              onPress={() => router.push('/crisis-mode' as any)}
-              testID="relapse-recovery-support"
-            />
-
-            <SetbackSuggestedActionCard
-              icon={Users}
-              title="Be accountable"
-              subtitle="Contact accountability partner and review commitments."
-              actionLabel="Accountability"
-              onPress={() =>
-                router.push({ pathname: '/accountability', params: { fromSetback: '1' } } as any)
-              }
-              testID="relapse-recovery-accountability"
-            />
-          </>
-        ) : (
-          <View>
-            <Pressable
-              style={({ pressed }) => [
-                styles.primaryButton,
-                !canSubmit && styles.primaryButtonDisabled,
-                canSubmit && pressed && styles.primaryButtonPressed,
-              ]}
-              disabled={!canSubmit}
-              onPress={handleSubmit}
-              testID="relapse-recovery-submit"
-            >
-              <Text
-                style={[styles.primaryButtonText, !canSubmit && styles.primaryButtonTextDisabled]}
+            {hasLogged ? (
+              <View
+                collapsable={false}
+                style={styles.recoveryStepsSection}
+                onLayout={(e) => {
+                  const y = e.nativeEvent.layout.y;
+                  if (!scrollToStepsAfterSubmitRef.current) return;
+                  scrollToStepsAfterSubmitRef.current = false;
+                  requestAnimationFrame(() => {
+                    scrollRef.current?.scrollTo({
+                      y: Math.max(0, y - 12),
+                      animated: true,
+                    });
+                  });
+                }}
               >
-                Log this and suggest steps
-              </Text>
-            </Pressable>
-            {!canSubmit && (
-              <Text style={styles.submitHint}>Select an option in each section to continue.</Text>
-            )}
-          </View>
-        )}
+                <Text style={styles.sectionLabel}>Recovery steps for the next hour</Text>
+                <SetbackSuggestedActionCard
+                  icon={Target}
+                  title="Quick journal entry"
+                  subtitle="Capture your thoughts about your setback in one short entry."
+                  actionLabel="Quick journal"
+                  onPress={() => router.push('/tools/quick-journal' as any)}
+                  testID="relapse-recovery-quick-journal"
+                />
 
-        {hasLogged && (
-          <Pressable
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              pressed && styles.secondaryButtonPressed,
-            ]}
-            onPress={handleClose}
-            testID="relapse-recovery-done"
-          >
-            <Text style={styles.secondaryButtonText}>I&apos;m ready to continue</Text>
-          </Pressable>
-        )}
+                {isPremium ? (
+                  <SetbackSuggestedActionCard
+                    icon={Brain}
+                    title="Rebuild protection"
+                    subtitle="Spend a few minutes in Rebuild to reinforce routines and coping skills."
+                    actionLabel="Rebuild"
+                    onPress={() =>
+                      router.push({ pathname: '/rebuild', params: { fromSetback: '1' } } as any)
+                    }
+                    testID="relapse-recovery-rebuild"
+                  />
+                ) : null}
+
+                <SetbackSuggestedActionCard
+                  icon={Shield}
+                  title="Ground yourself"
+                  subtitle="Pause, regroup, and calm yourself."
+                  actionLabel="Grounding exercise"
+                  onPress={() => router.push('/crisis-mode' as any)}
+                  testID="relapse-recovery-support"
+                />
+
+                <SetbackSuggestedActionCard
+                  icon={Users}
+                  title="Be accountable"
+                  subtitle="Contact accountability partner and review commitments."
+                  actionLabel="Accountability"
+                  onPress={() =>
+                    router.push({ pathname: '/accountability', params: { fromSetback: '1' } } as any)
+                  }
+                  testID="relapse-recovery-accountability"
+                />
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryButton,
+                    pressed && styles.secondaryButtonPressed,
+                  ]}
+                  onPress={handleClose}
+                  testID="relapse-recovery-done"
+                >
+                  <Text style={styles.secondaryButtonText}>I&apos;m ready to continue</Text>
+                </Pressable>
+              </View>
+            ) : null}
       </ScreenScrollView>
     </View>
   );
@@ -600,6 +609,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 10,
+  },
+  recoveryStepsSection: {
+    marginTop: 28,
   },
   pillGrid: {
     flexDirection: 'row',

@@ -632,7 +632,7 @@ export default function SettingsScreen() {
               <Lock size={17} color={Colors.primary} />
             </View>
             <View>
-              <Text style={styles.settingLabel}>Security & Privacy</Text>
+              <Text style={styles.settingLabel}>Security</Text>
               <Text style={styles.settingValue}>
                 PIN, security level, audit log
               </Text>

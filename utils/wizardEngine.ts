@@ -622,7 +622,7 @@ function createSeededRandom(seed: number): () => number {
   };
 }
 
-/** Deterministic subset for the given date key; order follows `pool` (priority order). */
+/** Deterministic subset for the given date key. Caller must pass `pool` in a stable order (e.g. sorted by `id`) so completing an action does not reshuffle which IDs are chosen. */
 function pickSeededActionIds(pool: WizardAction[], seedKey: string, count: number): Set<string> {
   if (count <= 0) return new Set();
   if (pool.length <= count) return new Set(pool.map((a) => a.id));
@@ -655,7 +655,8 @@ function limitDailyGuidanceActions(actions: WizardAction[], localDateKey: string
 
   const poolForPick = pool.filter((a) => !mustShow.has(a.id));
   const need = MAX_NON_CHECKIN_GUIDANCE_ACTIONS_PER_DAY - mustShow.size;
-  const extra = pickSeededActionIds(poolForPick, `${localDateKey}|dailyGuidance`, need);
+  const poolStableOrder = [...poolForPick].sort((a, b) => a.id.localeCompare(b.id));
+  const extra = pickSeededActionIds(poolStableOrder, `${localDateKey}|dailyGuidance`, need);
   const pickedPoolIds = new Set<string>([...mustShow, ...extra]);
 
   return actions.filter((a) => isGuidanceCapExempt(a) || pickedPoolIds.has(a.id));
