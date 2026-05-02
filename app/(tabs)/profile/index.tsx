@@ -11,6 +11,10 @@ import {
   TextInput,
   Modal,
   useWindowDimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  findNodeHandle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenScrollView } from '../../../components/ScreenScrollView';
@@ -30,6 +34,15 @@ import { useWizardEngineHook } from '../../../hooks/useWizardEngine';
 import { resolveCanonicalRoute } from '../../../utils/legacyRoutes';
 import { useQueryClient } from '@tanstack/react-query';
 
+/** Extra scroll padding while inline profile fields are focused so rows stay above the keyboard. */
+const PROFILE_KEYBOARD_SCROLL_PADDING = 280;
+
+const PROFILE_METRIC_EDIT_FIELDS = ['dailySavings', 'timeSpentDaily', 'motivation'] as const;
+type ProfileMetricEditField = (typeof PROFILE_METRIC_EDIT_FIELDS)[number];
+
+function isProfileMetricEditField(field: string | null): field is ProfileMetricEditField {
+  return field != null && (PROFILE_METRIC_EDIT_FIELDS as readonly string[]).includes(field);
+}
 
 const STAGE_CONFIG: Record<RecoveryStage, { label: string; color: string; icon: string; description: string }> = {
   crisis: { label: 'Crisis', color: '#EF5350', icon: 'alert', description: 'Navigating the hardest moments' },
@@ -74,6 +87,62 @@ export default function ProfileScreen() {
   const [tempYear, setTempYear] = useState<number>(new Date().getFullYear());
 
   const stageProgress = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+  const profileMoneyEditRef = useRef<View>(null);
+  const profileTimeEditRef = useRef<View>(null);
+  const profileMotivationEditRef = useRef<View>(null);
+
+  const scrollActiveMetricIntoView = useCallback(() => {
+    const scroll = scrollRef.current;
+    if (!scroll || !isProfileMetricEditField(editingField)) return;
+
+    const targetRef =
+      editingField === 'dailySavings'
+        ? profileMoneyEditRef
+        : editingField === 'timeSpentDaily'
+          ? profileTimeEditRef
+          : profileMotivationEditRef;
+    const anchor = targetRef.current;
+    const scrollNode = findNodeHandle(scroll);
+    if (!anchor || scrollNode == null) return;
+
+    anchor.measureLayout(
+      scrollNode,
+      (_x, y) => {
+        scroll.scrollTo({ y: Math.max(0, y - 56), animated: true });
+      },
+      () => {},
+    );
+  }, [editingField]);
+
+  useEffect(() => {
+    if (!isProfileMetricEditField(editingField)) return;
+
+    let cancelled = false;
+    const run = () => {
+      if (!cancelled) scrollActiveMetricIntoView();
+    };
+
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(run);
+    });
+
+    const keyboardEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const sub = Keyboard.addListener(keyboardEvent, () => {
+      setTimeout(run, Platform.OS === 'ios' ? 80 : 140);
+    });
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      sub.remove();
+    };
+  }, [editingField, scrollActiveMetricIntoView]);
+
+  const handleMetricEditLayout = useCallback(() => {
+    if (!isProfileMetricEditField(editingField)) return;
+    requestAnimationFrame(() => scrollActiveMetricIntoView());
+  }, [editingField, scrollActiveMetricIntoView]);
 
   const currentStage = profile.recoveryProfile?.recoveryStage ?? 'crisis';
   const stageConfig = STAGE_CONFIG[currentStage];
@@ -236,13 +305,25 @@ export default function ProfileScreen() {
   const privacyControls = profile.privacyControls ?? { isAnonymous: false, shareProgress: false, shareMood: false, allowCommunityMessages: true };
 
   return (
-    <ScreenScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      testID="profile-screen"
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoidingRoot}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 56 : 0}
     >
+      <ScreenScrollView
+        ref={scrollRef}
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          editingField != null && {
+            paddingBottom: Math.max(120, insets.bottom + PROFILE_KEYBOARD_SCROLL_PADDING),
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        testID="profile-screen"
+      >
       {!isPremium ? (
         <View style={styles.upgradeRow}>
           <View style={{ flex: 1, marginRight: 12 }}>
@@ -435,7 +516,12 @@ export default function ProfileScreen() {
       </Pressable>
 
       {editingField === 'dailySavings' ? (
-        <View style={styles.editRow}>
+        <View
+          ref={profileMoneyEditRef}
+          collapsable={false}
+          style={styles.editRow}
+          onLayout={handleMetricEditLayout}
+        >
           <TextInput
             style={styles.editInput}
             value={tempValue}
@@ -444,6 +530,7 @@ export default function ProfileScreen() {
             keyboardType="decimal-pad"
             placeholder="0.00"
             placeholderTextColor={Colors.textMuted}
+            onFocus={scrollActiveMetricIntoView}
           />
           <View style={styles.editActions}>
             <Pressable onPress={handleCancelEdit} style={styles.editCancel}>
@@ -470,7 +557,12 @@ export default function ProfileScreen() {
       )}
 
       {editingField === 'timeSpentDaily' ? (
-        <View style={styles.editRow}>
+        <View
+          ref={profileTimeEditRef}
+          collapsable={false}
+          style={styles.editRow}
+          onLayout={handleMetricEditLayout}
+        >
           <TextInput
             style={styles.editInput}
             value={tempValue}
@@ -479,6 +571,7 @@ export default function ProfileScreen() {
             keyboardType="decimal-pad"
             placeholder="e.g. 2"
             placeholderTextColor={Colors.textMuted}
+            onFocus={scrollActiveMetricIntoView}
           />
           <View style={styles.editActions}>
             <Pressable onPress={handleCancelEdit} style={styles.editCancel}>
@@ -520,7 +613,12 @@ export default function ProfileScreen() {
       )}
 
       {editingField === 'motivation' ? (
-        <View style={styles.editRow}>
+        <View
+          ref={profileMotivationEditRef}
+          collapsable={false}
+          style={styles.editRow}
+          onLayout={handleMetricEditLayout}
+        >
           <TextInput
             style={[styles.editInput, { minHeight: 60 }]}
             value={tempValue}
@@ -530,6 +628,7 @@ export default function ProfileScreen() {
             placeholder="Your motivation"
             placeholderTextColor={Colors.textMuted}
             maxLength={200}
+            onFocus={scrollActiveMetricIntoView}
           />
           <View style={styles.editActions}>
             <Pressable onPress={handleCancelEdit} style={styles.editCancel}>
@@ -772,11 +871,16 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </ScreenScrollView>
+      </ScreenScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoidingRoot: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
