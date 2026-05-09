@@ -93,7 +93,7 @@ export default function SubscriptionPlansScreen() {
           <Text style={styles.leadStrong}>Freemium</Text>
           {' '}is our free tier with full core recovery tools.{' '}
           <Text style={styles.leadStrong}>Premium</Text>
-          {' '}unlocks deeper insights, structured programs, practice group tools, and export options.
+          {' '}unlocks deeper insights, structured programs, exercises, advanced accountability and analytics.
         </Text>
 
         {isPremium ? (

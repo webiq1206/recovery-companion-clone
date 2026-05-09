@@ -26,6 +26,19 @@ import {
   NotificationIntensity,
 } from '../constants/notifications';
 
+/** Max tier (`active`) cannot exceed this many non-critical notifications per day, even with adaptive boost. */
+const MAX_INTENSITY_EFFECTIVE_DAILY_CAP = 12;
+
+function computeEffectiveMaxPerDay(
+  intensity: NotificationIntensity,
+  maxPerDay: number,
+  frequencyMultiplier: number,
+): number {
+  const raw = Math.round(maxPerDay * frequencyMultiplier);
+  if (intensity === 'active') return Math.min(MAX_INTENSITY_EFFECTIVE_DAILY_CAP, raw);
+  return raw;
+}
+
 const STORAGE_KEY = 'behavioral_notification_state';
 if (Platform.OS !== 'web' && !isExpoGo) {
   Notifications.setNotificationHandler({
@@ -184,6 +197,9 @@ async function scheduleLocalNotification(
         body,
         sound: false,
         categoryIdentifier: NOTIFICATION_CHANNEL_CONFIG.id,
+        ...(Platform.OS === 'android'
+          ? { android: { channelId: NOTIFICATION_CHANNEL_CONFIG.id } }
+          : {}),
       },
       trigger: triggerSeconds <= 1
         ? null
@@ -379,7 +395,11 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
 
     const today = getToday();
     const todayCount = state.frequency.todayDate === today ? state.frequency.todayCount : 0;
-    const effectiveMax = Math.round(intensityConfig.maxPerDay * state.frequency.frequencyMultiplier);
+    const effectiveMax = computeEffectiveMaxPerDay(
+      state.intensity as NotificationIntensity,
+      intensityConfig.maxPerDay,
+      state.frequency.frequencyMultiplier,
+    );
 
     if (todayCount >= effectiveMax && priority !== 'critical') {
       console.log('[Notifications] Blocked: daily limit reached', todayCount, '/', effectiveMax);
@@ -458,9 +478,13 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     daysSober: number,
     quietHoursStart: number = 22,
     quietHoursEnd: number = 7,
+    prefs: { riskBasedAlerts?: boolean; milestoneReminders?: boolean } = {},
   ) => {
     const intensityConfig = NOTIFICATION_INTENSITY_CONFIG[state.intensity as NotificationIntensity];
     if (!intensityConfig) return;
+
+    const allowRiskBased = prefs.riskBasedAlerts !== false;
+    const allowMilestones = prefs.milestoneReminders !== false;
 
     const now = new Date();
     const hour = now.getHours();
@@ -471,14 +495,14 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       setState(prev => ({ ...prev, highRiskHours }));
     }
 
-    if (intensityConfig.enableRiskAlerts && isInHighRiskWindow(highRiskHours)) {
+    if (allowRiskBased && intensityConfig.enableRiskAlerts && isInHighRiskWindow(highRiskHours)) {
       if (hoursSince(state.frequency.lastSentAt) >= 2) {
         await sendBehavioralNotification('high_risk_time', quietHoursStart, quietHoursEnd);
         return;
       }
     }
 
-    if (intensityConfig.enableRiskAlerts && (riskCategory === 'elevated' || riskCategory === 'high')) {
+    if (allowRiskBased && intensityConfig.enableRiskAlerts && (riskCategory === 'elevated' || riskCategory === 'high')) {
       if (checkIns.length >= 3) {
         const recent = [...checkIns]
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -536,7 +560,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       }
     }
 
-    if (intensityConfig.enableRiskAlerts && checkIns.length >= 3) {
+    if (allowRiskBased && intensityConfig.enableRiskAlerts && checkIns.length >= 3) {
       const sorted = [...checkIns]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 3);
@@ -569,15 +593,17 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       }
     }
 
-    const milestones = [7, 14, 30, 60, 90, 180, 365];
-    for (const m of milestones) {
-      if (daysSober >= m - 1 && daysSober < m) {
-        const alreadySent = state.history.some(
-          h => h.trigger === 'milestone_approaching' && h.scheduledAt.startsWith(today)
-        );
-        if (!alreadySent) {
-          await sendBehavioralNotification('milestone_approaching', quietHoursStart, quietHoursEnd);
-          return;
+    if (allowMilestones) {
+      const milestones = [7, 14, 30, 60, 90, 180, 365];
+      for (const m of milestones) {
+        if (daysSober >= m - 1 && daysSober < m) {
+          const alreadySent = state.history.some(
+            h => h.trigger === 'milestone_approaching' && h.scheduledAt.startsWith(today)
+          );
+          if (!alreadySent) {
+            await sendBehavioralNotification('milestone_approaching', quietHoursStart, quietHoursEnd);
+            return;
+          }
         }
       }
     }
@@ -640,7 +666,11 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   const effectiveMaxPerDay = useMemo(() => {
     const config = NOTIFICATION_INTENSITY_CONFIG[state.intensity as NotificationIntensity];
     if (!config) return 4;
-    return Math.round(config.maxPerDay * state.frequency.frequencyMultiplier);
+    return computeEffectiveMaxPerDay(
+      state.intensity as NotificationIntensity,
+      config.maxPerDay,
+      state.frequency.frequencyMultiplier,
+    );
   }, [state.intensity, state.frequency.frequencyMultiplier]);
 
   const intensityConfig = useMemo(() => {

@@ -37,7 +37,7 @@ export const NOTIFICATION_INTENSITY_CONFIG: Record<NotificationIntensity, {
     cooldownAfterDismissMinutes: 240,
   },
   supportive: {
-    label: 'Supportive',
+    label: 'Active',
     description: 'Gentle support throughout the day',
     maxPerDay: 6,
     minIntervalMinutes: 120,
@@ -49,9 +49,9 @@ export const NOTIFICATION_INTENSITY_CONFIG: Record<NotificationIntensity, {
     cooldownAfterDismissMinutes: 120,
   },
   active: {
-    label: 'Active',
+    label: 'Max',
     description: 'Maximum support for vulnerable periods',
-    maxPerDay: 10,
+    maxPerDay: 12,
     minIntervalMinutes: 60,
     enableRiskAlerts: true,
     enableStreakProtection: true,
