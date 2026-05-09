@@ -1,0 +1,20 @@
+/**
+ * RevenueCat alignment helpers for docs and UI mapping.
+ * Entitlement id must match `REVENUECAT_PRO_ENTITLEMENT_ID` in SubscriptionProvider.
+ */
+
+/** Env variable names for public SDK keys (Expo injects at build time). */
+export const REVENUECAT_PUBLIC_ENV_KEYS = {
+  ios: 'EXPO_PUBLIC_REVENUECAT_IOS_API_KEY',
+  android: 'EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY',
+} as const;
+
+/**
+ * RevenueCat default offering package identifiers recognized by the custom paywall UI
+ * (`premium-upgrade.tsx`) for friendly labels.
+ */
+export const REVENUECAT_STANDARD_PACKAGE_IDENTIFIERS = [
+  '$rc_monthly',
+  '$rc_annual',
+  '$rc_lifetime',
+] as const;

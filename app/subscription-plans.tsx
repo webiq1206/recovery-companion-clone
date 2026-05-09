@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import Colors from '../constants/colors';
 import { getTierComparisonRows } from '../constants/subscriptionPlans';
 import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { mapRcOfferingPackagesForDisplay } from '../utils/mapRcOfferingPackagesForDisplay';
 
 function openSubscriptionManagement() {
   if (Platform.OS === 'ios') {
@@ -33,7 +34,16 @@ function openSubscriptionManagement() {
 
 export default function SubscriptionPlansScreen() {
   const router = useRouter();
-  const { isPremium, restoreMutation, storePurchasesReady, purchasesApiKeyConfigured } = useSubscription();
+  const {
+    isPremium,
+    restoreMutation,
+    storePurchasesReady,
+    purchasesApiKeyConfigured,
+    offerings,
+    offeringsLoading,
+  } = useSubscription();
+
+  const storePriceRows = useMemo(() => mapRcOfferingPackagesForDisplay(offerings), [offerings]);
 
   const isRestoring = restoreMutation.isPending;
 
@@ -95,6 +105,42 @@ export default function SubscriptionPlansScreen() {
           <Text style={styles.leadStrong}>Premium</Text>
           {' '}unlocks deeper insights, structured programs, exercises, advanced accountability and analytics.
         </Text>
+
+        <View style={styles.storePricesSection}>
+          <Text style={styles.storePricesTitle}>Subscription options (store)</Text>
+          {Platform.OS === 'web' ? (
+            <Text style={styles.storePricesMuted}>
+              Live prices load in the iOS and Android apps through Apple or Google Play.
+            </Text>
+          ) : !purchasesApiKeyConfigured ? (
+            <Text style={styles.storePricesMuted}>
+              This build does not include RevenueCat API keys, so prices cannot load here.
+            </Text>
+          ) : offeringsLoading ? (
+            <View style={styles.storePricesLoading}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.storePricesMuted}>Loading prices…</Text>
+            </View>
+          ) : storePriceRows.length === 0 ? (
+            <Text style={styles.storePricesMuted}>
+              Packages are not available yet. Check your connection, RevenueCat default offering, and App Store / Play
+              product setup.
+            </Text>
+          ) : (
+            storePriceRows.map((row, index) => (
+              <View
+                key={row.id}
+                style={[styles.storePriceRow, index > 0 ? styles.storePriceRowDivider : null]}
+              >
+                <View style={styles.storePriceRowMain}>
+                  <Text style={styles.storePriceLabel}>{row.label}</Text>
+                  <Text style={styles.storePriceAmount}>{row.priceString}</Text>
+                </View>
+                <Text style={styles.storePriceHint}>{row.periodHint}</Text>
+              </View>
+            ))
+          )}
+        </View>
 
         {isPremium ? (
           <View style={styles.premiumBanner}>
@@ -201,6 +247,63 @@ const styles = StyleSheet.create({
   leadStrong: {
     fontWeight: '700' as const,
     color: Colors.text,
+  },
+  storePricesSection: {
+    marginBottom: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: Colors.cardBackground,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.border,
+  },
+  storePricesTitle: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 10,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  storePricesLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  storePricesMuted: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    lineHeight: 18,
+  },
+  storePriceRow: {
+    paddingVertical: 10,
+  },
+  storePriceRowDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
+  },
+  storePriceRowMain: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 12,
+  },
+  storePriceLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  storePriceAmount: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#D4A574',
+  },
+  storePriceHint: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 4,
+    lineHeight: 15,
   },
   premiumBanner: {
     flexDirection: 'row',

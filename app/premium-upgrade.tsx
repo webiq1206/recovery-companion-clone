@@ -170,10 +170,12 @@ export default function PremiumUpgradeScreen() {
     restoreMutation,
     storePurchasesReady,
     purchasesApiKeyConfigured,
+    presentHostedPaywall,
   } = useSubscription();
   const headerAnim = useRef(new Animated.Value(0)).current;
   const crownAnim = useRef(new Animated.Value(0)).current;
   const [selectedPlan, setSelectedPlan] = useState<string>('yearly');
+  const [rcPaywallBusy, setRcPaywallBusy] = useState(false);
 
   const openManageSubscription = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -582,6 +584,37 @@ export default function PremiumUpgradeScreen() {
           </Text>
         </Pressable>
 
+        {__DEV__ &&
+        Platform.OS !== 'web' &&
+        purchasesApiKeyConfigured &&
+        storePurchasesReady &&
+        !isPremium ? (
+          <View style={styles.devRcPaywallWrap}>
+            <Pressable
+              style={({ pressed }) => [styles.devRcPaywallBtn, pressed && { opacity: 0.85 }]}
+              disabled={rcPaywallBusy}
+              onPress={async () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setRcPaywallBusy(true);
+                try {
+                  await presentHostedPaywall();
+                } finally {
+                  setRcPaywallBusy(false);
+                }
+              }}
+            >
+              {rcPaywallBusy ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : (
+                <Text style={styles.devRcPaywallText}>Preview RevenueCat dashboard paywall</Text>
+              )}
+            </Pressable>
+            <Text style={styles.devRcPaywallHint}>
+              Development only — presents the hosted paywall from your RevenueCat project for the current offering.
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.legalLinksRow}>
           <Pressable
             onPress={() => {
@@ -888,6 +921,36 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: Colors.primary,
     textDecorationLine: 'underline',
+  },
+  devRcPaywallWrap: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  devRcPaywallBtn: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardBackground,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    minWidth: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devRcPaywallText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.primary,
+    textAlign: 'center',
+  },
+  devRcPaywallHint: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 15,
+    paddingHorizontal: 12,
   },
   legalLinksRow: {
     flexDirection: 'row',

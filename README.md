@@ -65,6 +65,8 @@ eas build --platform android
 
 Submit with `eas submit`. See [Expo submit docs](https://docs.expo.dev/submit/introduction/) for iOS and Android. Web export: `npx expo export` (see [Expo Router web](https://docs.expo.dev/router/introduction/)).
 
+**RevenueCat / subscriptions:** Copy [`.env.example`](.env.example) to `.env` for local native builds with public SDK keys. For EAS, create project secrets named `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` and `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`. Dashboard setup, hosted paywall preview, and release QA are documented in [`docs/SUBSCRIPTION_RELEASE_QA.md`](docs/SUBSCRIPTION_RELEASE_QA.md).
+
 ## Project layout (high level)
 
 ```

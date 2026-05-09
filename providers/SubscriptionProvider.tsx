@@ -419,6 +419,34 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     restoreMutation.mutate();
   }, [restoreMutation]);
 
+  /**
+   * Presents RevenueCat’s hosted paywall (dashboard-designed). No-op on web or when the SDK is not ready.
+   * Refreshes entitlement state after a successful purchase or restore.
+   */
+  const presentHostedPaywall = useCallback(async (): Promise<string | null> => {
+    if (Platform.OS === 'web' || !shouldUseNativePurchases || !storePurchasesReady) {
+      return null;
+    }
+    try {
+      const { default: RevenueCatUI, PAYWALL_RESULT } = await import('react-native-purchases-ui');
+      const result = await RevenueCatUI.presentPaywall();
+      if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+        const info = await Purchases.getCustomerInfo();
+        applyCustomerInfoRef.current(info);
+        await queryClient.invalidateQueries({ queryKey: ['rc_offerings', rcUserId] });
+      }
+      return result;
+    } catch (e) {
+      console.log('[Subscription] presentHostedPaywall failed:', e);
+      return null;
+    }
+  }, [
+    shouldUseNativePurchases,
+    storePurchasesReady,
+    queryClient,
+    rcUserId,
+  ]);
+
   return useMemo(
     () => ({
       subscription,
@@ -441,6 +469,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       purchaseMutation,
       restoreMutation,
       rcUserId,
+      presentHostedPaywall,
       /** @deprecated Use purchasesApiKeyConfigured */
       revenueCatConfigured: purchasesApiKeyConfigured,
     }),
@@ -461,6 +490,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       purchaseMutation,
       restoreMutation,
       rcUserId,
+      presentHostedPaywall,
       purchasesApiKeyConfigured,
       storePurchasesReady,
     ],
