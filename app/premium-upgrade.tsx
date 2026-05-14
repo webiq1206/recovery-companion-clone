@@ -11,7 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Crown,
@@ -33,6 +33,7 @@ import {
 } from '../constants/subscriptionPlans';
 import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
 /** App Store–style auto-renewal summary; shown on the paywall before purchase. */
 function storeAutoRenewalSummary(): string {
@@ -175,7 +176,41 @@ export default function PremiumUpgradeScreen() {
   const headerAnim = useRef(new Animated.Value(0)).current;
   const crownAnim = useRef(new Animated.Value(0)).current;
   const [selectedPlan, setSelectedPlan] = useState<string>('yearly');
-  const [rcPaywallBusy, setRcPaywallBusy] = useState(false);
+  const [showHostedFallback, setShowHostedFallback] = useState(false);
+  const [reopenHostedBusy, setReopenHostedBusy] = useState(false);
+
+  const useNativeHostedPaywall = Platform.OS !== 'web' && purchasesApiKeyConfigured;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isPremium || !useNativeHostedPaywall) {
+        return undefined;
+      }
+      setShowHostedFallback(false);
+      let cancelled = false;
+      const run = async () => {
+        if (!storePurchasesReady) return;
+        const result = await presentHostedPaywall();
+        if (cancelled) return;
+        if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          router.back();
+          return;
+        }
+        setShowHostedFallback(true);
+      };
+      void run();
+      return () => {
+        cancelled = true;
+      };
+    }, [
+      isPremium,
+      useNativeHostedPaywall,
+      storePurchasesReady,
+      presentHostedPaywall,
+      router,
+    ]),
+  );
 
   const openManageSubscription = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -426,6 +461,20 @@ export default function PremiumUpgradeScreen() {
     });
   }, [restoreMutation, router, storePurchasesReady, purchasesApiKeyConfigured]);
 
+  const openHostedPaywallAgain = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setReopenHostedBusy(true);
+    try {
+      const result = await presentHostedPaywall();
+      if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.back();
+      }
+    } finally {
+      setReopenHostedBusy(false);
+    }
+  }, [presentHostedPaywall, router]);
+
   const isRestoring = restoreMutation.isPending;
 
   if (isPremium) {
@@ -470,6 +519,150 @@ export default function PremiumUpgradeScreen() {
             <Text style={styles.backButtonText}>Go Back</Text>
           </Pressable>
         </View>
+      </View>
+    );
+  }
+
+  if (useNativeHostedPaywall) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+            <ArrowLeft size={22} color={Colors.text} />
+          </Pressable>
+          <Pressable
+            onPress={handleRestore}
+            disabled={isRestoring}
+            style={styles.restoreHeaderBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View style={styles.restoreHeaderInner}>
+              {isRestoring ? <ActivityIndicator size="small" color={Colors.textSecondary} /> : null}
+              <Text style={styles.restorePurchasesText}>Restore purchases</Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {!storePurchasesReady ? (
+          <View style={styles.hostedCenterWrap}>
+            <ActivityIndicator size="large" color="#D4A574" />
+            <Text style={styles.hostedCenterTitle}>
+              Connecting to {Platform.OS === 'ios' ? 'App Store' : 'Google Play'}…
+            </Text>
+            <Text style={styles.hostedCenterSubtitle}>Subscription options load through your store account.</Text>
+          </View>
+        ) : !showHostedFallback ? (
+          <View style={styles.hostedCenterWrap}>
+            <ActivityIndicator size="large" color="#D4A574" />
+            <Text style={styles.hostedCenterTitle}>Opening subscription options…</Text>
+          </View>
+        ) : (
+          <ScreenScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Animated.View
+              style={[
+                styles.heroSection,
+                {
+                  opacity: headerAnim,
+                  transform: [{ scale: headerAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }],
+                },
+              ]}
+            >
+              <Animated.View style={[styles.crownCircle, { transform: [{ scale: crownScale }] }]}>
+                <Crown size={36} color="#D4A574" />
+              </Animated.View>
+              <Text style={styles.heroTitle}>Unlock Premium</Text>
+              <Text style={styles.heroSubtitle}>
+                Tap below to open plans and checkout in your store. Premium is wellness self-help only—not medical care.
+              </Text>
+            </Animated.View>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.upgradeBtn,
+                pressed && styles.upgradeBtnPressed,
+                reopenHostedBusy && styles.upgradeBtnDisabled,
+              ]}
+              onPress={openHostedPaywallAgain}
+              disabled={reopenHostedBusy}
+              testID="hosted-paywall-reopen"
+            >
+              {reopenHostedBusy ? (
+                <ActivityIndicator size="small" color={Colors.background} />
+              ) : (
+                <>
+                  <Zap size={18} color={Colors.background} />
+                  <Text style={styles.upgradeBtnText}>View plans & subscribe</Text>
+                </>
+              )}
+            </Pressable>
+
+            <Text style={styles.subscriptionDisclosure}>{storeAutoRenewalSummary()}</Text>
+
+            <Pressable
+              onPress={openManageSubscription}
+              style={({ pressed }) => [styles.manageLinkWrap, pressed && { opacity: 0.75 }]}
+            >
+              <Text style={styles.manageLinkText}>
+                {Platform.OS === 'ios'
+                  ? 'Manage or cancel in App Store subscriptions'
+                  : 'Manage or cancel in Google Play subscriptions'}
+              </Text>
+            </Pressable>
+
+            <View style={styles.legalLinksRow}>
+              <Pressable
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  router.push('/terms-of-service' as never);
+                }}
+                hitSlop={6}
+              >
+                <Text style={styles.legalLink}>Terms of Service</Text>
+              </Pressable>
+              <Text style={styles.legalSep}>·</Text>
+              <Pressable
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  router.push('/privacy-policy' as never);
+                }}
+                hitSlop={6}
+              >
+                <Text style={styles.legalLink}>Privacy Policy</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.freeSection}>
+              <View style={styles.freeLabelRow}>
+                <Sparkles size={14} color={Colors.primary} />
+                <Text style={styles.freeSectionTitle}>{FREEMIUM_SECTION_TITLE}</Text>
+              </View>
+              {getFreemiumHighlights().map((feat, i) => (
+                <View key={i} style={styles.freeItem}>
+                  <Check size={14} color={Colors.primary} strokeWidth={3} />
+                  <Text style={styles.freeItemText}>{feat}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.premiumSection}>
+              <View style={styles.premiumLabelRow}>
+                <Crown size={14} color="#D4A574" />
+                <Text style={styles.premiumSectionTitle}>Premium Features</Text>
+              </View>
+              {getPremiumFeatureMarketingCards().map((item, index) => (
+                <FeatureItem key={index} item={item} index={index} />
+              ))}
+            </View>
+
+            <Text style={styles.disclaimer}>
+              {WELLNESS_APP_DISCLAIMER} If Premium ends, your on-device progress and journal entries stay on this device
+              unless you delete them.
+            </Text>
+          </ScreenScrollView>
+        )}
       </View>
     );
   }
@@ -583,37 +776,6 @@ export default function PremiumUpgradeScreen() {
                 : 'Manage subscription in the app store'}
           </Text>
         </Pressable>
-
-        {__DEV__ &&
-        Platform.OS !== 'web' &&
-        purchasesApiKeyConfigured &&
-        storePurchasesReady &&
-        !isPremium ? (
-          <View style={styles.devRcPaywallWrap}>
-            <Pressable
-              style={({ pressed }) => [styles.devRcPaywallBtn, pressed && { opacity: 0.85 }]}
-              disabled={rcPaywallBusy}
-              onPress={async () => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setRcPaywallBusy(true);
-                try {
-                  await presentHostedPaywall();
-                } finally {
-                  setRcPaywallBusy(false);
-                }
-              }}
-            >
-              {rcPaywallBusy ? (
-                <ActivityIndicator size="small" color={Colors.primary} />
-              ) : (
-                <Text style={styles.devRcPaywallText}>Preview RevenueCat dashboard paywall</Text>
-              )}
-            </Pressable>
-            <Text style={styles.devRcPaywallHint}>
-              Development only — presents the hosted paywall from your RevenueCat project for the current offering.
-            </Text>
-          </View>
-        ) : null}
 
         <View style={styles.legalLinksRow}>
           <Pressable
@@ -922,35 +1084,24 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     textDecorationLine: 'underline',
   },
-  devRcPaywallWrap: {
-    marginBottom: 16,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    gap: 8,
-  },
-  devRcPaywallBtn: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.cardBackground,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    minWidth: 200,
-    alignItems: 'center',
+  hostedCenterWrap: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    gap: 16,
   },
-  devRcPaywallText: {
+  hostedCenterTitle: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    textAlign: 'center',
+  },
+  hostedCenterSubtitle: {
     fontSize: 14,
-    fontWeight: '600' as const,
-    color: Colors.primary,
+    color: Colors.textSecondary,
     textAlign: 'center',
-  },
-  devRcPaywallHint: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 15,
-    paddingHorizontal: 12,
+    lineHeight: 21,
   },
   legalLinksRow: {
     flexDirection: 'row',
