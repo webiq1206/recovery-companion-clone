@@ -1,13 +1,18 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDaysSober, useHydrateRecoveryProfileStore, useRecoveryProfileStore } from '../../stores/useRecoveryProfileStore';
 import type { UserDomain } from '../contracts/user';
+import type { UserProfile } from '../../types';
 
 export function useUser(): UserDomain {
   useHydrateRecoveryProfileStore();
   const profile = useRecoveryProfileStore.use.profile();
-  const updateProfile = useRecoveryProfileStore.use.updateProfile();
   const isLoading = useRecoveryProfileStore.use.isLoading();
   const daysSober = useDaysSober();
+
+  /** Always delegate to the live store impl — avoids rare undefined from selector hooks on some builds. */
+  const updateProfile = useCallback((updates: Partial<UserProfile>) => {
+    useRecoveryProfileStore.getState().updateProfile(updates);
+  }, []);
 
   return useMemo(
     () => ({

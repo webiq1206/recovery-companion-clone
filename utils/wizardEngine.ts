@@ -681,9 +681,11 @@ function allGuidanceActionsCompleteExcept(
 
 /**
  * Collapsed guidance shows this index first: earliest incomplete M/A/E check-in that is
- * inside its window (tappable). If none, a PLEASE WAIT M/A/E row may fill the slot only when
- * allowed: afternoon only if every other row is complete except evening; evening only if
- * every other row is complete. Otherwise the first non-check-in row.
+ * inside its window (tappable). If none, the first incomplete row that is not a locked
+ * (PLEASE WAIT) check-in — so pledge, journal, etc. stay visible until done. A PLEASE WAIT
+ * M/A/E row fills the slot only when that is the only kind of incomplete work left, subject
+ * to: afternoon only if every other row is complete except evening; evening only if every
+ * other row is complete.
  * When `checkInWindowNow` is omitted, locked check-ins are still eligible (legacy).
  */
 export function getGuidanceCollapsedFocusIndex(
@@ -695,7 +697,13 @@ export function getGuidanceCollapsedFocusIndex(
   for (let i = 0; i < actions.length; i++) {
     const a = actions[i]!;
     if (!a.id.startsWith('check-in-')) {
-      return firstLockedMaeCheckIn ?? i;
+      if (!a.completed) {
+        return i;
+      }
+      if (checkInWindowNow == null) {
+        return firstLockedMaeCheckIn ?? i;
+      }
+      continue;
     }
     if (a.completed) {
       continue;
