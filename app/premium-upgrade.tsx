@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Platform,
   Linking,
+  InteractionManager,
 } from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -181,35 +182,44 @@ export default function PremiumUpgradeScreen() {
 
   const useNativeHostedPaywall = Platform.OS !== 'web' && purchasesApiKeyConfigured;
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
+  const presentHostedPaywallRef = useRef(presentHostedPaywall);
+  presentHostedPaywallRef.current = presentHostedPaywall;
+
   useFocusEffect(
     useCallback(() => {
       if (isPremium || !useNativeHostedPaywall) {
         return undefined;
       }
       setShowHostedFallback(false);
-      let cancelled = false;
       const run = async () => {
         if (!storePurchasesReady) return;
-        const result = await presentHostedPaywall();
-        if (cancelled) return;
+        await new Promise<void>((resolve) => {
+          InteractionManager.runAfterInteractions(() => resolve());
+        });
+        if (!mountedRef.current) return;
+        const result = await presentHostedPaywallRef.current();
+        if (!mountedRef.current) return;
         if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          router.back();
+          routerRef.current.back();
           return;
         }
         setShowHostedFallback(true);
       };
       void run();
-      return () => {
-        cancelled = true;
-      };
-    }, [
-      isPremium,
-      useNativeHostedPaywall,
-      storePurchasesReady,
-      presentHostedPaywall,
-      router,
-    ]),
+      return undefined;
+    }, [isPremium, useNativeHostedPaywall, storePurchasesReady]),
   );
 
   const openManageSubscription = useCallback(() => {
@@ -465,15 +475,22 @@ export default function PremiumUpgradeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setReopenHostedBusy(true);
     try {
-      const result = await presentHostedPaywall();
+      await new Promise<void>((resolve) => {
+        InteractionManager.runAfterInteractions(() => resolve());
+      });
+      if (!mountedRef.current) return;
+      const result = await presentHostedPaywallRef.current();
+      if (!mountedRef.current) return;
       if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.back();
+        routerRef.current.back();
       }
     } finally {
-      setReopenHostedBusy(false);
+      if (mountedRef.current) {
+        setReopenHostedBusy(false);
+      }
     }
-  }, [presentHostedPaywall, router]);
+  }, []);
 
   const isRestoring = restoreMutation.isPending;
 
