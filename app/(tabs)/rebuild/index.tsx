@@ -54,6 +54,7 @@ import { useUser } from '../../../core/domains/useUser';
 import { useCheckin } from '../../../core/domains/useCheckin';
 import { useRebuild } from '../../../core/domains/useRebuild';
 import { useSubscription } from '../../../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../../../hooks/useOpenPremiumPaywall';
 import Colors from '../../../constants/colors';
 import {
   getRecoveryStage,
@@ -788,6 +789,7 @@ export default function RebuildScreen() {
     : undefined;
 
   const { hasFeature } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
 
   if (!hasFeature('rebuild_programs')) {
     return (
@@ -812,7 +814,7 @@ export default function RebuildScreen() {
             style={({ pressed }) => [styles.premiumOverlayBtn, pressed && { opacity: 0.8 }]}
             onPress={() => {
               if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              rebuildRouter.push('/premium-upgrade' as never);
+              void openPremiumPaywall();
             }}
           >
             <Text style={styles.premiumOverlayBtnText}>Unlock Rebuild</Text>

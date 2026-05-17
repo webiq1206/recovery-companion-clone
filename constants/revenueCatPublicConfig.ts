@@ -11,7 +11,7 @@ export const REVENUECAT_PUBLIC_ENV_KEYS = {
 
 /**
  * RevenueCat default offering package identifiers recognized by the custom paywall UI
- * (`premium-upgrade.tsx`) for friendly labels.
+ * (hosted paywall / offerings UI) for friendly labels.
  */
 export const REVENUECAT_STANDARD_PACKAGE_IDENTIFIERS = [
   '$rc_monthly',

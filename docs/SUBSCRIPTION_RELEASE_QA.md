@@ -34,7 +34,7 @@ Subscriptions do **not** run in Expo Go. Use a **development build** or release-
 
 1. Configure RevenueCat as above and set the `EXPO_PUBLIC_REVENUECAT_*` key for the platform you are testing.
 2. Run `npm run start:dev-client` (or your usual LAN script) and open the app from a dev client install.
-3. Navigate to **Premium upgrade** (`/premium-upgrade`). You should see plan cards with **localized prices** from the store.
+3. From **Settings → Upgrade to Premium** or **Plans & benefits → Upgrade to Premium**, confirm the **RevenueCat hosted paywall** opens with **localized prices** from the store.
 4. In **`__DEV__`**, use **Preview RevenueCat dashboard paywall** to open the RevenueCat-hosted paywall modal (requires a paywall configured in the dashboard for the current offering).
 5. Complete a purchase or restore with a **sandbox** App Store / Play account and confirm **`RecoveryRoad Pro`** becomes active in RevenueCat.
 

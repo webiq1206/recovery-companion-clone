@@ -42,6 +42,7 @@ import { RiskAlert, RiskCategory } from '../types';
 import { useUser } from '../core/domains/useUser';
 import { useCheckin } from '../core/domains/useCheckin';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../hooks/useOpenPremiumPaywall';
 import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { resolveCanonicalRoute } from '../utils/legacyRoutes';
 
@@ -464,6 +465,7 @@ function IntensityIndicator({ level }: { level: string }) {
 export default function RelapseDetectionScreen() {
   const router = useRouter();
   const { hasFeature } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
   const hasRiskWarningAccess = hasFeature('predictive_engine');
   const {
     currentPrediction,
@@ -536,7 +538,7 @@ export default function RelapseDetectionScreen() {
                 style={({ pressed }) => [styles.premiumMemberPill, pressed && { opacity: 0.88 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/premium-upgrade' as never);
+                  void openPremiumPaywall();
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Upgrade to Premium Member"

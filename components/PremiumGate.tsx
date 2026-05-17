@@ -1,10 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { Crown, ChevronRight } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../hooks/useOpenPremiumPaywall';
 import { PremiumFeature } from '../types';
 
 interface PremiumGateProps {
@@ -15,8 +15,8 @@ interface PremiumGateProps {
 }
 
 const PremiumBanner = React.memo(({ feature }: { feature: PremiumFeature }) => {
-  const router = useRouter();
   const { getFeatureInfo } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
   const info = getFeatureInfo(feature);
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
@@ -44,7 +44,7 @@ const PremiumBanner = React.memo(({ feature }: { feature: PremiumFeature }) => {
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/premium-upgrade' as never);
+    void openPremiumPaywall();
   };
 
   return (
@@ -84,7 +84,7 @@ export default function PremiumGate({ feature, children, fallback, style }: Prem
 
 export function PremiumInlineGate({ feature, children }: { feature: PremiumFeature; children: React.ReactNode }) {
   const { hasFeature } = useSubscription();
-  const router = useRouter();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
 
   if (hasFeature(feature)) {
     return <>{children}</>;
@@ -92,7 +92,7 @@ export function PremiumInlineGate({ feature, children }: { feature: PremiumFeatu
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/premium-upgrade' as never);
+    void openPremiumPaywall();
   };
 
   return (
@@ -114,7 +114,7 @@ export function PremiumInlineGate({ feature, children }: { feature: PremiumFeatu
 
 export function PremiumSectionOverlay({ feature, title, description }: { feature: PremiumFeature; title?: string; description?: string }) {
   const { hasFeature, getFeatureInfo } = useSubscription();
-  const router = useRouter();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
 
   if (hasFeature(feature)) return null;
 
@@ -131,7 +131,7 @@ export function PremiumSectionOverlay({ feature, title, description }: { feature
         style={({ pressed }) => [overlayStyles.btn, pressed && overlayStyles.btnPressed]}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push('/premium-upgrade' as never);
+          void openPremiumPaywall();
         }}
       >
         <Text style={overlayStyles.btnText}>Learn More</Text>

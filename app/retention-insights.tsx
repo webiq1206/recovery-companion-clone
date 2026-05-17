@@ -37,6 +37,7 @@ import { useJournal } from '../core/domains/useJournal';
 import { usePledges } from '../core/domains/usePledges';
 import { useEngagement } from '../providers/EngagementProvider';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../hooks/useOpenPremiumPaywall';
 import { RETENTION_LOOPS, MICRO_PROGRESS_DEFINITIONS } from '../constants/retention';
 import { RetentionLoop, MicroProgressMarker, TriggerReductionMilestone, SupportiveNotification, RetentionLoopType } from '../types';
 
@@ -287,6 +288,7 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
 export default function RetentionInsightsScreen() {
   const router = useRouter();
   const { hasFeature } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
   const hasRecoveryInsightsAccess = hasFeature('advanced_analytics');
   const {
     loops,
@@ -358,7 +360,7 @@ export default function RetentionInsightsScreen() {
                 style={({ pressed }) => [styles.premiumMemberPill, pressed && { opacity: 0.88 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/premium-upgrade' as never);
+                  void openPremiumPaywall();
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Upgrade to Premium Member"

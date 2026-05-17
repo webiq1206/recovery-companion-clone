@@ -25,6 +25,7 @@ import { useUser } from '../../../core/domains/useUser';
 import { useAppMeta } from '../../../core/domains/useAppMeta';
 import { useEngagement } from '../../../providers/EngagementProvider';
 import { useSubscription } from '../../../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../../../hooks/useOpenPremiumPaywall';
 import { useNotifications } from '../../../providers/NotificationProvider';
 import { RecoveryStage, PrivacyControls, NotificationIntensityLevel } from '../../../types';
 import { ADDICTION_TYPES } from '../../../constants/milestones';
@@ -59,6 +60,7 @@ export default function ProfileScreen() {
   const { profile, updateProfile } = useUser();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
   const { isPremium } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
   const {
     intensity,
     setIntensity,
@@ -350,7 +352,7 @@ export default function ProfileScreen() {
               style={({ pressed }) => [styles.upgradePremiumBtn, pressed && { opacity: 0.85 }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/premium-upgrade' as any);
+                void openPremiumPaywall();
               }}
               testID="profile-upgrade-premium"
             >

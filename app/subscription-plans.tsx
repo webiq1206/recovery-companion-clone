@@ -17,6 +17,7 @@ import Colors from '../constants/colors';
 import { getTierComparisonRows } from '../constants/subscriptionPlans';
 import { WELLNESS_APP_DISCLAIMER } from '../constants/wellnessDisclaimer';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../hooks/useOpenPremiumPaywall';
 import { mapRcOfferingPackagesForDisplay } from '../utils/mapRcOfferingPackagesForDisplay';
 
 function openSubscriptionManagement() {
@@ -42,6 +43,7 @@ export default function SubscriptionPlansScreen() {
     offerings,
     offeringsLoading,
   } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
 
   const storePriceRows = useMemo(() => mapRcOfferingPackagesForDisplay(offerings), [offerings]);
 
@@ -90,8 +92,8 @@ export default function SubscriptionPlansScreen() {
 
   const handleUpgrade = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/premium-upgrade' as never);
-  }, [router]);
+    void openPremiumPaywall();
+  }, [openPremiumPaywall]);
 
   return (
     <View style={styles.container}>

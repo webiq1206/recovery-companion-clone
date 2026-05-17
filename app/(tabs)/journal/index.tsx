@@ -11,6 +11,7 @@ import { useJournal } from '../../../core/domains/useJournal';
 import { useUser } from '../../../core/domains/useUser';
 import { useHydrateWorkbookStore, useWorkbookStore } from '../../../features/workbook/state/useWorkbookStore';
 import { useSubscription } from '../../../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../../../hooks/useOpenPremiumPaywall';
 import { MOOD_EMOJIS } from '../../../constants/milestones';
 import { WORKBOOK_SECTIONS } from '../../../constants/workbook';
 import { JournalEntry } from '../../../types';
@@ -27,6 +28,7 @@ export default function JournalWorkbookScreen() {
   const { daysSober } = useUser();
   const workbookAnswers = useWorkbookStore.use.workbookAnswers();
   const { hasFeature } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
   const [activeTab, setActiveTab] = useState<TabMode>('journal');
 
   const handleNewEntry = useCallback(() => {
@@ -58,7 +60,7 @@ export default function JournalWorkbookScreen() {
     (sectionId: string, sectionIndex: number, isUnlocked: boolean, unlockDays: number) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       if (sectionIndex >= FREE_EXERCISE_COUNT && !hasPremium) {
-        router.push('/premium-upgrade' as any);
+        void openPremiumPaywall();
         return;
       }
       if (isUnlocked) {
@@ -70,7 +72,7 @@ export default function JournalWorkbookScreen() {
         );
       }
     },
-    [router, daysSober, hasPremium]
+    [openPremiumPaywall, daysSober, hasPremium]
   );
 
   const handleTabSwitch = useCallback((tab: TabMode) => {
@@ -186,7 +188,7 @@ export default function JournalWorkbookScreen() {
               style={({ pressed }) => [styles.upgradeBanner, pressed && { opacity: 0.85 }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/premium-upgrade' as any);
+                void openPremiumPaywall();
               }}
               testID="exercises-upgrade-banner"
             >

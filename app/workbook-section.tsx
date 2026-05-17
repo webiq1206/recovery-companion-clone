@@ -7,12 +7,14 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
   type ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenScrollView } from '../components/ScreenScrollView';
-import { Redirect, useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../hooks/useOpenPremiumPaywall';
 import { CheckCircle, Circle, ChevronDown, ChevronUp, BookOpen, PenLine, Lightbulb, Dumbbell } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
@@ -44,6 +46,33 @@ const TYPE_LABELS: Record<string, string> = {
 
 /** Exercises 1–3 (indices 0–2) are free; 4–25 require Paid Premium (`deep_exercises`). */
 const FREE_EXERCISE_COUNT = 3;
+
+function WorkbookPremiumGate() {
+  const router = useRouter();
+  const { openPremiumPaywall, isPremium } = useOpenPremiumPaywall();
+  const openedRef = useRef(false);
+
+  useEffect(() => {
+    if (isPremium) return;
+    if (openedRef.current) return;
+    openedRef.current = true;
+    void (async () => {
+      const purchased = await openPremiumPaywall();
+      if (!purchased) {
+        router.back();
+      }
+    })();
+  }, [isPremium, openPremiumPaywall, router]);
+
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ title: 'Premium' }} />
+      <View style={styles.premiumGateLoading}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    </View>
+  );
+}
 
 export default function WorkbookSectionScreen() {
   const insets = useSafeAreaInsets();
@@ -121,12 +150,7 @@ export default function WorkbookSectionScreen() {
   }
 
   if (sectionIndex >= FREE_EXERCISE_COUNT && !hasPremium) {
-    return (
-      <>
-        <Stack.Screen options={{ title: 'Premium' }} />
-        <Redirect href="/premium-upgrade" />
-      </>
-    );
+    return <WorkbookPremiumGate />;
   }
 
   const renderQuestion = ({ item, index }: { item: WorkbookQuestion; index: number }) => {
@@ -241,6 +265,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  premiumGateLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     padding: 20,

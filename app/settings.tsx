@@ -41,6 +41,7 @@ import { useUser } from '../core/domains/useUser';
 import { useAppMeta } from '../core/domains/useAppMeta';
 import { useEngagement } from '../providers/EngagementProvider';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../hooks/useOpenPremiumPaywall';
 import { useNotifications } from '../providers/NotificationProvider';
 import { useProviderMode } from '../providers/ProviderModeProvider';
 import type { PrivacyControls, NotificationIntensityLevel } from '../types';
@@ -69,6 +70,7 @@ export default function SettingsScreen() {
   const { resetAllData, clearDiagnosticsCaches } = useAppMeta();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
   const { isPremium, restoreMutation, storePurchasesReady, purchasesApiKeyConfigured } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
   const {
     intensity,
     setIntensity,
@@ -328,7 +330,7 @@ export default function SettingsScreen() {
                 style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.85 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/premium-upgrade' as any);
+                  void openPremiumPaywall();
                 }}
                 testID="settings-upgrade"
               >

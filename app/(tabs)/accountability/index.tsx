@@ -45,6 +45,7 @@ import { useUser } from '../../../core/domains/useUser';
 import { useCheckin } from '../../../core/domains/useCheckin';
 import { usePledges } from '../../../core/domains/usePledges';
 import { useSubscription } from '../../../providers/SubscriptionProvider';
+import { useOpenPremiumPaywall } from '../../../hooks/useOpenPremiumPaywall';
 import { CommitmentContract, AccountabilityPartner } from '../../../types';
 import { getGuidanceDateKey } from '../../../utils/checkInDate';
 
@@ -151,6 +152,7 @@ export default function AccountabilityScreen() {
   const fromLogSetbackFlow = fromSetbackParam === '1' || fromSetbackParam === 'true';
 
   const { hasFeature } = useSubscription();
+  const { openPremiumPaywall } = useOpenPremiumPaywall();
   const {
     accountabilityData,
     addContract,
@@ -715,7 +717,7 @@ export default function AccountabilityScreen() {
                 style={({ pressed }) => [styles.premiumGateBtn, pressed && { opacity: 0.8 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  require('expo-router').router.push('/premium-upgrade');
+                  void openPremiumPaywall();
                 }}
               >
                 <Text style={styles.premiumGateBtnText}>Unlock Partners</Text>
@@ -737,7 +739,7 @@ export default function AccountabilityScreen() {
                 style={({ pressed }) => [styles.premiumGateBtn, pressed && { opacity: 0.8 }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  require('expo-router').router.push('/premium-upgrade');
+                  void openPremiumPaywall();
                 }}
               >
                 <Text style={styles.premiumGateBtnText}>Unlock Alerts</Text>

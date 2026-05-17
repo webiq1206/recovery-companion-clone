@@ -77,7 +77,6 @@ function RootLayoutNav() {
         <Stack.Screen name="emergency" options={{ headerShown: false, presentation: 'fullScreenModal', animation: fadeAnimation, animationDuration: fadeAnimationDuration }} />
         <Stack.Screen name="recovery-rooms" options={{ title: 'Connect' }} />
         <Stack.Screen name="room-session" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation, animationDuration: modalAnimationDuration }} />
-        <Stack.Screen name="premium-upgrade" options={{ headerShown: false, presentation: 'modal', animation: modalAnimation, animationDuration: modalAnimationDuration }} />
         <Stack.Screen
           name="subscription-plans"
           options={{

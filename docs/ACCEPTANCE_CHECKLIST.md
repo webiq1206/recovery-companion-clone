@@ -89,7 +89,7 @@ From product links / menus, verify screens that use `href: null` still open:
 
 ## 10. Subscription and premium
 
-- [ ] [`/premium-upgrade`](../app/premium-upgrade.tsx), [`/subscription-plans`](../app/subscription-plans.tsx): pricing copy matches [`constants/subscriptionPlans`](../constants/subscriptionPlans.ts) (no removed features advertised).
+- [ ] Hosted paywall (Settings / Plans & benefits) and [`/subscription-plans`](../app/subscription-plans.tsx): pricing copy matches [`constants/subscriptionPlans`](../constants/subscriptionPlans.ts) (no removed features advertised).
 - [ ] Free vs premium gates: locked features show clear messaging; premium unlock paths work in dev/test.
 
 ---
