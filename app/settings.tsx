@@ -69,7 +69,13 @@ export default function SettingsScreen() {
   const { profile, updateProfile } = useUser();
   const { resetAllData, clearDiagnosticsCaches } = useAppMeta();
   const { notificationPreferences, updateNotificationPrefs } = useEngagement();
-  const { isPremium, restoreMutation, storePurchasesReady, purchasesApiKeyConfigured } = useSubscription();
+  const {
+    isPremium,
+    restoreMutation,
+    storePurchasesReady,
+    purchasesApiKeyConfigured,
+    rcUserId,
+  } = useSubscription();
   const { openPremiumPaywall } = useOpenPremiumPaywall();
   const {
     intensity,
@@ -296,6 +302,11 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+        ) : null}
+        {__DEV__ && rcUserId ? (
+          <Text style={styles.rcUserIdDev} testID="settings-rc-user-id">
+            RevenueCat customer ID (dev): {rcUserId}
+          </Text>
         ) : null}
         <View style={styles.groupCard}>
           <Pressable
@@ -1132,6 +1143,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: 10,
     textTransform: 'uppercase',
+  },
+  rcUserIdDev: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginBottom: 10,
+    lineHeight: 16,
   },
   groupCard: {
     backgroundColor: Colors.cardBackground,

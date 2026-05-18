@@ -13,12 +13,19 @@ import Purchases, {
 import { SubscriptionState, PremiumFeature } from '../types';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
+import { REVENUECAT_PRO_ENTITLEMENT_ID } from '../constants/revenueCatPublicConfig';
+
+export { REVENUECAT_PRO_ENTITLEMENT_ID };
 
 const STORAGE_KEY = 'subscription_state';
 const RC_USER_ID_KEY = 'rc_user_id';
 
-/** Must match the entitlement identifier in RevenueCat (and mirrored offering access). */
-export const REVENUECAT_PRO_ENTITLEMENT_ID = 'RecoveryRoad Pro';
+const REFRESH_CUSTOMER_INFO_DELAYS_MS = [0, 750, 1500] as const;
+
+export type HostedPaywallOutcome = {
+  result: string | null;
+  premiumUnlocked: boolean;
+};
 
 /**
  * RevenueCat **SDK** public API key (e.g. `appl_…` / `goog_…`). Same resolution in dev and release
@@ -164,6 +171,41 @@ function subscriptionStateFromCustomerInfo(info: CustomerInfo): SubscriptionStat
     tier: 'premium',
     subscribedAt: pro.originalPurchaseDate ?? new Date().toISOString(),
     expiresAt,
+  };
+}
+
+function activeEntitlementKeys(info: CustomerInfo): string[] {
+  return Object.keys(info.entitlements.active);
+}
+
+async function refreshPremiumStateAfterStoreAction(
+  applyCustomerInfo: (info: CustomerInfo) => void,
+): Promise<{
+  tier: SubscriptionState['tier'];
+  activeEntitlementKeys: string[];
+  customerInfo: CustomerInfo | null;
+}> {
+  let lastInfo: CustomerInfo | null = null;
+  for (const delayMs of REFRESH_CUSTOMER_INFO_DELAYS_MS) {
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    lastInfo = await Purchases.getCustomerInfo();
+    applyCustomerInfo(lastInfo);
+    const tier = subscriptionStateFromCustomerInfo(lastInfo).tier;
+    if (tier === 'premium') {
+      return {
+        tier,
+        activeEntitlementKeys: activeEntitlementKeys(lastInfo),
+        customerInfo: lastInfo,
+      };
+    }
+  }
+  const tier = lastInfo ? subscriptionStateFromCustomerInfo(lastInfo).tier : 'free';
+  return {
+    tier,
+    activeEntitlementKeys: lastInfo ? activeEntitlementKeys(lastInfo) : [],
+    customerInfo: lastInfo,
   };
 }
 
@@ -339,13 +381,20 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       }
       try {
         const { customerInfo } = await Purchases.purchasePackage(pkg);
-        applyCustomerInfoRef.current(customerInfo);
         await queryClient.invalidateQueries({ queryKey: ['rc_offerings', rcUserId] });
-        const next = subscriptionStateFromCustomerInfo(customerInfo);
-        if (next.tier !== 'premium') {
+        const refreshed = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current);
+        if (refreshed.tier !== 'premium') {
+          if (__DEV__) {
+            console.log(
+              '[Subscription] Package purchase completed but entitlement not active. Active keys:',
+              refreshed.activeEntitlementKeys,
+              'Expected:',
+              REVENUECAT_PRO_ENTITLEMENT_ID,
+            );
+          }
           throw new Error('Purchase could not be verified. Please try Restore purchases.');
         }
-        return next;
+        return subscriptionStateFromCustomerInfo(refreshed.customerInfo!);
       } catch (e) {
         if (isPurchaseCancelledError(e)) {
           throw new Error('PURCHASE_CANCELLED');
@@ -360,10 +409,9 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       if (!shouldUseNativePurchases || !storePurchasesReady) {
         throw new Error('Restore is only available in the iOS and Android apps once the store has finished connecting.');
       }
-      const info = await Purchases.restorePurchases();
-      applyCustomerInfoRef.current(info);
-      const next = subscriptionStateFromCustomerInfo(info);
-      return { restored: next.tier === 'premium' };
+      await Purchases.restorePurchases();
+      const refreshed = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current);
+      return { restored: refreshed.tier === 'premium' };
     },
   });
 
@@ -421,21 +469,40 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   /**
    * Presents RevenueCat’s hosted paywall (dashboard-designed). No-op on web or when the SDK is not ready.
-   * Refreshes entitlement state after a successful purchase or restore.
+   * Refreshes entitlement state after a successful purchase or restore and verifies premium unlock.
    */
-  const presentHostedPaywall = useCallback(async (): Promise<string | null> => {
+  const presentHostedPaywall = useCallback(async (): Promise<HostedPaywallOutcome | null> => {
     if (Platform.OS === 'web' || !shouldUseNativePurchases || !storePurchasesReady) {
       return null;
     }
     try {
       const { default: RevenueCatUI, PAYWALL_RESULT } = await import('react-native-purchases-ui');
-      const result = await RevenueCatUI.presentPaywall();
+      const result = await RevenueCatUI.presentPaywallIfNeeded({
+        requiredEntitlementIdentifier: REVENUECAT_PRO_ENTITLEMENT_ID,
+      });
+
       if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+        const refreshed = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current);
+        await queryClient.invalidateQueries({ queryKey: ['rc_offerings', rcUserId] });
+        if (__DEV__ && result === PAYWALL_RESULT.PURCHASED && refreshed.tier !== 'premium') {
+          console.log(
+            '[Subscription] Paywall purchase completed but entitlement not active. Active keys:',
+            refreshed.activeEntitlementKeys,
+            'Expected:',
+            REVENUECAT_PRO_ENTITLEMENT_ID,
+          );
+        }
+        return { result, premiumUnlocked: refreshed.tier === 'premium' };
+      }
+
+      if (result === PAYWALL_RESULT.NOT_PRESENTED) {
         const info = await Purchases.getCustomerInfo();
         applyCustomerInfoRef.current(info);
-        await queryClient.invalidateQueries({ queryKey: ['rc_offerings', rcUserId] });
+        const tier = subscriptionStateFromCustomerInfo(info).tier;
+        return { result, premiumUnlocked: tier === 'premium' };
       }
-      return result;
+
+      return { result, premiumUnlocked: false };
     } catch (e) {
       console.log('[Subscription] presentHostedPaywall failed:', e);
       return null;

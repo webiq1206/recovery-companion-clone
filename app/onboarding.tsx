@@ -26,6 +26,8 @@ import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { scrollToTop } from '../hooks/useScrollToTopOnFocus';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+/** Space reserved above the fixed footer so scroll content is not hidden behind it. */
+const FOOTER_SCROLL_RESERVE = 88;
 const RECOVERY_STAGES: { value: RecoveryStage; label: string; desc: string; icon: React.ReactNode }[] = [
   {
     value: 'crisis',
@@ -127,7 +129,7 @@ export default function OnboardingScreen() {
   const [goals, setGoals] = useState<string[]>([]);
   const [struggleLevel, setStruggleLevel] = useState<StruggleLevel>(3);
   const [sleepQuality, setSleepQuality] = useState<SleepQualityLevel>('fair');
-  const [supportAvailability, setSupportAvailability] = useState<SupportAvailability>('limited');
+  const [supportAvailability, setSupportAvailability] = useState<SupportAvailability | null>(null);
   const [timeInRecovery, setTimeInRecovery] = useState<string>('');
   const [relapseFrequency, setRelapseFrequency] = useState<string>('');
   const [emotionalBaseline, setEmotionalBaseline] = useState<number>(3);
@@ -142,7 +144,12 @@ export default function OnboardingScreen() {
   const [devReplayHydrateTick, setDevReplayHydrateTick] = useState(0);
 
   const heroScrollRef = useRef<ScrollView | null>(null);
+  const stepScrollRef = useRef<ScrollView | null>(null);
   const [keyboardPad, setKeyboardPad] = useState(0);
+
+  const bindStepScrollRef = useCallback((node: ScrollView | null) => {
+    stepScrollRef.current = node;
+  }, []);
 
   const updateUserState = useAppStore.use.updateUserState();
 
@@ -185,9 +192,10 @@ export default function OnboardingScreen() {
     };
   }, []);
 
+  const footerBottomInset = insets.bottom + 8;
   const scrollContentBottomPad = useMemo(
-    () => ({ paddingBottom: 28 + insets.bottom + keyboardPad }),
-    [insets.bottom, keyboardPad],
+    () => ({ paddingBottom: FOOTER_SCROLL_RESERVE + footerBottomInset + keyboardPad }),
+    [footerBottomInset, keyboardPad],
   );
 
   /** RecoveryRoad intro (hero) should start at the top whenever it is shown again. */
@@ -206,6 +214,13 @@ export default function OnboardingScreen() {
       }
     }, [hasStarted]),
   );
+
+  /** Each wizard step opens scrolled to the top. */
+  useEffect(() => {
+    if (!hasStarted || currentStepId == null) return;
+    const id = requestAnimationFrame(() => scrollToTop(stepScrollRef.current));
+    return () => cancelAnimationFrame(id);
+  }, [hasStarted, step, currentStepId]);
 
   useEffect(() => {
     if (devReplayFullOnboarding) return;
@@ -287,20 +302,22 @@ export default function OnboardingScreen() {
   const handleComplete = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
+    const resolvedSupport: SupportAvailability = supportAvailability ?? 'limited';
+
     const rp: RecoveryProfile = {
       recoveryStage,
       struggleLevel,
       relapseCount: 0,
       triggers,
       sleepQuality,
-      supportAvailability,
+      supportAvailability: resolvedSupport,
       goals,
       riskScore: 0,
       interventionIntensity: 'moderate',
       baselineStabilityScore: 50,
       emotionalBaseline,
       cravingBaseline,
-      supportLevel: mapSupportToLevel(supportAvailability),
+      supportLevel: mapSupportToLevel(resolvedSupport),
     };
 
     rp.riskScore = calculateRiskScore(rp);
@@ -371,7 +388,7 @@ export default function OnboardingScreen() {
       case 'calibration':
         return true;
       case 'triggers':
-        return triggers.length > 0;
+        return triggers.length > 0 && supportAvailability != null;
       case 'goals':
         return goals.length > 0;
       default:
@@ -391,7 +408,13 @@ export default function OnboardingScreen() {
     switch (currentStepId) {
       case 'identity':
         return (
-          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}>
+          <ScreenScrollView
+            ref={bindStepScrollRef}
+            style={styles.stepContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
+          >
             <Text style={[styles.stepLabel, { marginTop: 24 }]}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.name.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.name.subtitle}</Text>
@@ -462,7 +485,13 @@ export default function OnboardingScreen() {
 
       case 'daily_spend':
         return (
-          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}>
+          <ScreenScrollView
+            ref={bindStepScrollRef}
+            style={styles.stepContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
+          >
             <Text style={styles.stepLabel}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.dailySpend.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.dailySpend.subtitle}</Text>
@@ -526,7 +555,13 @@ export default function OnboardingScreen() {
 
       case 'calibration':
         return (
-          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}>
+          <ScreenScrollView
+            ref={bindStepScrollRef}
+            style={styles.stepContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
+          >
             <Text style={styles.stepLabel}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.struggle.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.struggle.subtitle}</Text>
@@ -685,7 +720,13 @@ export default function OnboardingScreen() {
 
       case 'triggers':
         return (
-          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}>
+          <ScreenScrollView
+            ref={bindStepScrollRef}
+            style={styles.stepContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
+          >
             <Text style={styles.stepLabel}>{stepLabel}</Text>
             <Text style={styles.stepTitle}>{ONBOARDING_COPY.steps.triggers.title}</Text>
             <Text style={styles.stepSubtitle}>{ONBOARDING_COPY.steps.triggers.subtitle}</Text>
@@ -739,7 +780,13 @@ export default function OnboardingScreen() {
 
       case 'goals':
         return (
-          <ScreenScrollView style={styles.stepContent} showsVerticalScrollIndicator={false} contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}>
+          <ScreenScrollView
+            ref={bindStepScrollRef}
+            style={styles.stepContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
+          >
             <View style={styles.stepIconWrap}>
               <Target size={28} color={Colors.primary} />
             </View>
@@ -816,11 +863,12 @@ export default function OnboardingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={insets.top + 12}
       >
-        <View style={[styles.container, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }]}>
+        <View style={[styles.container, styles.containerWithFooter, { paddingTop: insets.top + 12 }]}>
           <ScreenScrollView
             ref={heroScrollRef}
             style={styles.stepContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
           >
           <View style={styles.heroContainer}>
@@ -854,7 +902,7 @@ export default function OnboardingScreen() {
           <Text style={styles.wellnessDisclaimer}>{ONBOARDING_COPY.wellnessDisclaimer}</Text>
         </ScreenScrollView>
 
-        <View style={[styles.bottomRow, { justifyContent: 'center' }]}>
+        <View style={[styles.bottomRow, styles.bottomRowPinned, { justifyContent: 'center', paddingBottom: footerBottomInset }]}>
           <Pressable
             style={styles.nextBtn}
             onPress={() => {
@@ -885,7 +933,7 @@ export default function OnboardingScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={insets.top + 56}
     >
-      <View style={[styles.container, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.container, styles.containerWithFooter, { paddingTop: insets.top + 12 }]}>
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBarBg}>
           <Animated.View style={[styles.progressBarFill, { width: progressWidth }]} />
@@ -903,7 +951,7 @@ export default function OnboardingScreen() {
         </View>
       </Animated.View>
 
-      <View style={styles.bottomRow}>
+      <View style={[styles.bottomRow, styles.bottomRowPinned, { paddingBottom: footerBottomInset }]}>
         <Pressable
           style={styles.backBtn}
           onPress={step > 0 ? handleBack : () => {
@@ -962,6 +1010,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     paddingHorizontal: 24,
+  },
+  containerWithFooter: {
+    justifyContent: 'flex-start',
   },
   progressBarContainer: {
     flexDirection: 'row' as const,
@@ -1399,6 +1450,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between' as const,
     alignItems: 'center' as const,
     marginTop: 12,
+  },
+  bottomRowPinned: {
+    marginTop: 'auto',
   },
   backBtn: {
     flexDirection: 'row' as const,

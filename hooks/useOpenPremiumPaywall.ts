@@ -4,9 +4,12 @@ import * as Haptics from 'expo-haptics';
 import { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import { useSubscription } from '../providers/SubscriptionProvider';
 
+const PURCHASE_VERIFY_FAILED_MESSAGE =
+  'Purchase completed, but Premium could not be activated yet. Try Restore purchases in Settings. If this continues, contact support.';
+
 /**
  * Presents the RevenueCat hosted paywall from any screen (Settings, Plans & benefits, gates, etc.).
- * Returns true when the user purchased or restored premium.
+ * Returns true only when premium is actually unlocked in app state.
  */
 export function useOpenPremiumPaywall() {
   const {
@@ -39,11 +42,20 @@ export function useOpenPremiumPaywall() {
     await new Promise<void>((resolve) => {
       InteractionManager.runAfterInteractions(() => resolve());
     });
-    const result = await presentHostedPaywall();
-    if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
+    const outcome = await presentHostedPaywall();
+    if (!outcome) {
+      return false;
+    }
+
+    if (outcome.premiumUnlocked) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return true;
     }
+
+    if (outcome.result === PAYWALL_RESULT.PURCHASED) {
+      Alert.alert('Premium not activated', PURCHASE_VERIFY_FAILED_MESSAGE, [{ text: 'OK' }]);
+    }
+
     return false;
   }, [isPremium, purchasesApiKeyConfigured, storePurchasesReady, presentHostedPaywall]);
 
