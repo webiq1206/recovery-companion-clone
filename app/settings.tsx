@@ -304,10 +304,14 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
-        ) : null}
-        {Platform.OS !== 'web' && (__DEV__ || !isPremium) ? (
-          <View style={styles.subscriptionStatusCard} testID="settings-subscription-status">
-            <Text style={styles.subscriptionStatusTitle}>Subscription status</Text>
+        ) : (
+          <Text style={styles.subscriptionStatusFree} testID="settings-subscription-status">
+            Subscription status: Free
+          </Text>
+        )}
+        {Platform.OS !== 'web' && __DEV__ && !isPremium ? (
+          <View style={styles.subscriptionStatusCard} testID="settings-subscription-diagnostics">
+            <Text style={styles.subscriptionStatusTitle}>Subscription diagnostics</Text>
             <Text style={styles.subscriptionStatusLine}>
               Store key in build: {purchasesApiKeyConfigured ? 'yes' : 'no'}
             </Text>
@@ -1179,6 +1183,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: 10,
     textTransform: 'uppercase',
+  },
+  subscriptionStatusFree: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 12,
   },
   subscriptionStatusCard: {
     backgroundColor: Colors.cardBackground,
