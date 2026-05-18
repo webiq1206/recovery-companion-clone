@@ -174,28 +174,39 @@ export default function OnboardingScreen() {
       if (rp.recoveryStage) setRecoveryStage(rp.recoveryStage);
       if (typeof rp.struggleLevel === 'number') setStruggleLevel(rp.struggleLevel);
       if (rp.sleepQuality) setSleepQuality(rp.sleepQuality);
-      if (rp.supportAvailability) setSupportAvailability(rp.supportAvailability);
+      if (rp.supportAvailability && profile.hasCompletedOnboarding) {
+        setSupportAvailability(rp.supportAvailability);
+      }
       if (Array.isArray(rp.triggers) && rp.triggers.length > 0) setTriggers(rp.triggers);
       if (Array.isArray(rp.goals) && rp.goals.length > 0) setGoals(rp.goals);
     }
     if (profile.privacyControls) setPrivacyControls(profile.privacyControls);
   }, [profile, isLoading, devReplayHydrateTick]);
 
+  const keyboardFooterStep =
+    hasStarted && (currentStepId === 'identity' || currentStepId === 'daily_spend');
+
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const subShow = Keyboard.addListener(showEvt, (e) => setKeyboardPad(e.endCoordinates.height));
+    const subShow = Keyboard.addListener(showEvt, (e) => {
+      setKeyboardPad(e.endCoordinates.height);
+      if (currentStepId === 'identity' || currentStepId === 'daily_spend') {
+        requestAnimationFrame(() => scrollToTop(stepScrollRef.current));
+      }
+    });
     const subHide = Keyboard.addListener(hideEvt, () => setKeyboardPad(0));
     return () => {
       subShow.remove();
       subHide.remove();
     };
-  }, []);
+  }, [currentStepId]);
 
   const footerBottomInset = insets.bottom + 8;
+  const footerBottomOffset = footerBottomInset + (keyboardFooterStep ? keyboardPad : 0);
   const scrollContentBottomPad = useMemo(
-    () => ({ paddingBottom: FOOTER_SCROLL_RESERVE + footerBottomInset + keyboardPad }),
-    [footerBottomInset, keyboardPad],
+    () => ({ paddingBottom: FOOTER_SCROLL_RESERVE + footerBottomOffset }),
+    [footerBottomOffset],
   );
 
   /** RecoveryRoad intro (hero) should start at the top whenever it is shown again. */
@@ -245,6 +256,7 @@ export default function OnboardingScreen() {
       setDevReplayHydrateTick((n) => n + 1);
       setStep(0);
       setHasStarted(false);
+      setSupportAvailability(null);
       progressAnim.setValue(0);
       fadeAnim.setValue(1);
     }, [devReplayFullOnboarding, progressAnim, fadeAnim]),
@@ -388,7 +400,7 @@ export default function OnboardingScreen() {
       case 'calibration':
         return true;
       case 'triggers':
-        return triggers.length > 0 && supportAvailability != null;
+        return triggers.length > 0 && supportAvailability !== null;
       case 'goals':
         return goals.length > 0;
       default:
@@ -930,8 +942,8 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.keyboardFlex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={insets.top + 56}
+      behavior={keyboardFooterStep ? undefined : Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={keyboardFooterStep ? 0 : insets.top + 56}
     >
       <View style={[styles.container, styles.containerWithFooter, { paddingTop: insets.top + 12 }]}>
       <View style={styles.progressBarContainer}>
@@ -951,7 +963,7 @@ export default function OnboardingScreen() {
         </View>
       </Animated.View>
 
-      <View style={[styles.bottomRow, styles.bottomRowPinned, { paddingBottom: footerBottomInset }]}>
+      <View style={[styles.bottomRow, styles.bottomRowPinned, { paddingBottom: footerBottomOffset }]}>
         <Pressable
           style={styles.backBtn}
           onPress={step > 0 ? handleBack : () => {
@@ -1012,7 +1024,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   containerWithFooter: {
+    flex: 1,
     justifyContent: 'flex-start',
+    position: 'relative',
   },
   progressBarContainer: {
     flexDirection: 'row' as const,
@@ -1452,7 +1466,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   bottomRowPinned: {
-    marginTop: 'auto',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    marginTop: 0,
   },
   backBtn: {
     flexDirection: 'row' as const,

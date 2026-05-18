@@ -4,11 +4,11 @@
  */
 
 /**
- * Premium entitlement identifier in RevenueCat (case- and space-sensitive).
- * Override via EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID when dashboard id differs.
+ * Canonical RevenueCat entitlement id (dashboard: **RecoveryRoad Premium**).
+ * Case- and space-sensitive. Override via EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID when needed.
  */
 export const REVENUECAT_PRO_ENTITLEMENT_ID =
-  process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID ?? 'RecoveryRoad Pro';
+  process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID ?? 'RecoveryRoad Premium';
 
 export const REVENUECAT_ENTITLEMENT_ENV_KEY = 'EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID' as const;
 

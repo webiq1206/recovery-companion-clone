@@ -7,6 +7,7 @@ import Purchases, {
   PURCHASES_ERROR_CODE,
   type CustomerInfo,
   type CustomerInfoUpdateListener,
+  type PurchasesEntitlementInfo,
   type PurchasesOffering,
   type PurchasesPackage,
 } from 'react-native-purchases';
@@ -20,11 +21,24 @@ export { REVENUECAT_PRO_ENTITLEMENT_ID };
 const STORAGE_KEY = 'subscription_state';
 const RC_USER_ID_KEY = 'rc_user_id';
 
-const REFRESH_CUSTOMER_INFO_DELAYS_MS = [0, 750, 1500] as const;
+const REFRESH_CUSTOMER_INFO_DELAYS_MS = [0, 1000, 2500, 5000] as const;
+
+/** Short generic aliases only; canonical id is REVENUECAT_PRO_ENTITLEMENT_ID (RecoveryRoad Premium). */
+const ENTITLEMENT_ALIASES = ['premium', 'pro'] as const;
+
+export type PremiumEntitlementSource = 'configured' | 'alias' | 'sole_active' | null;
+
+export type SubscriptionDiagnostics = {
+  activeEntitlementKeys: string[];
+  lastEntitlementSource: PremiumEntitlementSource;
+  lastResolvedEntitlementId: string | null;
+  expectedEntitlementId: string;
+};
 
 export type HostedPaywallOutcome = {
   result: string | null;
   premiumUnlocked: boolean;
+  activeEntitlementKeys: string[];
 };
 
 /**
@@ -161,9 +175,53 @@ function repopulateNativePackageMap(
   }
 }
 
+export type ResolvedPremiumEntitlement = {
+  entitlement: PurchasesEntitlementInfo | null;
+  identifier: string | null;
+  source: PremiumEntitlementSource;
+};
+
+export function resolveActivePremiumEntitlement(info: CustomerInfo): ResolvedPremiumEntitlement {
+  const configured = info.entitlements.active[REVENUECAT_PRO_ENTITLEMENT_ID];
+  if (configured?.isActive) {
+    return {
+      entitlement: configured,
+      identifier: REVENUECAT_PRO_ENTITLEMENT_ID,
+      source: 'configured',
+    };
+  }
+
+  const seen = new Set<string>([REVENUECAT_PRO_ENTITLEMENT_ID]);
+  for (const alias of ENTITLEMENT_ALIASES) {
+    if (seen.has(alias)) continue;
+    seen.add(alias);
+    const ent = info.entitlements.active[alias];
+    if (ent?.isActive) {
+      if (__DEV__ && alias !== REVENUECAT_PRO_ENTITLEMENT_ID) {
+        console.log('[Subscription] Using alias entitlement:', alias);
+      }
+      return { entitlement: ent, identifier: alias, source: 'alias' };
+    }
+  }
+
+  const activeKeys = Object.keys(info.entitlements.active);
+  if (activeKeys.length === 1) {
+    const key = activeKeys[0];
+    const ent = info.entitlements.active[key];
+    if (ent?.isActive) {
+      if (__DEV__) {
+        console.log('[Subscription] Using sole active entitlement:', key);
+      }
+      return { entitlement: ent, identifier: key, source: 'sole_active' };
+    }
+  }
+
+  return { entitlement: null, identifier: null, source: null };
+}
+
 function subscriptionStateFromCustomerInfo(info: CustomerInfo): SubscriptionState {
-  const pro = info.entitlements.active[REVENUECAT_PRO_ENTITLEMENT_ID];
-  if (!pro || !pro.isActive) {
+  const { entitlement: pro } = resolveActivePremiumEntitlement(info);
+  if (!pro) {
     return DEFAULT_STATE;
   }
   const expiresAt = pro.expirationDate ?? null;
@@ -178,6 +236,28 @@ function activeEntitlementKeys(info: CustomerInfo): string[] {
   return Object.keys(info.entitlements.active);
 }
 
+function diagnosticsFromCustomerInfo(info: CustomerInfo): SubscriptionDiagnostics {
+  const resolved = resolveActivePremiumEntitlement(info);
+  return {
+    activeEntitlementKeys: activeEntitlementKeys(info),
+    lastEntitlementSource: resolved.source,
+    lastResolvedEntitlementId: resolved.identifier,
+    expectedEntitlementId: REVENUECAT_PRO_ENTITLEMENT_ID,
+  };
+}
+
+async function syncStorePurchasesIfSupported(): Promise<void> {
+  if (Platform.OS !== 'ios') return;
+  const purchases = Purchases as typeof Purchases & { syncPurchases?: () => Promise<void> };
+  if (typeof purchases.syncPurchases === 'function') {
+    try {
+      await purchases.syncPurchases();
+    } catch (e) {
+      console.log('[Subscription] syncPurchases failed:', e);
+    }
+  }
+}
+
 async function refreshPremiumStateAfterStoreAction(
   applyCustomerInfo: (info: CustomerInfo) => void,
 ): Promise<{
@@ -185,6 +265,7 @@ async function refreshPremiumStateAfterStoreAction(
   activeEntitlementKeys: string[];
   customerInfo: CustomerInfo | null;
 }> {
+  await syncStorePurchasesIfSupported();
   let lastInfo: CustomerInfo | null = null;
   for (const delayMs of REFRESH_CUSTOMER_INFO_DELAYS_MS) {
     if (delayMs > 0) {
@@ -222,6 +303,12 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const [subscription, setSubscription] = useState<SubscriptionState>(DEFAULT_STATE);
   const [rcUserId, setRcUserId] = useState<string>('');
   const [storePurchasesReady, setStorePurchasesReady] = useState(false);
+  const [subscriptionDiagnostics, setSubscriptionDiagnostics] = useState<SubscriptionDiagnostics>({
+    activeEntitlementKeys: [],
+    lastEntitlementSource: null,
+    lastResolvedEntitlementId: null,
+    expectedEntitlementId: REVENUECAT_PRO_ENTITLEMENT_ID,
+  });
 
   const nativePackagesByProductId = useRef<Map<string, PurchasesPackage>>(new Map());
 
@@ -249,6 +336,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const applyCustomerInfo = useCallback(
     (info: CustomerInfo) => {
+      setSubscriptionDiagnostics(diagnosticsFromCustomerInfo(info));
       const next = subscriptionStateFromCustomerInfo(info);
       void persistSubscription(next);
     },
@@ -492,17 +580,25 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
             REVENUECAT_PRO_ENTITLEMENT_ID,
           );
         }
-        return { result, premiumUnlocked: refreshed.tier === 'premium' };
+        return {
+          result,
+          premiumUnlocked: refreshed.tier === 'premium',
+          activeEntitlementKeys: refreshed.activeEntitlementKeys,
+        };
       }
 
       if (result === PAYWALL_RESULT.NOT_PRESENTED) {
         const info = await Purchases.getCustomerInfo();
         applyCustomerInfoRef.current(info);
         const tier = subscriptionStateFromCustomerInfo(info).tier;
-        return { result, premiumUnlocked: tier === 'premium' };
+        return {
+          result,
+          premiumUnlocked: tier === 'premium',
+          activeEntitlementKeys: activeEntitlementKeys(info),
+        };
       }
 
-      return { result, premiumUnlocked: false };
+      return { result, premiumUnlocked: false, activeEntitlementKeys: [] };
     } catch (e) {
       console.log('[Subscription] presentHostedPaywall failed:', e);
       return null;
@@ -537,6 +633,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       restoreMutation,
       rcUserId,
       presentHostedPaywall,
+      subscriptionDiagnostics,
       /** @deprecated Use purchasesApiKeyConfigured */
       revenueCatConfigured: purchasesApiKeyConfigured,
     }),
@@ -558,6 +655,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       restoreMutation,
       rcUserId,
       presentHostedPaywall,
+      subscriptionDiagnostics,
       purchasesApiKeyConfigured,
       storePurchasesReady,
     ],

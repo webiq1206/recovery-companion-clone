@@ -8,7 +8,7 @@ Complete this in the [RevenueCat dashboard](https://app.revenuecat.com/) before 
 
 1. **Apps** — Add your iOS app (`com.webiq.recoveryroad`) and Android app (`com.webiq.recoveryroad`) and upload store credentials as RevenueCat requires.
 2. **Products** — Create subscription / non-consumable products that match identifiers in App Store Connect and Google Play (exact ID match).
-3. **Entitlement** — Create an entitlement named **`RecoveryRoad Pro`** (must match `REVENUECAT_PRO_ENTITLEMENT_ID` in [`constants/revenueCatPublicConfig.ts`](../constants/revenueCatPublicConfig.ts)). Attach all premium products to this entitlement. If the dashboard id differs, set `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` in `.env` / EAS to the exact dashboard identifier.
+3. **Entitlement** — Create an entitlement named **`RecoveryRoad Premium`** (must match `REVENUECAT_PRO_ENTITLEMENT_ID` in [`constants/revenueCatPublicConfig.ts`](../constants/revenueCatPublicConfig.ts)). Attach all premium products to this entitlement. If the dashboard id differs, set `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` in `.env` / EAS to the exact dashboard identifier.
 4. **Offering** — Create a **default** offering (marked current) with packages. The custom paywall maps friendly labels when packages use RevenueCat defaults **`$rc_monthly`**, **`$rc_annual`**, and optionally **`$rc_lifetime`**; other package identifiers still appear as generic plan rows using store metadata.
 5. **Paywalls (optional)** — If you design a hosted paywall in RevenueCat, link it to that offering. The app can present it via **Preview RevenueCat dashboard paywall** on the Premium upgrade screen in development builds (`__DEV__`), using [`react-native-purchases-ui`](../package.json).
 
@@ -22,11 +22,17 @@ The Purchases SDK reads **public** API keys at build time:
 |----------|----------|
 | `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` | iOS (`appl_…`) |
 | `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` | Android (`goog_…`) |
+| `EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID` | Optional override if dashboard entitlement id differs from `RecoveryRoad Premium` |
 
-- **EAS Build:** Create [EAS secrets](https://docs.expo.dev/build-reference/variables/) or project environment variables with these names so they are available during `eas build`. Do not commit real keys in [`eas.json`](../eas.json).
+- **EAS Build (TestFlight / App Store):** Variables must be on the **`production`** environment (not only a legacy project secret). Example:
+  ```bash
+  eas env:create --name EXPO_PUBLIC_REVENUECAT_IOS_API_KEY --value <appl_…> --environment production --visibility secret
+  eas env:create --name EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID --value "RecoveryRoad Premium" --environment production --visibility plaintext
+  ```
+  After `eas build -p ios --profile production`, confirm **Settings → Subscription status** shows **Store key in build: yes**. If it shows **no**, the binary was built without the key—subscriptions will not unlock.
 - **Local native runs:** Copy [`.env.example`](../.env.example) to `.env` and fill values, or export the variables in your shell before `expo run:ios` / `expo run:android`.
 
-Without both keys (per platform build), `purchasesApiKeyConfigured` is false and the paywall cannot load offerings.
+Without the platform key in the **build** that is installed, `purchasesApiKeyConfigured` is false and premium cannot sync from RevenueCat.
 
 ## Preview paywall on a development client
 
@@ -36,12 +42,20 @@ Subscriptions do **not** run in Expo Go. Use a **development build** or release-
 2. Run `npm run start:dev-client` (or your usual LAN script) and open the app from a dev client install.
 3. From **Settings → Upgrade to Premium** or **Plans & benefits → Upgrade to Premium**, confirm the **RevenueCat hosted paywall** opens with **localized prices** from the store.
 4. In **`__DEV__`**, use **Preview RevenueCat dashboard paywall** to open the RevenueCat-hosted paywall modal (requires a paywall configured in the dashboard for the current offering).
-5. Complete a purchase or restore with a **sandbox** App Store / Play account and confirm **`RecoveryRoad Pro`** becomes active in RevenueCat.
+5. Complete a purchase or restore with a **sandbox** App Store / Play account and confirm **`RecoveryRoad Premium`** becomes active in RevenueCat.
 6. In **`__DEV__`**, open **Settings** and note **RevenueCat customer ID** to look up the same customer in the RevenueCat dashboard after purchase.
 
 ## Post-purchase verification (app)
 
-After a sandbox purchase, the app retries `getCustomerInfo` (0 / 750 / 1500 ms) before treating Premium as unlocked. If the paywall reports success but Settings still shows **Upgrade**, check Metro logs for active entitlement keys vs the expected id. Use **Restore purchases** once the RevenueCat dashboard shows the entitlement on that customer.
+After a sandbox purchase, the app syncs with the store (iOS when supported), then retries `getCustomerInfo` at **0 / 1s / 2.5s / 5s** before treating Premium as unlocked. Entitlements resolve from the configured id (`RecoveryRoad Premium`), short aliases (`premium`, `pro`), or a single active entitlement if only one exists.
+
+If the paywall reports success but Settings still shows **Upgrade**:
+
+1. Open **Settings → Subscription status** (visible when not premium) and compare **Active entitlements** vs **Expected entitlement**.
+2. In RevenueCat → **Customers**, search the **RevenueCat customer ID** from Settings and confirm the entitlement is active.
+3. Use **Restore purchases** once the dashboard shows the entitlement on that customer.
+
+In **`__DEV__`**, Metro also logs active entitlement keys when purchase completes but tier stays free.
 
 ## Preconditions
 

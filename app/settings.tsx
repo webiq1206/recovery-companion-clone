@@ -41,6 +41,7 @@ import { useUser } from '../core/domains/useUser';
 import { useAppMeta } from '../core/domains/useAppMeta';
 import { useEngagement } from '../providers/EngagementProvider';
 import { useSubscription } from '../providers/SubscriptionProvider';
+import { REVENUECAT_PRO_ENTITLEMENT_ID } from '../constants/revenueCatPublicConfig';
 import { useOpenPremiumPaywall } from '../hooks/useOpenPremiumPaywall';
 import { useNotifications } from '../providers/NotificationProvider';
 import { useProviderMode } from '../providers/ProviderModeProvider';
@@ -75,6 +76,7 @@ export default function SettingsScreen() {
     storePurchasesReady,
     purchasesApiKeyConfigured,
     rcUserId,
+    subscriptionDiagnostics,
   } = useSubscription();
   const { openPremiumPaywall } = useOpenPremiumPaywall();
   const {
@@ -303,10 +305,44 @@ export default function SettingsScreen() {
             </View>
           </View>
         ) : null}
-        {__DEV__ && rcUserId ? (
-          <Text style={styles.rcUserIdDev} testID="settings-rc-user-id">
-            RevenueCat customer ID (dev): {rcUserId}
-          </Text>
+        {Platform.OS !== 'web' && (__DEV__ || !isPremium) ? (
+          <View style={styles.subscriptionStatusCard} testID="settings-subscription-status">
+            <Text style={styles.subscriptionStatusTitle}>Subscription status</Text>
+            <Text style={styles.subscriptionStatusLine}>
+              Store key in build: {purchasesApiKeyConfigured ? 'yes' : 'no'}
+            </Text>
+            <Text style={styles.subscriptionStatusLine}>
+              Store connected: {storePurchasesReady ? 'yes' : 'no'}
+            </Text>
+            <Text style={styles.subscriptionStatusLine}>
+              Expected entitlement: {REVENUECAT_PRO_ENTITLEMENT_ID}
+            </Text>
+            <Text style={styles.subscriptionStatusLine}>
+              Active entitlements:{' '}
+              {subscriptionDiagnostics.activeEntitlementKeys.length > 0
+                ? subscriptionDiagnostics.activeEntitlementKeys.join(', ')
+                : '(none)'}
+            </Text>
+            {subscriptionDiagnostics.lastResolvedEntitlementId ? (
+              <Text style={styles.subscriptionStatusLine}>
+                Resolved as: {subscriptionDiagnostics.lastResolvedEntitlementId}
+                {subscriptionDiagnostics.lastEntitlementSource
+                  ? ` (${subscriptionDiagnostics.lastEntitlementSource})`
+                  : ''}
+              </Text>
+            ) : null}
+            {rcUserId ? (
+              <Text style={styles.subscriptionStatusLine} testID="settings-rc-user-id">
+                RevenueCat customer ID: {rcUserId}
+              </Text>
+            ) : null}
+            {!purchasesApiKeyConfigured ? (
+              <Text style={styles.subscriptionStatusHint}>
+                TestFlight builds need EXPO_PUBLIC_REVENUECAT_IOS_API_KEY on the EAS production
+                environment, then a new build.
+              </Text>
+            ) : null}
+          </View>
         ) : null}
         <View style={styles.groupCard}>
           <Pressable
@@ -1144,11 +1180,33 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textTransform: 'uppercase',
   },
-  rcUserIdDev: {
+  subscriptionStatusCard: {
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  subscriptionStatusTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  subscriptionStatusLine: {
     fontSize: 11,
     color: Colors.textMuted,
-    marginBottom: 10,
     lineHeight: 16,
+    marginBottom: 4,
+  },
+  subscriptionStatusHint: {
+    fontSize: 11,
+    color: Colors.warning,
+    lineHeight: 16,
+    marginTop: 6,
   },
   groupCard: {
     backgroundColor: Colors.cardBackground,
