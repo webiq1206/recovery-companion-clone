@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ShieldAlert, ShieldCheck, Shield, TrendingUp, AlertTriangle, ChevronRight } from 'lucide-react-native';
 import Colors from '../constants/colors';
+import { DEFAULT_RECOVERY_PROFILE } from '../core/persistence';
 import { useHydrateRecoveryProfileStore, useRecoveryProfileStore } from '../stores/useRecoveryProfileStore';
 import { calculateProtectionScore, type ProtectionStatus } from '../utils/protectionScore';
 import { ProtectionScoreCircle } from '../components/ProtectionScoreCircle';
@@ -51,7 +52,7 @@ export default function ProtectionProfileScreen() {
   useHydrateRecoveryProfileStore();
   const { profile } = useRecoveryProfileStore();
 
-  const rp = profile.recoveryProfile;
+  const rp = profile.recoveryProfile ?? DEFAULT_RECOVERY_PROFILE;
   const { protectionScore, protectionStatus } = useMemo(() => {
     const r = calculateProtectionScore({
       intensity: rp.struggleLevel,

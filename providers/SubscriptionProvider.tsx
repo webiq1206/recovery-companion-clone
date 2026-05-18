@@ -15,6 +15,7 @@ import { SubscriptionState, PremiumFeature } from '../types';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
 import { REVENUECAT_PRO_ENTITLEMENT_ID } from '../constants/revenueCatPublicConfig';
+import { registerAccountDeletionResetHandler } from '../core/accountDeletionReset';
 
 export { REVENUECAT_PRO_ENTITLEMENT_ID };
 
@@ -327,6 +328,40 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       setRcUserId(userIdQuery.data);
     }
   }, [userIdQuery.data]);
+
+  useEffect(() => {
+    return registerAccountDeletionResetHandler(async () => {
+      setSubscription(DEFAULT_STATE);
+      setRcUserId('');
+      setStorePurchasesReady(false);
+      nativePackagesByProductId.current.clear();
+      setSubscriptionDiagnostics({
+        activeEntitlementKeys: [],
+        lastEntitlementSource: null,
+        lastResolvedEntitlementId: null,
+        expectedEntitlementId: REVENUECAT_PRO_ENTITLEMENT_ID,
+      });
+      queryClient.removeQueries({ queryKey: ['subscription'] });
+      queryClient.removeQueries({ queryKey: ['rc_user_id'] });
+      queryClient.removeQueries({ queryKey: ['rc_offerings'] });
+
+      if (isNativeStorePlatform() && isPurchasesApiKeyConfigured()) {
+        try {
+          const configured = await Purchases.isConfigured();
+          if (configured) {
+            const purchases = Purchases as typeof Purchases & {
+              logOut?: () => Promise<CustomerInfo>;
+            };
+            if (typeof purchases.logOut === 'function') {
+              await purchases.logOut();
+            }
+          }
+        } catch (e) {
+          console.log('[Subscription] logOut after account reset:', e);
+        }
+      }
+    });
+  }, [queryClient]);
 
   const persistSubscription = useCallback(async (next: SubscriptionState) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));

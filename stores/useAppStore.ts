@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 import type { DailyCheckIn, TimelineEvent, UserProfile } from '../types';
+import { DEFAULT_PROFILE } from '../core/persistence';
 import { createSelectors } from './zustand/createSelectors';
 import { getLocalDateKey } from '../utils/checkInDate';
 
@@ -82,9 +83,18 @@ const baseUseAppStore = create<AppStoreState>()(
 
       updateUserState: (updates) => {
         set((state) => {
+          const base = state.userProfile ?? DEFAULT_PROFILE;
           const nextProfile: UserProfile = {
-            ...(state.userProfile ?? ({} as UserProfile)),
+            ...base,
             ...updates,
+            recoveryProfile: {
+              ...base.recoveryProfile,
+              ...(updates.recoveryProfile ?? {}),
+            },
+            privacyControls: {
+              ...base.privacyControls,
+              ...(updates.privacyControls ?? {}),
+            },
           };
 
           const nextProgress: ProgressStats = {

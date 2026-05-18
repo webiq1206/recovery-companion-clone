@@ -21,6 +21,8 @@ import {
   type OnboardingStepId,
 } from '../utils/wizardSteps';
 import { useAppStore } from '../stores/useAppStore';
+import { useRecoveryProfileStore } from '../stores/useRecoveryProfileStore';
+import { registerAccountDeletionResetHandler } from '../core/accountDeletionReset';
 import { LegalDocLinksRow } from '../components/LegalDocLinksRow';
 import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { scrollToTop } from '../hooks/useScrollToTopOnFocus';
@@ -233,11 +235,47 @@ export default function OnboardingScreen() {
     return () => cancelAnimationFrame(id);
   }, [hasStarted, step, currentStepId]);
 
+  const resetOnboardingForm = useCallback(() => {
+    hasInitializedFromProfile.current = false;
+    setStep(0);
+    setHasStarted(false);
+    setName('');
+    setIsAnonymous(false);
+    setAddictions([]);
+    setMoneySpentDailyInput('');
+    setTimeSpentDailyInput('');
+    setRecoveryStage('crisis');
+    setTriggers([]);
+    setGoals([]);
+    setStruggleLevel(3);
+    setSleepQuality('fair');
+    setSupportAvailability(null);
+    setTimeInRecovery('');
+    setRelapseFrequency('');
+    setEmotionalBaseline(3);
+    setCravingBaseline(3);
+    setPrivacyControls({
+      isAnonymous: false,
+      shareProgress: false,
+      shareMood: false,
+      allowCommunityMessages: true,
+    });
+    setKeyboardPad(0);
+    progressAnim.setValue(0);
+    fadeAnim.setValue(1);
+  }, [fadeAnim, progressAnim]);
+
+  useEffect(() => {
+    return registerAccountDeletionResetHandler(resetOnboardingForm);
+  }, [resetOnboardingForm]);
+
   useEffect(() => {
     if (devReplayFullOnboarding) return;
     if (hasStarted && remainingSteps.length === 0) {
-      updateProfile({ hasCompletedOnboarding: true });
-      updateUserState({ hasCompletedOnboarding: true });
+      const current = useRecoveryProfileStore.getState().profile;
+      const completed = { ...current, hasCompletedOnboarding: true as const };
+      updateProfile(completed);
+      updateUserState(completed);
       router.replace('/protection-profile?offerNotifs=1' as any);
     }
   }, [

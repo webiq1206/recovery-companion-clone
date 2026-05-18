@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { AlertTriangle, ArrowRight, Heart } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Colors from '../constants/colors';
+import { DEFAULT_RECOVERY_PROFILE } from '../core/persistence';
 import { useHydrateRecoveryProfileStore, useRecoveryProfileStore } from '../stores/useRecoveryProfileStore';
 
 function mapRiskLevelLabel(
@@ -48,7 +49,7 @@ export default function RecoverySnapshotScreen() {
   useHydrateRecoveryProfileStore();
   const { profile } = useRecoveryProfileStore();
 
-  const rp = profile.recoveryProfile;
+  const rp = profile.recoveryProfile ?? DEFAULT_RECOVERY_PROFILE;
 
   const baselineStability = rp.baselineStability ?? rp.baselineStabilityScore;
   const relapseRiskLabel = mapRiskLevelLabel(rp.relapseRiskLevel);

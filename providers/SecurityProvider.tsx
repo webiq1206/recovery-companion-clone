@@ -1,6 +1,6 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import { Platform, AppState } from 'react-native';
 import * as Crypto from 'expo-crypto';
@@ -21,6 +21,7 @@ import {
   secureSetJSON,
   secureGetJSON,
 } from '../utils/secureStorage';
+import { registerAccountDeletionResetHandler } from '../core/accountDeletionReset';
 
 const STORAGE_KEYS = {
   SECURITY_SETTINGS: 'ro_security_settings',
@@ -89,6 +90,7 @@ async function authenticateWithBiometric(): Promise<boolean> {
 }
 
 export const [SecurityProvider, useSecurity] = createContextHook(() => {
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState<SecuritySettings>(DEFAULT_SECURITY_SETTINGS);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [isLocked, setIsLocked] = useState<boolean>(false);
@@ -144,6 +146,17 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     setIsInitialized(true);
     console.log('[Security] Provider initialized');
   }, []);
+
+  useEffect(() => {
+    return registerAccountDeletionResetHandler(() => {
+      setSettings(DEFAULT_SECURITY_SETTINGS);
+      setIsAuthenticated(true);
+      setIsLocked(false);
+      setAuditLog([]);
+      queryClient.setQueryData(['security_settings'], DEFAULT_SECURITY_SETTINGS);
+      queryClient.setQueryData(['audit_log'], []);
+    });
+  }, [queryClient]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {

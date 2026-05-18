@@ -21,6 +21,7 @@ import { useMediaStore } from '../../media/state/useMediaStore';
 import { createSelectors } from '../../../stores/zustand/createSelectors';
 import { useAppStore } from '../../../stores/useAppStore';
 import { useWizardBehaviorStore } from '../../../stores/useWizardBehaviorStore';
+import { runAccountDeletionProviderResets } from '../../../core/accountDeletionReset';
 import { DEFAULT_PROFILE } from '../../../core/persistence';
 import { removePIN, secureDelete } from '../../../utils/secureStorage';
 
@@ -93,6 +94,8 @@ const baseUseAppMetaStore = create<AppMetaState>()(
       useRebuildStore.getState().reset();
       useAccountabilityStore.getState().reset();
       useWizardBehaviorStore.getState().reset();
+
+      await runAccountDeletionProviderResets();
     },
 
     clearDiagnosticsCaches: async () => {
