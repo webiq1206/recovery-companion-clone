@@ -1,5 +1,22 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, Animated, Dimensions, Switch, Image, KeyboardAvoidingView, Platform, Keyboard, type ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Animated,
+  Dimensions,
+  Switch,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  findNodeHandle,
+  type ScrollView,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
@@ -30,6 +47,12 @@ import { scrollToTop } from '../hooks/useScrollToTopOnFocus';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 /** Space reserved above the fixed footer so scroll content is not hidden behind it. */
 const FOOTER_SCROLL_RESERVE = 88;
+/** Pinned footer bar (padding + back/continue row), excluding safe-area / keyboard inset. */
+const FOOTER_BAR_HEIGHT = 78;
+const SCROLL_ABOVE_FOOTER_GAP = 20;
+/** Used before keyboard height is known so the first scroll is not too short. */
+const ESTIMATED_KEYBOARD_HEIGHT = Platform.OS === 'ios' ? 336 : 280;
+const FOOTER_SOLID_BG = '#000000';
 const RECOVERY_STAGES: { value: RecoveryStage; label: string; desc: string; icon: React.ReactNode }[] = [
   {
     value: 'crisis',
@@ -147,6 +170,10 @@ export default function OnboardingScreen() {
 
   const heroScrollRef = useRef<ScrollView | null>(null);
   const stepScrollRef = useRef<ScrollView | null>(null);
+  const stepScrollY = useRef(0);
+  const nameAnchorRef = useRef<View | null>(null);
+  const moneyAnchorRef = useRef<View | null>(null);
+  const activeKeyboardAnchorRef = useRef<View | null>(null);
   const [keyboardPad, setKeyboardPad] = useState(0);
 
   const bindStepScrollRef = useCallback((node: ScrollView | null) => {
@@ -188,28 +215,114 @@ export default function OnboardingScreen() {
   const keyboardFooterStep =
     hasStarted && (currentStepId === 'identity' || currentStepId === 'daily_spend');
 
-  useEffect(() => {
-    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const subShow = Keyboard.addListener(showEvt, (e) => {
-      setKeyboardPad(e.endCoordinates.height);
-      if (currentStepId === 'identity' || currentStepId === 'daily_spend') {
-        requestAnimationFrame(() => scrollToTop(stepScrollRef.current));
-      }
-    });
-    const subHide = Keyboard.addListener(hideEvt, () => setKeyboardPad(0));
-    return () => {
-      subShow.remove();
-      subHide.remove();
-    };
-  }, [currentStepId]);
-
   const footerBottomInset = insets.bottom + 8;
   const footerBottomOffset = footerBottomInset + (keyboardFooterStep ? keyboardPad : 0);
   const scrollContentBottomPad = useMemo(
     () => ({ paddingBottom: FOOTER_SCROLL_RESERVE + footerBottomOffset }),
     [footerBottomOffset],
   );
+
+  const onStepScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    stepScrollY.current = e.nativeEvent.contentOffset.y;
+  }, []);
+
+  const alignAnchorAboveFooter = useCallback(
+    (anchor: View | null, keyboardHeightOverride?: number) => {
+      const scroll = stepScrollRef.current;
+      if (!scroll || !anchor) return;
+
+      const kbHeight =
+        keyboardHeightOverride ??
+        (keyboardFooterStep ? keyboardPad || ESTIMATED_KEYBOARD_HEIGHT : 0);
+      const bottomOffset = footerBottomInset + (keyboardFooterStep ? kbHeight : 0);
+      const reservedBottom = FOOTER_BAR_HEIGHT + bottomOffset;
+
+      const run = () => {
+        const scrollHandle = findNodeHandle(scroll);
+        if (!scrollHandle) return;
+
+        anchor.measureLayout(
+          scrollHandle,
+          (_left, top, _width, height) => {
+            scroll.measure((_fx, _fy, _fw, viewportHeight) => {
+              const targetY =
+                top +
+                height +
+                SCROLL_ABOVE_FOOTER_GAP -
+                (viewportHeight - reservedBottom);
+              scroll.scrollTo({
+                y: Math.max(0, targetY),
+                animated: true,
+              });
+            });
+          },
+          () => {
+            scroll.measureInWindow((_sx, scrollY, _sw, scrollH) => {
+              anchor.measureInWindow((_ax, ay, _aw, ah) => {
+                const windowH = Dimensions.get('window').height;
+                const footerTopY = windowH - bottomOffset - FOOTER_BAR_HEIGHT;
+                const visibleBottom = Math.min(scrollY + scrollH, footerTopY);
+                const overflow = ay + ah + SCROLL_ABOVE_FOOTER_GAP - visibleBottom;
+                if (overflow > 0) {
+                  scroll.scrollTo({
+                    y: stepScrollY.current + overflow,
+                    animated: true,
+                  });
+                }
+              });
+            });
+          },
+        );
+      };
+
+      run();
+      requestAnimationFrame(run);
+      [80, 200, 350, 500, 700].forEach((ms) => setTimeout(run, ms));
+    },
+    [footerBottomInset, keyboardFooterStep, keyboardPad],
+  );
+
+  const focusAnchorAboveFooter = useCallback(
+    (anchorRef: React.RefObject<View | null>) => {
+      activeKeyboardAnchorRef.current = anchorRef.current;
+      const kb =
+        keyboardPad > 0 ? keyboardPad : keyboardFooterStep ? ESTIMATED_KEYBOARD_HEIGHT : 0;
+      alignAnchorAboveFooter(anchorRef.current, kb);
+    },
+    [alignAnchorAboveFooter, keyboardFooterStep, keyboardPad],
+  );
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const subShow = Keyboard.addListener(showEvt, (e) => {
+      const height = e.endCoordinates.height;
+      setKeyboardPad(height);
+      if (activeKeyboardAnchorRef.current) {
+        alignAnchorAboveFooter(activeKeyboardAnchorRef.current, height);
+      }
+    });
+    const subHide = Keyboard.addListener(hideEvt, () => {
+      setKeyboardPad(0);
+      activeKeyboardAnchorRef.current = null;
+    });
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, [alignAnchorAboveFooter]);
+
+  useEffect(() => {
+    if (keyboardPad > 0 && activeKeyboardAnchorRef.current) {
+      alignAnchorAboveFooter(activeKeyboardAnchorRef.current, keyboardPad);
+    }
+  }, [keyboardPad, alignAnchorAboveFooter]);
+
+  useEffect(() => {
+    Keyboard.dismiss();
+    activeKeyboardAnchorRef.current = null;
+    setKeyboardPad(0);
+  }, [step, currentStepId]);
 
   /** RecoveryRoad intro (hero) should start at the top whenever it is shown again. */
   useEffect(() => {
@@ -463,6 +576,9 @@ export default function OnboardingScreen() {
             style={styles.stepContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={false}
+            onScroll={onStepScroll}
+            scrollEventThrottle={16}
             contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
           >
             <Text style={[styles.stepLabel, { marginTop: 24 }]}>{stepLabel}</Text>
@@ -488,7 +604,7 @@ export default function OnboardingScreen() {
             </View>
 
             {!isAnonymous && (
-              <>
+              <View ref={nameAnchorRef} collapsable={false}>
                 <Text style={styles.inputLabel}>YOUR NAME</Text>
                 <TextInput
                   style={styles.input}
@@ -496,11 +612,11 @@ export default function OnboardingScreen() {
                   placeholderTextColor={Colors.textMuted}
                   value={name}
                   onChangeText={setName}
-                  autoFocus
+                  onFocus={() => focusAnchorAboveFooter(nameAnchorRef)}
                   maxLength={30}
                   testID="onboarding-name"
                 />
-              </>
+              </View>
             )}
           </ScreenScrollView>
         );
@@ -540,6 +656,9 @@ export default function OnboardingScreen() {
             style={styles.stepContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={false}
+            onScroll={onStepScroll}
+            scrollEventThrottle={16}
             contentContainerStyle={[styles.optionsListContent, scrollContentBottomPad]}
           >
             <Text style={styles.stepLabel}>{stepLabel}</Text>
@@ -554,19 +673,23 @@ export default function OnboardingScreen() {
               value={timeSpentDailyInput}
               onChangeText={setTimeSpentDailyInput}
               keyboardType="decimal-pad"
+              onFocus={() => focusAnchorAboveFooter(moneyAnchorRef)}
               testID="onboarding-time-spent-daily"
             />
 
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>MONEY (PER DAY)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 25 or 25.50"
-              placeholderTextColor={Colors.textMuted}
-              value={moneySpentDailyInput}
-              onChangeText={setMoneySpentDailyInput}
-              keyboardType="decimal-pad"
-              testID="onboarding-money-spent-daily"
-            />
+            <View ref={moneyAnchorRef} collapsable={false}>
+              <Text style={[styles.inputLabel, { marginTop: 16 }]}>MONEY (PER DAY)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 25 or 25.50"
+                placeholderTextColor={Colors.textMuted}
+                value={moneySpentDailyInput}
+                onChangeText={setMoneySpentDailyInput}
+                keyboardType="decimal-pad"
+                onFocus={() => focusAnchorAboveFooter(moneyAnchorRef)}
+                testID="onboarding-money-spent-daily"
+              />
+            </View>
           </ScreenScrollView>
         );
 
@@ -952,7 +1075,14 @@ export default function OnboardingScreen() {
           <Text style={styles.wellnessDisclaimer}>{ONBOARDING_COPY.wellnessDisclaimer}</Text>
         </ScreenScrollView>
 
-        <View style={[styles.bottomRow, styles.bottomRowPinned, { justifyContent: 'center', paddingBottom: footerBottomInset }]}>
+        <View
+          style={[
+            styles.bottomRow,
+            styles.bottomRowPinned,
+            styles.bottomRowSolid,
+            { justifyContent: 'center', paddingBottom: footerBottomInset },
+          ]}
+        >
           <Pressable
             style={styles.nextBtn}
             onPress={() => {
@@ -1001,7 +1131,14 @@ export default function OnboardingScreen() {
         </View>
       </Animated.View>
 
-      <View style={[styles.bottomRow, styles.bottomRowPinned, { paddingBottom: footerBottomOffset }]}>
+      <View
+        style={[
+          styles.bottomRow,
+          styles.bottomRowPinned,
+          styles.bottomRowSolid,
+          { paddingBottom: footerBottomOffset },
+        ]}
+      >
         <Pressable
           style={styles.backBtn}
           onPress={step > 0 ? handleBack : () => {
@@ -1509,6 +1646,12 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     marginTop: 0,
+  },
+  bottomRowSolid: {
+    backgroundColor: FOOTER_SOLID_BG,
+    paddingTop: 10,
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
   },
   backBtn: {
     flexDirection: 'row' as const,

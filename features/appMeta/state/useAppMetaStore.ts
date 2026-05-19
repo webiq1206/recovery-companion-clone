@@ -83,9 +83,14 @@ const baseUseAppMetaStore = create<AppMetaState>()(
         relapsePlan: null,
         isLoading: false,
         hasHydrated: true,
-      } as any, true);
+      });
 
-      useCheckInsStore.setState({ checkIns: [], nearMissEvents: [], isLoading: false, hasHydrated: true } as any, true);
+      useCheckInsStore.setState({
+        checkIns: [],
+        nearMissEvents: [],
+        isLoading: false,
+        hasHydrated: true,
+      });
       usePledgesStore.getState().reset();
       useJournalStore.getState().reset();
       useMediaStore.getState().reset();
