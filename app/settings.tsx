@@ -52,9 +52,10 @@ import {
 } from '../constants/notifications';
 import {
   formatClearLocalDiagnosticsMessage,
-  formatDeleteAccountDetailsMessage,
   formatRemoveAllAppDataDetailsMessage,
 } from '../core/accountDeletionCopy';
+import { SHOW_SETTINGS_ACCOUNT_SECTION } from '../core/settingsUiFlags';
+import { SettingsAccountSection } from '../components/settings/SettingsAccountSection';
 
 const ANONYMOUS_NAMES = [
   'Quiet Phoenix',
@@ -154,32 +155,6 @@ export default function SettingsScreen() {
     ]);
   }, [executeFullLocalReset]);
 
-  const handleDeleteAccount = useCallback(() => {
-    Alert.alert('Delete account?', formatDeleteAccountDetailsMessage(), [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Continue',
-        style: 'destructive',
-        onPress: () => {
-          Alert.alert(
-            'Delete account permanently?',
-            'You will set up the app again from the beginning.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Delete account',
-                style: 'destructive',
-                onPress: () => {
-                  void executeFullLocalReset();
-                },
-              },
-            ],
-          );
-        },
-      },
-    ]);
-  }, [executeFullLocalReset]);
-
   const handleClearLocalDiagnostics = useCallback(() => {
     Alert.alert('Reset local diagnostics?', formatClearLocalDiagnosticsMessage(), [
       { text: 'Cancel', style: 'cancel' },
@@ -214,14 +189,6 @@ export default function SettingsScreen() {
     void Haptics.selectionAsync();
     void Linking.openURL(supportUrl);
   }, [supportUrl, supportUrlIsHttps]);
-
-  const openAccountDeletionSupportEmail = useCallback(() => {
-    const addr = supportEmail || 'support@recoveryroad.app';
-    void Haptics.selectionAsync();
-    void Linking.openURL(
-      `mailto:${addr}?subject=${encodeURIComponent('RecoveryRoad — account data deletion request')}`,
-    );
-  }, [supportEmail]);
 
   const handleRestorePurchases = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1123,40 +1090,7 @@ export default function SettingsScreen() {
           </View>
         </Pressable>
 
-        <Text style={[styles.sectionLabel, { marginTop: 28 }]}>ACCOUNT</Text>
-        <View style={styles.deleteAccountBlock}>
-          <Pressable
-            style={({ pressed }) => [styles.deleteAccountTitlePress, pressed && { opacity: 0.85 }]}
-            onPress={handleDeleteAccount}
-            accessibilityRole="button"
-            accessibilityLabel="Delete account"
-            testID="settings-delete-account"
-          >
-            <View style={styles.settingLeft}>
-              <View
-                style={[
-                  styles.settingIcon,
-                  { backgroundColor: 'rgba(239,83,80,0.12)' },
-                ]}
-              >
-                <Trash2 size={17} color={Colors.danger} />
-              </View>
-              <Text style={[styles.settingLabel, { color: Colors.danger, flex: 1 }]}>Delete account</Text>
-            </View>
-          </Pressable>
-          <Text style={styles.deleteAccountDescription}>
-            If you also need operator-held social data removed beyond what this device stores, email{' '}
-            <Text
-              style={styles.deleteAccountEmailLink}
-              accessibilityRole="link"
-              accessibilityLabel={`Email ${supportEmail || 'support@recoveryroad.app'}`}
-              onPress={openAccountDeletionSupportEmail}
-            >
-              {supportEmail || 'support@recoveryroad.app'}
-            </Text>{' '}
-            with your request.
-          </Text>
-        </View>
+        {SHOW_SETTINGS_ACCOUNT_SECTION ? <SettingsAccountSection /> : null}
 
         <View style={{ height: 40 }} />
       </ScreenScrollView>
@@ -1301,31 +1235,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.danger + '20',
     marginBottom: 8,
-  },
-  deleteAccountBlock: {
-    backgroundColor: Colors.danger + '08',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: Colors.danger + '20',
-    marginBottom: 8,
-  },
-  deleteAccountTitlePress: {
-    alignSelf: 'stretch',
-    marginBottom: 10,
-  },
-  deleteAccountDescription: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: Colors.textSecondary,
-  },
-  deleteAccountEmailLink: {
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '600' as const,
-    color: Colors.primary,
-    textDecorationLine: 'underline',
   },
   intensityContainer: {
     flexDirection: 'row',
