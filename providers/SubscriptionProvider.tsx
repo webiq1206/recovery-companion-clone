@@ -16,7 +16,10 @@ import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
 import { REVENUECAT_PRO_ENTITLEMENT_ID } from '../constants/revenueCatPublicConfig';
 import { registerAccountDeletionResetHandler } from '../core/accountDeletionReset';
-import { buildActiveSubscriptionDisplay, type ActiveSubscriptionDisplay } from '../utils/activeSubscriptionDisplay';
+import {
+  resolvePremiumSubscriptionDisplay,
+  type ActiveSubscriptionDisplay,
+} from '../utils/activeSubscriptionDisplay';
 
 export { REVENUECAT_PRO_ENTITLEMENT_ID };
 
@@ -642,11 +645,17 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const offerings = useMemo(() => offeringsQuery.data ?? [], [offeringsQuery.data]);
 
   const activePremiumDisplay = useMemo((): ActiveSubscriptionDisplay | null => {
-    if (!customerInfo) return null;
-    const { entitlement } = resolveActivePremiumEntitlement(customerInfo);
-    if (!entitlement) return null;
-    return buildActiveSubscriptionDisplay(entitlement, offerings);
-  }, [customerInfo, offerings]);
+    const entitlement = customerInfo
+      ? resolveActivePremiumEntitlement(customerInfo).entitlement
+      : null;
+    return resolvePremiumSubscriptionDisplay({
+      isPremium: subscription.tier === 'premium',
+      customerInfo,
+      subscription,
+      offerings,
+      entitlement,
+    });
+  }, [customerInfo, offerings, subscription]);
 
   const purchaseStatus = useMemo(
     () => ({

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View,
   Text,
@@ -37,13 +38,13 @@ export default function SubscriptionPlansScreen() {
   const router = useRouter();
   const {
     isPremium,
-    subscription,
     activePremiumDisplay,
     restoreMutation,
     storePurchasesReady,
     purchasesApiKeyConfigured,
     offerings,
     offeringsLoading,
+    reconcileStoreSubscription,
   } = useSubscription();
   const { openPremiumPaywall } = useOpenPremiumPaywall();
 
@@ -97,6 +98,13 @@ export default function SubscriptionPlansScreen() {
     void openPremiumPaywall();
   }, [openPremiumPaywall]);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!storePurchasesReady) return;
+      void reconcileStoreSubscription();
+    }, [storePurchasesReady, reconcileStoreSubscription]),
+  );
+
   return (
     <View style={styles.container}>
       <ScreenScrollView
@@ -115,31 +123,36 @@ export default function SubscriptionPlansScreen() {
             {isPremium ? 'Your subscription' : 'Subscription options (store)'}
           </Text>
           {isPremium ? (
-            activePremiumDisplay ? (
+            <>
               <View style={styles.storePriceRow}>
                 <View style={styles.storePriceRowMain}>
-                  <Text style={styles.storePriceLabel}>{activePremiumDisplay.label}</Text>
-                  {activePremiumDisplay.priceString ? (
+                  <Text style={styles.storePriceLabel}>{activePremiumDisplay?.label ?? 'Premium'}</Text>
+                  {activePremiumDisplay?.priceString ? (
                     <Text style={styles.storePriceAmount}>{activePremiumDisplay.priceString}</Text>
                   ) : null}
                 </View>
-                <Text style={styles.storePriceHint}>{activePremiumDisplay.periodHint}</Text>
+                <Text style={styles.storePriceRenewal}>
+                  {activePremiumDisplay?.renewalLine ?? 'Loading renewal date…'}
+                </Text>
+                {activePremiumDisplay &&
+                activePremiumDisplay.periodHint !== activePremiumDisplay.renewalLine ? (
+                  <Text style={styles.storePriceHint}>{activePremiumDisplay.periodHint}</Text>
+                ) : null}
               </View>
-            ) : subscription.expiresAt ? (
-              <Text style={styles.storePricesMuted}>
-                Premium active through{' '}
-                {new Date(subscription.expiresAt).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-                . Manage or cancel in the App Store or Play Store.
-              </Text>
-            ) : (
-              <Text style={styles.storePricesMuted}>
-                Premium is active on this device. Manage or cancel in the App Store or Play Store.
-              </Text>
-            )
+              <Pressable
+                style={({ pressed }) => [styles.manageInStoreLink, pressed && { opacity: 0.85 }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  openSubscriptionManagement();
+                }}
+                testID="subscription-plans-manage-cancel"
+              >
+                <Text style={styles.manageInStoreLinkText}>
+                  Cancel or change plan in{' '}
+                  {Platform.OS === 'ios' ? 'App Store' : Platform.OS === 'android' ? 'Play Store' : 'store'}
+                </Text>
+              </Pressable>
+            </>
           ) : Platform.OS === 'web' ? (
             <Text style={styles.storePricesMuted}>
               Live prices load in the iOS and Android apps through Apple or Google Play.
@@ -179,7 +192,7 @@ export default function SubscriptionPlansScreen() {
         {isPremium ? (
           <View style={styles.premiumBanner}>
             <Crown size={22} color="#D4A574" />
-            <Text style={styles.premiumBannerText}>You have Premium — thank you for your support.</Text>
+            <Text style={styles.premiumBannerText}>You have Premium — there&apos;s no stopping you now.</Text>
           </View>
         ) : null}
 
@@ -332,11 +345,29 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#D4A574',
   },
+  storePriceRenewal: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginTop: 8,
+    lineHeight: 20,
+  },
   storePriceHint: {
     fontSize: 11,
     color: Colors.textMuted,
     marginTop: 4,
     lineHeight: 15,
+  },
+  manageInStoreLink: {
+    marginTop: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  manageInStoreLinkText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primary,
+    textAlign: 'center',
   },
   premiumBanner: {
     flexDirection: 'row',
