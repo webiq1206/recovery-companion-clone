@@ -37,6 +37,8 @@ export default function SubscriptionPlansScreen() {
   const router = useRouter();
   const {
     isPremium,
+    subscription,
+    activePremiumDisplay,
     restoreMutation,
     storePurchasesReady,
     purchasesApiKeyConfigured,
@@ -109,8 +111,36 @@ export default function SubscriptionPlansScreen() {
         </Text>
 
         <View style={styles.storePricesSection}>
-          <Text style={styles.storePricesTitle}>Subscription options (store)</Text>
-          {Platform.OS === 'web' ? (
+          <Text style={styles.storePricesTitle}>
+            {isPremium ? 'Your subscription' : 'Subscription options (store)'}
+          </Text>
+          {isPremium ? (
+            activePremiumDisplay ? (
+              <View style={styles.storePriceRow}>
+                <View style={styles.storePriceRowMain}>
+                  <Text style={styles.storePriceLabel}>{activePremiumDisplay.label}</Text>
+                  {activePremiumDisplay.priceString ? (
+                    <Text style={styles.storePriceAmount}>{activePremiumDisplay.priceString}</Text>
+                  ) : null}
+                </View>
+                <Text style={styles.storePriceHint}>{activePremiumDisplay.periodHint}</Text>
+              </View>
+            ) : subscription.expiresAt ? (
+              <Text style={styles.storePricesMuted}>
+                Premium active through{' '}
+                {new Date(subscription.expiresAt).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+                . Manage or cancel in the App Store or Play Store.
+              </Text>
+            ) : (
+              <Text style={styles.storePricesMuted}>
+                Premium is active on this device. Manage or cancel in the App Store or Play Store.
+              </Text>
+            )
+          ) : Platform.OS === 'web' ? (
             <Text style={styles.storePricesMuted}>
               Live prices load in the iOS and Android apps through Apple or Google Play.
             </Text>
@@ -136,7 +166,9 @@ export default function SubscriptionPlansScreen() {
               >
                 <View style={styles.storePriceRowMain}>
                   <Text style={styles.storePriceLabel}>{row.label}</Text>
-                  <Text style={styles.storePriceAmount}>{row.priceString}</Text>
+                  {row.priceString ? (
+                    <Text style={styles.storePriceAmount}>{row.priceString}</Text>
+                  ) : null}
                 </View>
                 <Text style={styles.storePriceHint}>{row.periodHint}</Text>
               </View>
@@ -221,8 +253,7 @@ export default function SubscriptionPlansScreen() {
         </Pressable>
 
         <Text style={styles.footerNote}>
-          Prices and renewal terms are shown on the next screen. You can cancel anytime; your recovery data stays on your
-          device.{'\n\n'}
+          You can cancel anytime; your recovery data stays on your device.{'\n\n'}
           {WELLNESS_APP_DISCLAIMER}
         </Text>
       </ScreenScrollView>

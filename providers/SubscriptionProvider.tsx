@@ -16,6 +16,7 @@ import { arePeerPracticeFeaturesEnabled } from '../core/socialLiveConfig';
 import { isProviderEnterpriseSuiteInBuild } from '../utils/isProviderEnterpriseSuiteInBuild';
 import { REVENUECAT_PRO_ENTITLEMENT_ID } from '../constants/revenueCatPublicConfig';
 import { registerAccountDeletionResetHandler } from '../core/accountDeletionReset';
+import { buildActiveSubscriptionDisplay, type ActiveSubscriptionDisplay } from '../utils/activeSubscriptionDisplay';
 
 export { REVENUECAT_PRO_ENTITLEMENT_ID };
 
@@ -182,38 +183,94 @@ export type ResolvedPremiumEntitlement = {
   source: PremiumEntitlementSource;
 };
 
+function findActiveEntitlementCaseInsensitive(
+  active: Record<string, PurchasesEntitlementInfo>,
+  targetId: string,
+): { key: string; entitlement: PurchasesEntitlementInfo } | null {
+  const direct = active[targetId];
+  if (direct?.isActive) {
+    return { key: targetId, entitlement: direct };
+  }
+  const targetLower = targetId.toLowerCase();
+  for (const [key, ent] of Object.entries(active)) {
+    if (key.toLowerCase() === targetLower && ent?.isActive) {
+      return { key, entitlement: ent };
+    }
+  }
+  return null;
+}
+
+/** Store has subscription metadata on the receipt but RC may not have linked it to this app user yet. */
+function customerInfoHasActiveStoreSubscription(info: CustomerInfo): boolean {
+  const subs = (info as CustomerInfo & { activeSubscriptions?: string[] | Record<string, unknown> })
+    .activeSubscriptions;
+  if (Array.isArray(subs) && subs.length > 0) return true;
+  if (subs && typeof subs === 'object' && Object.keys(subs).length > 0) return true;
+  return false;
+}
+
 export function resolveActivePremiumEntitlement(info: CustomerInfo): ResolvedPremiumEntitlement {
-  const configured = info.entitlements.active[REVENUECAT_PRO_ENTITLEMENT_ID];
-  if (configured?.isActive) {
+  const active = info.entitlements.active;
+
+  const configuredMatch = findActiveEntitlementCaseInsensitive(active, REVENUECAT_PRO_ENTITLEMENT_ID);
+  if (configuredMatch) {
     return {
-      entitlement: configured,
-      identifier: REVENUECAT_PRO_ENTITLEMENT_ID,
+      entitlement: configuredMatch.entitlement,
+      identifier: configuredMatch.key,
       source: 'configured',
     };
   }
 
-  const seen = new Set<string>([REVENUECAT_PRO_ENTITLEMENT_ID]);
+  const seen = new Set<string>([REVENUECAT_PRO_ENTITLEMENT_ID.toLowerCase()]);
   for (const alias of ENTITLEMENT_ALIASES) {
-    if (seen.has(alias)) continue;
-    seen.add(alias);
-    const ent = info.entitlements.active[alias];
-    if (ent?.isActive) {
-      if (__DEV__ && alias !== REVENUECAT_PRO_ENTITLEMENT_ID) {
-        console.log('[Subscription] Using alias entitlement:', alias);
+    const aliasLower = alias.toLowerCase();
+    if (seen.has(aliasLower)) continue;
+    seen.add(aliasLower);
+    const aliasMatch = findActiveEntitlementCaseInsensitive(active, alias);
+    if (aliasMatch) {
+      if (__DEV__ && aliasMatch.key !== REVENUECAT_PRO_ENTITLEMENT_ID) {
+        console.log('[Subscription] Using alias entitlement:', aliasMatch.key);
       }
-      return { entitlement: ent, identifier: alias, source: 'alias' };
+      return {
+        entitlement: aliasMatch.entitlement,
+        identifier: aliasMatch.key,
+        source: 'alias',
+      };
     }
   }
 
-  const activeKeys = Object.keys(info.entitlements.active);
+  const activeKeys = Object.keys(active);
   if (activeKeys.length === 1) {
     const key = activeKeys[0];
-    const ent = info.entitlements.active[key];
+    const ent = active[key];
     if (ent?.isActive) {
       if (__DEV__) {
         console.log('[Subscription] Using sole active entitlement:', key);
       }
       return { entitlement: ent, identifier: key, source: 'sole_active' };
+    }
+  }
+
+  if (activeKeys.length > 1) {
+    for (const key of activeKeys) {
+      const lower = key.toLowerCase();
+      if (lower.includes('premium') || lower.includes('recovery')) {
+        const ent = active[key];
+        if (ent?.isActive) {
+          if (__DEV__) {
+            console.log('[Subscription] Using premium-like active entitlement:', key);
+          }
+          return { entitlement: ent, identifier: key, source: 'sole_active' };
+        }
+      }
+    }
+    const firstActiveKey = activeKeys.find((key) => active[key]?.isActive);
+    if (firstActiveKey) {
+      const ent = active[firstActiveKey];
+      if (__DEV__) {
+        console.log('[Subscription] Using first active entitlement:', firstActiveKey);
+      }
+      return { entitlement: ent, identifier: firstActiveKey, source: 'sole_active' };
     }
   }
 
@@ -261,12 +318,20 @@ async function syncStorePurchasesIfSupported(): Promise<void> {
 
 async function refreshPremiumStateAfterStoreAction(
   applyCustomerInfo: (info: CustomerInfo) => void,
+  options?: { restoreBeforeRefresh?: boolean },
 ): Promise<{
   tier: SubscriptionState['tier'];
   activeEntitlementKeys: string[];
   customerInfo: CustomerInfo | null;
 }> {
   await syncStorePurchasesIfSupported();
+  if (options?.restoreBeforeRefresh) {
+    try {
+      await Purchases.restorePurchases();
+    } catch (e) {
+      console.log('[Subscription] restorePurchases during reconcile failed:', e);
+    }
+  }
   let lastInfo: CustomerInfo | null = null;
   for (const delayMs of REFRESH_CUSTOMER_INFO_DELAYS_MS) {
     if (delayMs > 0) {
@@ -291,6 +356,13 @@ async function refreshPremiumStateAfterStoreAction(
   };
 }
 
+function shouldReconcileStoreSubscription(info: CustomerInfo): boolean {
+  const tier = subscriptionStateFromCustomerInfo(info).tier;
+  if (tier === 'premium') return false;
+  const activeKeys = activeEntitlementKeys(info);
+  return activeKeys.length > 0 || customerInfoHasActiveStoreSubscription(info);
+}
+
 function isPurchaseCancelledError(e: unknown): boolean {
   const err = e as { code?: PURCHASES_ERROR_CODE; userCancelled?: boolean | null };
   return (
@@ -302,6 +374,7 @@ function isPurchaseCancelledError(e: unknown): boolean {
 export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   const queryClient = useQueryClient();
   const [subscription, setSubscription] = useState<SubscriptionState>(DEFAULT_STATE);
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [rcUserId, setRcUserId] = useState<string>('');
   const [storePurchasesReady, setStorePurchasesReady] = useState(false);
   const [subscriptionDiagnostics, setSubscriptionDiagnostics] = useState<SubscriptionDiagnostics>({
@@ -332,6 +405,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
   useEffect(() => {
     return registerAccountDeletionResetHandler(async () => {
       setSubscription(DEFAULT_STATE);
+      setCustomerInfo(null);
       setRcUserId('');
       setStorePurchasesReady(false);
       nativePackagesByProductId.current.clear();
@@ -371,6 +445,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const applyCustomerInfo = useCallback(
     (info: CustomerInfo) => {
+      setCustomerInfo(info);
       setSubscriptionDiagnostics(diagnosticsFromCustomerInfo(info));
       const next = subscriptionStateFromCustomerInfo(info);
       void persistSubscription(next);
@@ -405,6 +480,11 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
         const info = await Purchases.getCustomerInfo();
         if (cancelled) return;
         applyCustomerInfoRef.current(info);
+        if (shouldReconcileStoreSubscription(info)) {
+          void refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current, {
+            restoreBeforeRefresh: true,
+          });
+        }
 
         listener = (customerInfo) => {
           applyCustomerInfoRef.current(customerInfo);
@@ -561,6 +641,13 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
 
   const offerings = useMemo(() => offeringsQuery.data ?? [], [offeringsQuery.data]);
 
+  const activePremiumDisplay = useMemo((): ActiveSubscriptionDisplay | null => {
+    if (!customerInfo) return null;
+    const { entitlement } = resolveActivePremiumEntitlement(customerInfo);
+    if (!entitlement) return null;
+    return buildActiveSubscriptionDisplay(entitlement, offerings);
+  }, [customerInfo, offerings]);
+
   const purchaseStatus = useMemo(
     () => ({
       isPending: purchaseMutation.isPending,
@@ -590,6 +677,22 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     restoreMutation.mutate();
   }, [restoreMutation]);
 
+  /** Links App Store / Play receipts to this RevenueCat user and refreshes entitlements. */
+  const reconcileStoreSubscription = useCallback(async (): Promise<HostedPaywallOutcome> => {
+    if (!shouldUseNativePurchases || !storePurchasesReady) {
+      return { result: null, premiumUnlocked: false, activeEntitlementKeys: [] };
+    }
+    const refreshed = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current, {
+      restoreBeforeRefresh: true,
+    });
+    await queryClient.invalidateQueries({ queryKey: ['rc_offerings', rcUserId] });
+    return {
+      result: null,
+      premiumUnlocked: refreshed.tier === 'premium',
+      activeEntitlementKeys: refreshed.activeEntitlementKeys,
+    };
+  }, [shouldUseNativePurchases, storePurchasesReady, queryClient, rcUserId]);
+
   /**
    * Presents RevenueCat’s hosted paywall (dashboard-designed). No-op on web or when the SDK is not ready.
    * Refreshes entitlement state after a successful purchase or restore and verifies premium unlock.
@@ -600,6 +703,23 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
     }
     try {
       const { default: RevenueCatUI, PAYWALL_RESULT } = await import('react-native-purchases-ui');
+
+      let preInfo = await Purchases.getCustomerInfo();
+      applyCustomerInfoRef.current(preInfo);
+      if (shouldReconcileStoreSubscription(preInfo)) {
+        const preReconcile = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current, {
+          restoreBeforeRefresh: true,
+        });
+        if (preReconcile.tier === 'premium') {
+          return {
+            result: PAYWALL_RESULT.NOT_PRESENTED,
+            premiumUnlocked: true,
+            activeEntitlementKeys: preReconcile.activeEntitlementKeys,
+          };
+        }
+        preInfo = preReconcile.customerInfo ?? preInfo;
+      }
+
       const result = await RevenueCatUI.presentPaywallIfNeeded({
         requiredEntitlementIdentifier: REVENUECAT_PRO_ENTITLEMENT_ID,
       });
@@ -607,17 +727,27 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
         const refreshed = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current);
         await queryClient.invalidateQueries({ queryKey: ['rc_offerings', rcUserId] });
-        if (__DEV__ && result === PAYWALL_RESULT.PURCHASED && refreshed.tier !== 'premium') {
-          console.log(
-            '[Subscription] Paywall purchase completed but entitlement not active. Active keys:',
-            refreshed.activeEntitlementKeys,
-            'Expected:',
-            REVENUECAT_PRO_ENTITLEMENT_ID,
-          );
+        if (refreshed.tier !== 'premium') {
+          const reconciled = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current, {
+            restoreBeforeRefresh: true,
+          });
+          if (__DEV__ && result === PAYWALL_RESULT.PURCHASED && reconciled.tier !== 'premium') {
+            console.log(
+              '[Subscription] Paywall purchase completed but entitlement not active. Active keys:',
+              reconciled.activeEntitlementKeys,
+              'Expected:',
+              REVENUECAT_PRO_ENTITLEMENT_ID,
+            );
+          }
+          return {
+            result,
+            premiumUnlocked: reconciled.tier === 'premium',
+            activeEntitlementKeys: reconciled.activeEntitlementKeys,
+          };
         }
         return {
           result,
-          premiumUnlocked: refreshed.tier === 'premium',
+          premiumUnlocked: true,
           activeEntitlementKeys: refreshed.activeEntitlementKeys,
         };
       }
@@ -625,15 +755,40 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       if (result === PAYWALL_RESULT.NOT_PRESENTED) {
         const info = await Purchases.getCustomerInfo();
         applyCustomerInfoRef.current(info);
-        const tier = subscriptionStateFromCustomerInfo(info).tier;
+        let tier = subscriptionStateFromCustomerInfo(info).tier;
+        let keys = activeEntitlementKeys(info);
+        if (tier !== 'premium' && shouldReconcileStoreSubscription(info)) {
+          const reconciled = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current, {
+            restoreBeforeRefresh: true,
+          });
+          tier = reconciled.tier;
+          keys = reconciled.activeEntitlementKeys;
+        }
         return {
           result,
           premiumUnlocked: tier === 'premium',
-          activeEntitlementKeys: activeEntitlementKeys(info),
+          activeEntitlementKeys: keys,
         };
       }
 
-      return { result, premiumUnlocked: false, activeEntitlementKeys: [] };
+      const info = await Purchases.getCustomerInfo();
+      applyCustomerInfoRef.current(info);
+      if (subscriptionStateFromCustomerInfo(info).tier !== 'premium') {
+        const reconciled = await refreshPremiumStateAfterStoreAction(applyCustomerInfoRef.current, {
+          restoreBeforeRefresh: true,
+        });
+        return {
+          result,
+          premiumUnlocked: reconciled.tier === 'premium',
+          activeEntitlementKeys: reconciled.activeEntitlementKeys,
+        };
+      }
+
+      return {
+        result,
+        premiumUnlocked: true,
+        activeEntitlementKeys: activeEntitlementKeys(info),
+      };
     } catch (e) {
       console.log('[Subscription] presentHostedPaywall failed:', e);
       return null;
@@ -660,6 +815,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       featureLabels: FEATURE_LABELS,
       offerings,
       offeringsLoading: offeringsQuery.isLoading,
+      activePremiumDisplay,
       purchase,
       purchaseStatus,
       restore,
@@ -668,6 +824,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       restoreMutation,
       rcUserId,
       presentHostedPaywall,
+      reconcileStoreSubscription,
       subscriptionDiagnostics,
       /** @deprecated Use purchasesApiKeyConfigured */
       revenueCatConfigured: purchasesApiKeyConfigured,
@@ -682,6 +839,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       userIdQuery.isLoading,
       offerings,
       offeringsQuery.isLoading,
+      activePremiumDisplay,
       purchase,
       purchaseStatus,
       restore,
@@ -690,6 +848,7 @@ export const [SubscriptionProvider, useSubscription] = createContextHook(() => {
       restoreMutation,
       rcUserId,
       presentHostedPaywall,
+      reconcileStoreSubscription,
       subscriptionDiagnostics,
       purchasesApiKeyConfigured,
       storePurchasesReady,

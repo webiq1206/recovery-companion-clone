@@ -20,6 +20,7 @@ function buildPurchaseVerifyFailedMessage(activeKeys: string[]): string {
 export function useOpenPremiumPaywall() {
   const {
     presentHostedPaywall,
+    reconcileStoreSubscription,
     storePurchasesReady,
     purchasesApiKeyConfigured,
     isPremium,
@@ -58,14 +59,29 @@ export function useOpenPremiumPaywall() {
       return true;
     }
 
+    const reconciled = await reconcileStoreSubscription();
+    if (reconciled.premiumUnlocked) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return true;
+    }
+
+    const activeKeys =
+      reconciled.activeEntitlementKeys.length > 0
+        ? reconciled.activeEntitlementKeys
+        : outcome.activeEntitlementKeys;
+
     if (outcome.result === PAYWALL_RESULT.PURCHASED) {
-      Alert.alert('Premium not activated', buildPurchaseVerifyFailedMessage(outcome.activeEntitlementKeys), [
-        { text: 'OK' },
-      ]);
+      Alert.alert('Premium not activated', buildPurchaseVerifyFailedMessage(activeKeys), [{ text: 'OK' }]);
+    } else if (activeKeys.length > 0) {
+      Alert.alert(
+        'Premium not activated',
+        `${buildPurchaseVerifyFailedMessage(activeKeys)} Try Restore purchases in Settings.`,
+        [{ text: 'OK' }],
+      );
     }
 
     return false;
-  }, [isPremium, purchasesApiKeyConfigured, storePurchasesReady, presentHostedPaywall]);
+  }, [isPremium, purchasesApiKeyConfigured, storePurchasesReady, presentHostedPaywall, reconcileStoreSubscription]);
 
   return {
     openPremiumPaywall,
